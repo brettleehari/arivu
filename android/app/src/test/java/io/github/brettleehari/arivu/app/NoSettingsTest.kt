@@ -3,6 +3,7 @@ package io.github.brettleehari.arivu.app
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import io.github.brettleehari.arivu.app.profile.Profiles
 import org.junit.Test
 import org.w3c.dom.Element
 import java.io.File
@@ -10,7 +11,8 @@ import java.lang.reflect.Modifier
 import javax.xml.parsers.DocumentBuilderFactory
 
 // spine: C8 — no settings: the app declares exactly one screen-hosting activity and one service, no
-// preference screen, no persisted user preferences, and every tunable is a compile-time constant in Policy.
+// preference screen, no persisted user preferences, and every tunable is fixed at build time — in Policy
+// when no device gets a say, and in a Profile when the device does (spine: C11, ProfileSelectorTest).
 // Unit tests run with working directory android/app.
 class NoSettingsTest {
     private val manifest = File("src/main/AndroidManifest.xml")
@@ -70,8 +72,21 @@ class NoSettingsTest {
         fields.forEach {
             assertTrue("Policy.${it.name} is not static final", Modifier.isStatic(it.modifiers) && Modifier.isFinal(it.modifiers))
         }
-        // Spot-check the decisions that fixed them (leaves/BRIEF.md "Context", D-007).
-        assertEquals(2048, Policy.N_CTX)
-        assertEquals(0.7f, Policy.TEMPERATURE)
+        assertEquals(30_000L, Policy.CONTEXT_IDLE_MILLIS)
+    }
+
+    /**
+     * The device-dependent tunables moved into a Profile (spine: C11), which must not become a way
+     * back to a settings screen: the app reads the profile the probe chose and nothing else.
+     */
+    @Test
+    fun theProfileIsChosenByTheDeviceAndNeverEdited() {
+        val edits = Regex("""(profile|Profiles\.[A-Z_]+)\s*\.copy\(""")
+        val offenders = mainSrc.walk().filter { it.isFile && it.extension == "kt" }
+            .filter { f -> edits.containsMatchIn(f.readText()) }
+            .map { it.name }
+            .toList()
+        assertTrue("a Profile is edited at runtime in: $offenders", offenders.isEmpty())
+        assertEquals("exactly one profile ships (SPINE R3)", 1, Profiles.SHIPPED.size)
     }
 }

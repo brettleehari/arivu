@@ -1,29 +1,20 @@
 package io.github.brettleehari.arivu.app
 
 /**
- * Every value that could have been a setting. spine: C8 — there is no settings screen.
+ * Every value that could have been a setting, and is not. spine: C8 — there is no settings screen.
+ *
+ * The values are in two places on purpose:
+ *  - **here**: decisions no device gets a say in — the same on a 4GB phone, an 8GB phone and,
+ *    later, an iPhone.
+ *  - **[io.github.brettleehari.arivu.app.profile.Profile]**: decisions the *device* makes, chosen
+ *    by a probe of its RAM and cores (spine: C11). Context size, batch, threads, the model itself
+ *    and its sampling live there.
+ *
  * Each constant names the decision that fixed it (leaves/decisions.yml).
  */
 object Policy {
-    /** leaves/BRIEF.md "Context": 2048 tokens, q8_0 KV. */
-    const val N_CTX = 2048
-    const val N_BATCH = 512
-    const val KV_Q8_0 = true
-
-    /** Tokens held back for the reply when fitting history into the context. */
-    const val REPLY_RESERVE_TOKENS = 512
-    const val MAX_REPLY_TOKENS = 768
-
     /** leaves/BRIEF.md "Lifecycle": free the context after ~30s idle. */
     const val CONTEXT_IDLE_MILLIS = 30_000L
-
-    /** D-015: weights stay file-backed and evictable unless the benchmark proves repacking worth ~400MB RSS. */
-    const val REPACK_WEIGHTS = false
-
-    /** D-007: Qwen3 non-thinking mode with Qwen's recommended non-thinking sampling. */
-    const val TEMPERATURE = 0.7f
-    const val TOP_K = 20
-    const val TOP_P = 0.8f
 
     /** spine: C5 — the model is told, as the user is told, what it is bad at. */
     const val SYSTEM_PROMPT =
@@ -35,11 +26,4 @@ object Policy {
             // spine: C9 — short safeguards; every token here is context the user's text cannot use.
             "Refuse sexual content involving minors, instructions for weapons or serious harm, and forging official " +
             "documents or IDs. If someone mentions self-harm, reply kindly and briefly and suggest talking to someone they trust or local emergency help."
-
-    /**
-     * The ".so" suffix is deliberate (D-013). bundletool page-aligns any stored entry ending in ".so";
-     * everything else gets 4-byte alignment, and a GGUF can only be mmap'd in place at an offset that
-     * is a multiple of 32. Verified with tools/zip_entry_offset.py on bundletool output.
-     */
-    const val MODEL_ASSET = "model/qwen3-0.6b-q4_k_m.gguf.so"
 }

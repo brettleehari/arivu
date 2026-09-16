@@ -4,8 +4,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 
+/** Why a reply ended. LOW_MEMORY is the phone giving up, not the user and not the model (spine: C6). */
 @Serializable
-enum class Stop { END_OF_TURN, CANCELLED, CONTEXT_FULL, MAX_TOKENS, ERROR }
+enum class Stop { END_OF_TURN, CANCELLED, CONTEXT_FULL, MAX_TOKENS, ERROR, LOW_MEMORY }
 
 @Serializable
 data class Message(

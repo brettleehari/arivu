@@ -35,9 +35,11 @@
     <string name="stopped_context_full">Cut off: this conversation is now too long for Arivu to hold. Its next reply will leave out the oldest messages.</string>
     <string name="stopped_max_tokens">This reply reached its length limit. Send “continue” to get more.</string>
     <string name="stopped_error">Something went wrong while writing this reply. Try sending again.</string>
+    <string name="stopped_low_memory">Stopped: your phone ran low on memory. Close other apps, then send \u201Ccontinue\u201D to get the rest.</string>
     <!-- %1$d = how long a shorter part should be, as a percentage of this message (1–99). -->
     <string name="message_too_long">This message is too long for Arivu to read at once. Try sending a part about %1$d%% as long.</string>
     <string name="load_failed">Arivu could not start on this phone. Close Arivu fully, then open it again.</string>
+    <string name="load_failed_low_memory">Arivu could not start: your phone is low on memory. Close other apps, then send your message again.</string>
     <string name="notification_channel">Writing replies</string>
     <string name="notification_writing">Arivu is writing a reply</string>
 

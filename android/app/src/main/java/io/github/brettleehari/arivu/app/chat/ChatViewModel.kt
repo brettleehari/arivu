@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import io.github.brettleehari.arivu.app.ArivuApp
-import io.github.brettleehari.arivu.app.Policy
 import io.github.brettleehari.arivu.app.inference.BuiltPrompt
 import io.github.brettleehari.arivu.app.inference.EngineState
+import io.github.brettleehari.arivu.app.inference.MemoryPressure
 import io.github.brettleehari.arivu.app.inference.Turn
 import io.github.brettleehari.arivu.llama.GenerationEvent
 import io.github.brettleehari.arivu.llama.StopReason
@@ -35,6 +35,9 @@ data class ChatUiState(
 sealed interface Notice {
     data class TooLong(val tokens: Int, val limit: Int) : Notice
     data object LoadFailed : Notice
+
+    /** The phone ran out of memory before Arivu could start or finish. spine: C6 */
+    data object LowMemory : Notice
 }
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
@@ -78,10 +81,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val history = _state.value.messages.filter { it.text.isNotEmpty() }
             val built = try {
                 inference.promptBuilder.build(history.map { Turn(it.id, it.fromUser, it.text) })
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
                 removeMessage(reply.id)
-                _state.update { it.copy(generating = false, notice = Notice.LoadFailed) }
+                // spine: C6 — an allocation that failed is the phone being full, not Arivu being broken,
+                // and the user is told which of the two it was.
+                _state.update { it.copy(generating = false, notice = noticeFor(e)) }
                 persist()
                 return@launch
             }
@@ -95,7 +100,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 is BuiltPrompt.Ok -> {
                     val startId = if (built.firstIncluded > 0) history[built.firstIncluded].id else null
                     _state.update { it.copy(contextStartId = startId) }
-                    val maxNew = minOf(Policy.MAX_REPLY_TOKENS, Policy.N_CTX - built.promptTokens)
+                    val maxNew = inference.maxReplyTokens(built.promptTokens)
                     runGeneration(reply.id, built.text, maxNew)
                 }
             }
@@ -115,12 +120,23 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         val now = System.currentTimeMillis()
                         if (now - lastSave >= STREAM_SAVE_MILLIS) { lastSave = now; persist() }
                     }
-                    is GenerationEvent.Done -> stop = ev.stats.stop.toStop()
+                    is GenerationEvent.Done -> {
+                        stop = ev.stats.stop.toStop()
+                        // The user's own Stop is never relabelled; anything else that died next to a
+                        // critical trim, or on a failed allocation, says so plainly. spine: C6
+                        if (!stopRequested && inference.endedForMemory(ev.stats.stop, ev.stats.error)) stop = Stop.LOW_MEMORY
+                    }
                 }
             }
-        } catch (e: Exception) {
-            stop = if (e is kotlinx.coroutines.CancellationException) Stop.CANCELLED else Stop.ERROR
-            if (e !is kotlinx.coroutines.CancellationException) _state.update { it.copy(notice = Notice.LoadFailed) }
+        } catch (e: Throwable) {
+            when {
+                e is kotlinx.coroutines.CancellationException -> stop = Stop.CANCELLED
+                MemoryPressure.isAllocationFailure(e) -> stop = Stop.LOW_MEMORY
+                else -> {
+                    stop = Stop.ERROR
+                    _state.update { it.copy(notice = Notice.LoadFailed) }
+                }
+            }
         } finally {
             updateMessage(replyId) { it.copy(stop = stop, text = it.text.trimEnd()) }
             _state.update { it.copy(generating = false) }
@@ -140,6 +156,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         updateMessage(id) { it.copy(reported = true) }
         persist()
     }
+
+    /** spine: C6 — the phone being out of memory gets its own sentence, not the generic one. */
+    private fun noticeFor(t: Throwable): Notice =
+        if (MemoryPressure.isAllocationFailure(t)) Notice.LowMemory else Notice.LoadFailed
 
     private fun removeMessage(id: String) = _state.update { s -> s.copy(messages = s.messages.filterNot { it.id == id }) }
 

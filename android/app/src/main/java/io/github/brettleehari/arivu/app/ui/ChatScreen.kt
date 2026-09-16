@@ -344,7 +344,7 @@ private fun MessageBubble(m: Message, streaming: Boolean, engine: EngineState, o
                     Text(
                         stringResource(it),
                         style = MaterialTheme.typography.labelMedium,
-                        color = if (m.stop == Stop.ERROR || m.stop == Stop.CONTEXT_FULL) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (m.stop in ALARMING_STOPS) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 6.dp),
                     )
                 }
@@ -434,7 +434,12 @@ private fun stopLabel(stop: Stop?): Int? = when (stop) {
     Stop.CONTEXT_FULL -> R.string.stopped_context_full
     Stop.MAX_TOKENS -> R.string.stopped_max_tokens
     Stop.ERROR -> R.string.stopped_error
+    // spine: C6 — the phone ran out of memory, and it says so in those words instead of "something went wrong".
+    Stop.LOW_MEMORY -> R.string.stopped_low_memory
 }
+
+/** Stop reasons shown in the error colour: something the user did not ask for cut the reply short. */
+private val ALARMING_STOPS = setOf(Stop.ERROR, Stop.CONTEXT_FULL, Stop.LOW_MEMORY)
 
 @Composable
 private fun NoticeBar(notice: Notice, onDismiss: () -> Unit) {
@@ -445,6 +450,8 @@ private fun NoticeBar(notice: Notice, onDismiss: () -> Unit) {
             (notice.limit * 100 / notice.tokens.coerceAtLeast(1)).coerceIn(1, 99),
         )
         Notice.LoadFailed -> stringResource(R.string.load_failed)
+        // spine: C6 — named plainly, and the app stays usable: dismiss it and send again.
+        Notice.LowMemory -> stringResource(R.string.load_failed_low_memory)
     }
     Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
         Row(

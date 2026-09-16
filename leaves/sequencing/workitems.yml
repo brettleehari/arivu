@@ -23,7 +23,7 @@
 # Rendered by tools/sequence.py → leaves/sequencing/SEQUENCING.md
 
 slices:
-  BENCH: CLAUDE.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
+  BENCH: BRIEF.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
   MVP:   steps 2–8, verified on the physical phone
   PLAY:  step 9, store submission and release
 

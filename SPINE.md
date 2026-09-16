@@ -12,7 +12,7 @@ product: Arivu
 ## Changelog
 
 - **0.1 — 2026-09-15** — First Spine, derived from the settled engineering
-  brief (now `CLAUDE.md`). Customer quotes below are *design hypotheses*, not
+  brief (now `BRIEF.md`). Customer quotes below are *design hypotheses*, not
   field evidence; replace them with real interview lines before 0.2.
 
 ---

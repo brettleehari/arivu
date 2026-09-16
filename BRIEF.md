@@ -1,4 +1,4 @@
-# CLAUDE.md
+# BRIEF.md
 
 ## How this repo is run — Spine and Leaf
 

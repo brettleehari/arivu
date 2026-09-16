@@ -7,7 +7,7 @@ generated_for: 2026-09-15
 
 # Sequencing Leaf
 
-Today **2026-09-15** (Tuesday) · slice **all** · done 23/67 · builders 1 + Hari · phones 1
+Today **2026-09-15** (Tuesday) · slice **all** · done 25/67 · builders 1 + Hari · phones 1
 
 Done means verified to the stated level. **Nothing has run on a physical phone**; emulator runs are functional only.
 
@@ -25,7 +25,7 @@ Unconstrained = sum of effort + elapsed on the longest chain if every owner were
 | Scenario | internal | production |
 |---|---|---|
 | 1 builder(s), personal account (base) | 2026-09-21 | 2026-10-17 |
-| 2 builders, personal account | 2026-09-18 | 2026-10-17 |
+| 2 builders, personal account | 2026-09-21 | 2026-10-17 |
 | 1 builder(s), organisation account exempt from closed test (UNVERIFIED) | 2026-09-21 | 2026-09-26 |
 
 ## Critical path — internal (W52)
@@ -36,11 +36,9 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 
 | Item | Owner | Ready | Start | Finish | Queued (days) |
 |---|---|---|---|---|---|
-| W42 Public source repo URL exists (privacy policy, listing, GitHub Pages h | Hari | 2026-09-15 | 2026-09-17 | 2026-09-17 | 2 |
-| W43 Privacy text — one source (Compliance owns), placeholders filled, rete | Compliance | 2026-09-17 | 2026-09-18 | 2026-09-18 | 0.75 |
-| W16 Apply D-001 package name, D-010 address and the privacy text into the  | Engineering | 2026-09-18 | 2026-09-18 | 2026-09-18 | 0 |
-| W51 tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-s | Engineering | 2026-09-18 | 2026-09-18 | 2026-09-18 | 0 |
-| W52 MILESTONE — first Internal testing upload (create app, internal track, | Hari | 2026-09-19 | 2026-09-21 | 2026-09-21 | 2 |
+| W33 D-020: choose account type; create/confirm Play developer account; sta | Hari | 2026-09-15 | 2026-09-15 | 2026-09-15 | 0 |
+| W34 Developer verification complete (Google's review) | Hari | 2026-09-15 | 2026-09-15 | 2026-09-18 | 0 |
+| W52 MILESTONE — first Internal testing upload (create app, internal track, | Hari | 2026-09-18 | 2026-09-21 | 2026-09-21 | 2.25 |
 
 ## Critical path — production (W19)
 
@@ -50,8 +48,8 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 
 | Item | Owner | Ready | Start | Finish | Queued (days) |
 |---|---|---|---|---|---|
-| W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM dra | Hari | 2026-09-15 | 2026-09-17 | 2026-09-23 | 2.75 |
-| W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | Hari | 2026-09-23 | 2026-09-23 | 2026-10-08 | 0 |
+| W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM dra | Hari | 2026-09-15 | 2026-09-17 | 2026-09-22 | 2.25 |
+| W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | Hari | 2026-09-22 | 2026-09-22 | 2026-10-07 | 0 |
 | W58 Apply for production access (form answers from the closed test) and wa | Hari | 2026-10-08 | 2026-10-08 | 2026-10-15 | 0 |
 | W19 MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH) | Hari | 2026-10-15 | 2026-10-15 | 2026-10-17 | 0 |
 
@@ -66,7 +64,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 
 | Decision | Blocks release | Status | SLA expires | Flag | Work items |
 |---|---|---|---|---|---|
-| D-001 | **yes** | pending | 2026-09-17 | expires in 2d | W35, W16, W51 |
+| D-001 | **yes** | resolved_human | 2026-09-17 |  | W16, W51 |
 | D-002 | no | pending | 2026-09-17 | expires in 2d | W37 |
 | D-003 | no | pending | 2026-09-17 | expires in 2d | W66, W45 |
 | D-004 | no | pending | 2026-09-17 | expires in 2d | W03, W65 |
@@ -87,7 +85,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-019 | no | pending | 2026-09-17 | expires in 2d | W66 |
 | D-020 | **yes** | pending | 2026-09-17 | expires in 2d | W33, W34, W52, W57, W58, W19 |
 | D-021 | **yes** | pending | 2026-09-17 | expires in 2d | W37, W16, W53, W47, W54, W64 |
-| D-022 | **yes** | pending | 2026-09-17 | expires in 2d | W38, W42, W43, W16, W44, W54 |
+| D-022 | **yes** | pending | 2026-09-17 | expires in 2d | W38, W43, W16, W44, W54 |
 | D-023 | **yes** | pending | 2026-09-17 | expires in 2d | W38, W43 |
 | D-024 | **yes** | pending | 2026-09-17 | expires in 2d | W39, W54 |
 | D-025 | **yes** | pending | 2026-09-17 | expires in 2d | W39, W54 |
@@ -108,10 +106,8 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | Item | Slice | Title | Estimate | Deadline | Decisions | Needs |
 |---|---|---|---|---|---|---|
 | W33 | PLAY | D-020: choose account type; create/confirm Play developer account; start developer verification | 0.5d | 2026-09-30; verification enforced in BR, ID, SG, TH from 2026-09-30 | D-020 |  |
-| W35 | PLAY | D-001: package name (confirm domain control); record resolution in decisions.yml | 0.25d | before the first upload; irreversible | D-001 |  |
 | W36 | PLAY | D-010: create the monitored report/contact mailbox; record resolution in decisions.yml | 0.25d | before the first upload (release_check.sh fails on the placeholder) | D-010 |  |
 | W37 | PLAY | D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions, D-011 if yes); bump version, run propagate.py | 0.5d | before the first upload (the build already contains Report) | D-021 D-002 D-011 |  |
-| W42 | PLAY | Public source repo URL exists (privacy policy, listing, GitHub Pages host) | ~0.25d |  | D-022 | surfaced by Sequencing — [REPO_URL] is unfilled in privacy-policy.html and store-listing.md; GitHub Pages needs the repo |
 | W17 | PLAY | Generate the upload key (tools/make_upload_key.sh), two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256 | 0.5d | before the first upload (release_check.sh fails unsigned) | D-018 | never an agent; provisional D-018 option A (Play-generated app signing key) at the first upload |
 | W56 | PLAY | Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message | ~0.5d + 5d elapsed |  |  | agents cannot recruit humans; launch-plan.md Phase 2 |
 | W41 | BENCH | Physical 4 GB test phone on adb, USB debugging, its Google account ready to join Internal testing | ~0.25d |  |  | surfaced by Sequencing — every phone item waits on this; assumes Hari already owns the phone (if not, add purchase lead time) |
@@ -137,29 +133,27 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 |---|---|---|---|---|---|---|
 | 1 | W33 D-020: choose account type; create/confirm Play developer account; start developer verification | 0.5d | 2026-09-30; verification enforced in BR, ID, SG, TH from 2026-09-30 | D-020 | ready | 2026-09-15 → 2026-09-15 |
 | 2 | W34 Developer verification complete (Google's review) | ~0.25d + 3d elapsed | 2026-09-30 | D-020 | W33 | 2026-09-15 → 2026-09-18 |
-| 3 | W35 D-001: package name (confirm domain control); record resolution in decisions.yml | 0.25d | before the first upload; irreversible | D-001 | ready | 2026-09-15 → 2026-09-15 |
-| 4 | W36 D-010: create the monitored report/contact mailbox; record resolution in decisions.yml | 0.25d | before the first upload (release_check.sh fails on the placeholder) | D-010 | ready | 2026-09-16 → 2026-09-16 |
-| 5 | W37 D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions, D-011 if yes); bump version, run propagate.py | 0.5d | before the first upload (the build already contains Report) | D-021 D-002 D-011 | ready | 2026-09-16 → 2026-09-16 |
-| 6 | W38 D-022 + D-023: privacy policy host and text owner; retention period; supply developer name and repo URL | 0.25d | before the first upload (in-app text ships) and before the Data safety form | D-022 D-023 | W35, W36 | 2026-09-16 → 2026-09-16 |
-| 7 | W42 Public source repo URL exists (privacy policy, listing, GitHub Pages host) | ~0.25d |  | D-022 | ready | 2026-09-17 → 2026-09-17 |
-| 8 | W17 Generate the upload key (tools/make_upload_key.sh), two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256 | 0.5d | before the first upload (release_check.sh fails unsigned) | D-018 | ready | 2026-09-17 → 2026-09-17 |
-| 9 | W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message | ~0.5d + 5d elapsed |  |  | ready | 2026-09-17 → 2026-09-23 |
-| 10 | W41 Physical 4 GB test phone on adb, USB debugging, its Google account ready to join Internal testing | ~0.25d |  |  | ready | 2026-09-18 → 2026-09-18 |
-| 11 | W40 D-017 interim: drop or keep "polite" in the listing and first example | 0.25d | before the store listing is uploaded | D-017 D-030 | ready | 2026-09-18 → 2026-09-18 |
-| 12 | W39 D-024 + D-025: target audience 18+; Data safety answer | 0.25d | before the Console App content forms | D-024 D-025 | W38 | 2026-09-18 → 2026-09-18 |
-| 13 | W52 MILESTONE — first Internal testing upload (create app, internal track, testers, upload signed AAB, keep Play App Signing) | 0.25d |  | D-018 D-020 | W51, W34, W33 | 2026-09-21 → 2026-09-21 |
-| 14 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-09-21 → 2026-09-21 |
-| 15 | W54 Console: store listing + App content — privacy URL, Data safety, target audience, IARC, AI content / App access notes, ads, FGS check | 0.5d |  | D-021 D-022 D-024 D-025 | W52, W39, W44, W53 | 2026-09-21 → 2026-09-22 |
-| 16 | W55 Console: device-catalog RAM exclusion rule (gate layer 2) from D-009 | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-09-22 → 2026-09-22 |
-| 17 | W65 D-017 final — is 0.6B good enough; what the listing may promise | 0.5d | final call before production; Wave B also needs the non-English result | D-017 D-004 | W04 | 2026-09-22 → 2026-09-22 |
+| 3 | W36 D-010: create the monitored report/contact mailbox; record resolution in decisions.yml | 0.25d | before the first upload (release_check.sh fails on the placeholder) | D-010 | ready | 2026-09-15 → 2026-09-15 |
+| 4 | W37 D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions, D-011 if yes); bump version, run propagate.py | 0.5d | before the first upload (the build already contains Report) | D-021 D-002 D-011 | ready | 2026-09-16 → 2026-09-16 |
+| 5 | W38 D-022 + D-023: privacy policy host and text owner; retention period; supply developer name and repo URL | 0.25d | before the first upload (in-app text ships) and before the Data safety form | D-022 D-023 | W36 | 2026-09-16 → 2026-09-16 |
+| 6 | W17 Generate the upload key (tools/make_upload_key.sh), two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256 | 0.5d | before the first upload (release_check.sh fails unsigned) | D-018 | ready | 2026-09-16 → 2026-09-17 |
+| 7 | W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message | ~0.5d + 5d elapsed |  |  | ready | 2026-09-17 → 2026-09-22 |
+| 8 | W41 Physical 4 GB test phone on adb, USB debugging, its Google account ready to join Internal testing | ~0.25d |  |  | ready | 2026-09-17 → 2026-09-17 |
+| 9 | W40 D-017 interim: drop or keep "polite" in the listing and first example | 0.25d | before the store listing is uploaded | D-017 D-030 | ready | 2026-09-18 → 2026-09-18 |
+| 10 | W39 D-024 + D-025: target audience 18+; Data safety answer | 0.25d | before the Console App content forms | D-024 D-025 | W38 | 2026-09-18 → 2026-09-18 |
+| 11 | W65 D-017 final — is 0.6B good enough; what the listing may promise | 0.5d | final call before production; Wave B also needs the non-English result | D-017 D-004 | W04 | 2026-09-18 → 2026-09-18 |
+| 12 | W52 MILESTONE — first Internal testing upload (create app, internal track, testers, upload signed AAB, keep Play App Signing) | 0.25d |  | D-018 D-020 | W51, W34, W33 | 2026-09-21 → 2026-09-21 |
+| 13 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-09-21 → 2026-09-21 |
+| 14 | W54 Console: store listing + App content — privacy URL, Data safety, target audience, IARC, AI content / App access notes, ads, FGS check | 0.5d |  | D-021 D-022 D-024 D-025 | W52, W39, W44, W53 | 2026-09-21 → 2026-09-22 |
+| 15 | W55 Console: device-catalog RAM exclusion rule (gate layer 2) from D-009 | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-09-22 → 2026-09-22 |
+| 16 | W66 Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. D-028, D-033) | 0.25d |  | D-003 D-005 D-006 D-007 D-012 D-013 D-016 D-019 D-026 D-027 D-028 D-029 D-031 D-032 D-033 | ready | 2026-09-22 → 2026-09-22 |
+| 17 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot be compressed) | 0.25d + 15d elapsed |  | D-020 | W52, W18, W21, W54, W55, W56, W34 | 2026-09-22 → 2026-10-07 |
 | 18 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via PEPK (B) | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-09-23 → 2026-09-23 |
-| 19 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot be compressed) | 0.25d + 15d elapsed |  | D-020 | W52, W18, W21, W54, W55, W56, W34 | 2026-09-23 → 2026-10-08 |
-| 20 | W66 Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. D-028, D-033) | 0.25d |  | D-003 D-005 D-006 D-007 D-012 D-013 D-016 D-019 D-026 D-027 D-028 D-029 D-031 D-032 D-033 | ready | 2026-09-23 → 2026-09-23 |
-| 21 | W58 Apply for production access (form answers from the closed test) and wait for Google | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-08 → 2026-10-15 |
-| 22 | W19 MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH) | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-15 → 2026-10-17 |
-| 23 | W63 Wave B (ID, BR) then Wave C, by country | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-19 → 2026-10-26 |
+| 19 | W58 Apply for production access (form answers from the closed test) and wait for Google | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-08 → 2026-10-15 |
+| 20 | W19 MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH) | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-15 → 2026-10-17 |
+| 21 | W63 Wave B (ID, BR) then Wave C, by country | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-19 → 2026-10-26 |
 
-Hari effort still open: 7.5 days.
+Hari effort still open: 7 days.
 
 ## Open items no milestone requires
 
@@ -170,25 +164,24 @@ W61 (Engineering), W66 (Hari), W60 (Engineering), W47 (GTM), W63 (Hari), W64 (Co
 | Item | Owner | Slice | Status | Estimate | Start | Finish |
 |---|---|---|---|---|---|---|
 | W33 D-020: choose account type; create/confirm Play developer account; sta | Hari | PLAY | todo | 0.5d | 2026-09-15 | 2026-09-15 |
-| W35 D-001: package name (confirm domain control); record resolution in dec | Hari | PLAY | todo | 0.25d | 2026-09-15 | 2026-09-15 |
-| W36 D-010: create the monitored report/contact mailbox; record resolution  | Hari | PLAY | todo | 0.25d | 2026-09-16 | 2026-09-16 |
+| W36 D-010: create the monitored report/contact mailbox; record resolution  | Hari | PLAY | todo | 0.25d | 2026-09-15 | 2026-09-15 |
 | W37 D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions,  | Hari | PLAY | todo | 0.5d | 2026-09-16 | 2026-09-16 |
-| W04 Writing and comprehension eval set (EN + 2 target languages), incl. "c | Engineering | BENCH | todo | ~2d | 2026-09-15 | 2026-09-16 |
 | W38 D-022 + D-023: privacy policy host and text owner; retention period; s | Hari | PLAY | todo | 0.25d | 2026-09-16 | 2026-09-16 |
-| W42 Public source repo URL exists (privacy policy, listing, GitHub Pages h | Hari | PLAY | todo | ~0.25d | 2026-09-17 | 2026-09-17 |
-| W17 Generate the upload key (tools/make_upload_key.sh), two encrypted offl | Hari | PLAY | todo | 0.5d | 2026-09-17 | 2026-09-17 |
-| W59 Red-team eval slice (CSAE, self-harm, weapons, forged official letters | Engineering | BENCH | todo | ~1d | 2026-09-17 | 2026-09-17 |
-| W43 Privacy text — one source (Compliance owns), placeholders filled, rete | Compliance | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
-| W41 Physical 4 GB test phone on adb, USB debugging, its Google account rea | Hari | BENCH | todo | ~0.25d | 2026-09-18 | 2026-09-18 |
-| W16 Apply D-001 package name, D-010 address and the privacy text into the  | Engineering | PLAY | todo | 0.5d | 2026-09-18 | 2026-09-18 |
-| W34 Developer verification complete (Google's review) | Hari | PLAY | todo | ~0.25d + 3d elapsed | 2026-09-15 | 2026-09-18 |
+| W04 Writing and comprehension eval set (EN + 2 target languages), incl. "c | Engineering | BENCH | todo | ~2d | 2026-09-15 | 2026-09-16 |
+| W17 Generate the upload key (tools/make_upload_key.sh), two encrypted offl | Hari | PLAY | todo | 0.5d | 2026-09-16 | 2026-09-17 |
+| W43 Privacy text — one source (Compliance owns), placeholders filled, rete | Compliance | PLAY | todo | 0.25d | 2026-09-17 | 2026-09-17 |
+| W16 Apply D-001 package name, D-010 address and the privacy text into the  | Engineering | PLAY | todo | 0.5d | 2026-09-17 | 2026-09-17 |
+| W41 Physical 4 GB test phone on adb, USB debugging, its Google account rea | Hari | BENCH | todo | ~0.25d | 2026-09-17 | 2026-09-17 |
+| W51 tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-s | Engineering | PLAY | todo | 0.25d | 2026-09-17 | 2026-09-17 |
 | W40 D-017 interim: drop or keep "polite" in the listing and first example | Hari | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
 | W39 D-024 + D-025: target audience 18+; Data safety answer | Hari | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
-| W51 tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-s | Engineering | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
-| W02 Run benchmark on the physical test phone; record NOTES.md | Engineering | BENCH | todo | 1d | 2026-09-19 | 2026-09-19 |
-| W44 Privacy policy hosted at a public, non-geofenced URL (GitHub Pages, no | GTM | PLAY | todo | 0.25d | 2026-09-20 | 2026-09-20 |
-| W53 Listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 i | GTM | PLAY | todo | 0.25d | 2026-09-20 | 2026-09-20 |
-| W21 End-to-end on the phone — install bundle, airplane mode, first reply ( | Engineering | MVP | todo | 0.5d | 2026-09-20 | 2026-09-20 |
+| W34 Developer verification complete (Google's review) | Hari | PLAY | todo | ~0.25d + 3d elapsed | 2026-09-15 | 2026-09-18 |
+| W02 Run benchmark on the physical test phone; record NOTES.md | Engineering | BENCH | todo | 1d | 2026-09-18 | 2026-09-18 |
+| W65 D-017 final — is 0.6B good enough; what the listing may promise | Hari | BENCH | todo | 0.5d | 2026-09-18 | 2026-09-18 |
+| W44 Privacy policy hosted at a public, non-geofenced URL (GitHub Pages, no | GTM | PLAY | todo | 0.25d | 2026-09-19 | 2026-09-19 |
+| W53 Listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 i | GTM | PLAY | todo | 0.25d | 2026-09-19 | 2026-09-19 |
+| W21 End-to-end on the phone — install bundle, airplane mode, first reply ( | Engineering | MVP | todo | 0.5d | 2026-09-19 | 2026-09-19 |
+| W59 Red-team eval slice (CSAE, self-harm, weapons, forged official letters | Engineering | BENCH | todo | ~1d | 2026-09-20 | 2026-09-20 |
 | W52 MILESTONE — first Internal testing upload (create app, internal track, | Hari | PLAY | todo | 0.25d | 2026-09-21 | 2026-09-21 |
 | W45 API 34 service timeout test — onTimeout(int) fires and stops after ~3  | Engineering | MVP | todo | ~0.5d | 2026-09-21 | 2026-09-21 |
 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | Hari | BENCH | todo | 0.5d | 2026-09-21 | 2026-09-21 |
@@ -196,12 +189,11 @@ W61 (Engineering), W66 (Hari), W60 (Engineering), W47 (GTM), W63 (Hari), W64 (Co
 | W54 Console: store listing + App content — privacy URL, Data safety, targe | Hari | PLAY | todo | 0.5d | 2026-09-21 | 2026-09-22 |
 | W46 Phone accessibility pass — TalkBack, 200% text, RTL (design.md commitm | Design | MVP | todo | ~0.5d | 2026-09-22 | 2026-09-22 |
 | W55 Console: device-catalog RAM exclusion rule (gate layer 2) from D-009 | Hari | PLAY | todo | 0.25d | 2026-09-22 | 2026-09-22 |
+| W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM dra | Hari | PLAY | todo | ~0.5d + 5d elapsed | 2026-09-17 | 2026-09-22 |
+| W66 Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. | Hari | PLAY | todo | 0.25d | 2026-09-22 | 2026-09-22 |
 | W48 W18 extension: signed universal APK has the model aligned; apksigner c | Architecture | PLAY | todo | ~0.5d | 2026-09-22 | 2026-09-22 |
-| W65 D-017 final — is 0.6B good enough; what the listing may promise | Hari | BENCH | todo | 0.5d | 2026-09-22 | 2026-09-22 |
 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | Hari | PLAY | todo | 0.25d | 2026-09-23 | 2026-09-23 |
-| W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM dra | Hari | PLAY | todo | ~0.5d + 5d elapsed | 2026-09-17 | 2026-09-23 |
 | W08 Verify idle RSS returns to baseline with dumpsys meminfo (M4) | Engineering | BENCH | todo | 0.5d | 2026-09-23 | 2026-09-23 |
-| W66 Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. | Hari | PLAY | todo | 0.25d | 2026-09-23 | 2026-09-23 |
 | W10 Gate layer 3 on the phone with fake totalMem; ACTION_DELETE works | Engineering | MVP | todo | 0.5d | 2026-09-23 | 2026-09-23 |
 | W62 Production candidate — fixes in, versionCode bumped, release_check.sh  | Engineering | PLAY | todo | 0.5d | 2026-09-24 | 2026-09-24 |
 | W50 Record Play app-signing cert SHA-256 and release provenance (AAB sha25 | Engineering | PLAY | todo | 0.25d | 2026-09-24 | 2026-09-24 |
@@ -209,7 +201,7 @@ W61 (Engineering), W66 (Hari), W60 (Engineering), W47 (GTM), W63 (Hari), W64 (Co
 | W47 Recapture shot 4 (Stop) and final screenshots on the phone (+ shot 8 R | GTM | PLAY | todo | 0.5d | 2026-09-25 | 2026-09-26 |
 | W61 Native heap investigation — ~46 MB held after idle context free | Engineering | BENCH | todo | ~0.5d | 2026-09-26 | 2026-09-26 |
 | W64 Compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and §3 descr | Compliance | PLAY | todo | 0.25d | 2026-09-26 | 2026-09-26 |
-| W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | Hari | PLAY | todo | 0.25d + 15d elapsed | 2026-09-23 | 2026-10-08 |
+| W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | Hari | PLAY | todo | 0.25d + 15d elapsed | 2026-09-22 | 2026-10-07 |
 | W58 Apply for production access (form answers from the closed test) and wa | Hari | PLAY | todo | ~0.25d + 7d elapsed | 2026-10-08 | 2026-10-15 |
 | W19 MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH) | Hari | PLAY | todo | ~0.25d + 2d elapsed | 2026-10-15 | 2026-10-17 |
 | W63 Wave B (ID, BR) then Wave C, by country | Hari | PLAY | todo | ~0.25d + 7d elapsed | 2026-10-19 | 2026-10-26 |
@@ -241,6 +233,8 @@ W61 (Engineering), W66 (Hari), W60 (Engineering), W47 (GTM), W63 (Hari), W64 (Co
 | W31 Design — store icon, accessibility commitments, copy | Design | delivered (design.md, store-icon-512.png); accessibility commitments NOT yet checked on a phone (W46) |
 | W32 Compliance — Play policy checklist and licence audit | Compliance | delivered (play-policy-checklist.md, licence-audit.md); checklist partly stale after round 2 (W64) |
 | W20 GTM — listing copy, privacy policy draft, feature graphic, 4 screenshots, release notes, launch plan | GTM | delivered; screenshots are emulator captures (dev icon in status bar); nothing uploaded; shot 2 dropped (6/6 failed), shot 4 needs recapture |
+| W35 D-001: package name (confirm domain control); record resolution in decisions.yml | Hari | resolved_human 2026-09-15: io.github.brettleehari.arivu; renamed across the source tree; unit tests + emulator run confirm JNI still binds |
+| W42 Public source repo URL exists (privacy policy, listing, GitHub Pages host) | Hari | github.com/brettleehari/arivu, public, pushed 2026-09-15 (D-035) |
 
 ## Graph
 
@@ -281,7 +275,7 @@ flowchart LR
   W20["W20 GTM — listing copy, privacy policy draft…"]:::done
   W33["W33 D-020: choose account type create/confir…"]:::hari
   W34["W34 Developer verification complete Google's…"]:::hari
-  W35["W35 D-001: package name confirm domain contr…"]:::hari
+  W35["W35 D-001: package name confirm domain contr…"]:::done
   W36["W36 D-010: create the monitored report/conta…"]:::hari
   W37["W37 D-021: approve per-reply Report amend SP…"]:::hari
   W38["W38 D-022 + D-023: privacy policy host and t…"]:::hari
@@ -289,7 +283,7 @@ flowchart LR
   W40["W40 D-017 interim: drop or keep polite in th…"]:::hari
   W17["W17 Generate the upload key tools/make_uploa…"]:::hari
   W41["W41 Physical 4 GB test phone on adb, USB deb…"]:::hari
-  W42["W42 Public source repo URL exists privacy po…"]:::hari
+  W42["W42 Public source repo URL exists privacy po…"]:::done
   W66["W66 Stamp the non-blocking decisions D-002..…"]:::hari
   W43["W43 Privacy text — one source Compliance own…"]:::todo
   W16["W16 Apply D-001 package name, D-010 address…"]:::todo

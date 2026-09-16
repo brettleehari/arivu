@@ -28,12 +28,12 @@ Evidence labels used below:
 | A lost or compromised **upload key** can be reset by Google (new PEM certificate, Console request). A lost app signing key that you manage yourself cannot be recovered. | [V-doc] |
 | Key upgrade (rotation) of the app signing key: annual upgrade for installs on Android 17+; Android 13–16 enforce the latest classical key via v3.1; Android 7–12 rely on Play Protect. Because minSdk is 30, every Arivu device supports v3 key rotation lineage. | [V-doc] for Play rules; minSdk from `android/app/build.gradle.kts` [V-local] |
 | Developer verification: "If you use Play App Signing, … your eligible apps will be part of the automatic registration process." Multiple signing keys can be registered per package. Lost signing key → cannot register packages. Unregistered apps are blocked on certified devices in enforced regions (BR, ID, SG, TH from 2026-09-30; global 2027); ADB installs exempt. | [V-doc] developer-verification FAQ |
-| Whether an **off-Play** copy with the same package and the same Play-held key is covered by that automatic registration, or needs the manual step CLAUDE.md names. | [B] ambiguous in docs — check in the Console's verification page before iteration-2 |
+| Whether an **off-Play** copy with the same package and the same Play-held key is covered by that automatic registration, or needs the manual step BRIEF.md names. | [B] ambiguous in docs — check in the Console's verification page before iteration-2 |
 | The current release AAB is **unsigned** (no top-level `META-INF/` signature; the release buildType has no `signingConfig`). Play rejects unsigned uploads. | [V-local] `unzip -l app-release.aab` |
 
 ### What that implies for "iteration-2 must share the key"
 
-CLAUDE.md's instruction ("guard the signing key carefully from day one") was written as if Hari holds
+BRIEF.md's instruction ("guard the signing key carefully from day one") was written as if Hari holds
 *the* key. Under Play App Signing there are two keys, and only one of them decides whether a shared
 APK updates a Play install: the **app signing key**. There are exactly two ways to satisfy R1:
 

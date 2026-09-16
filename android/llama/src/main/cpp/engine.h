@@ -1,7 +1,7 @@
 // Arivu inference engine. Plain C++ over llama.cpp, no JNI, so the host smoke
 // test (tools/host/) exercises exactly the code the app ships.
 //
-// Memory model (CLAUDE.md "Lifecycle"): the model is mmap'd and file-backed, so
+// Memory model (BRIEF.md "Lifecycle"): the model is mmap'd and file-backed, so
 // the kernel may evict it; the context owns the KV cache and is freed explicitly.
 #pragma once
 

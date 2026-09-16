@@ -18,7 +18,7 @@ not show visually.
   Still Spine 0.1.
 - **2026-09-15 (a)** — First Leaf.
 
-> **Provisional, pending Hari:** the chat screen now has *Send, Stop, Copy, **Report***. SPINE §3/CLAUDE.md say
+> **Provisional, pending Hari:** the chat screen now has *Send, Stop, Copy, **Report***. SPINE §3/BRIEF.md say
 > "Send. Stop. Copy message. That is all." Report was added because Play's AI-generated content policy is read as
 > needing a flag on the output itself (play-policy-checklist.md §1). The in-app privacy policy text is also
 > Engineering's derivation of GTM's draft and has no developer name, retention period or repo URL yet.

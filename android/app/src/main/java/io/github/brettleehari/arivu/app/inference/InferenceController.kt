@@ -30,7 +30,7 @@ import io.github.brettleehari.arivu.llama.SamplingSpec
 enum class EngineState { COLD, STARTING, READY, GENERATING }
 
 /**
- * Owns the engine and enforces CLAUDE.md "Lifecycle — load only during operation":
+ * Owns the engine and enforces BRIEF.md "Lifecycle — load only during operation":
  *  - model + context created lazily on the first message, never at app start
  *  - context freed after [Policy.CONTEXT_IDLE_MILLIS] idle, and when the UI is hidden
  *  - UI_HIDDEN frees the context; BACKGROUND and above also free the (mmap'd) model (D-012)

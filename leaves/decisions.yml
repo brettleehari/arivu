@@ -81,7 +81,7 @@
   if_rejected: change one property before the first Play upload; nothing else depends on it.
 
 - id: D-002
-  title: "\"Permissions: None\" vs the permissions the settled design needs (CLAUDE.md correction)"
+  title: "\"Permissions: None\" vs the permissions the settled design needs (BRIEF.md correction)"
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C10, C6]
@@ -97,16 +97,16 @@
     allows exactly these three). POST_NOTIFICATIONS is deliberately NOT requested. Compliance confirms
     REQUEST_DELETE_PACKAGES is not on Play's sensitive-permission declaration list
     (play-policy-checklist.md §5, [V]). The core claim (no INTERNET) is intact.
-  related_claude_md_correction: >
-    Compliance (play-policy-checklist.md §9): CLAUDE.md "Distribution" says developer verification
+  related_brief_correction: >
+    Compliance (play-policy-checklist.md §9): BRIEF.md "Distribution" says developer verification
     enforcement "began 2026-09-30". It BEGINS 2026-09-30 (15 days from today) in Brazil, Indonesia,
     Singapore, Thailand; global in 2027 [V: developer.android.com/developer-verification]. The action it
-    requires is tracked in D-020. Both corrections go to Hari as one CLAUDE.md edit.
+    requires is tracked in D-020. Both corrections go to Hari as one BRIEF.md edit.
   options:
-    - amend CLAUDE.md to the enforced allow-list (below)
+    - amend BRIEF.md to the enforced allow-list (below)
     - keep "None" literally (drop the foreground service and ACTION_DELETE)
   recommendation: >
-    Amend CLAUDE.md to "No network permissions and no runtime-prompted permissions. Allowed:
+    Amend BRIEF.md to "No network permissions and no runtime-prompted permissions. Allowed:
     FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, and the AndroidX-generated
     DYNAMIC_RECEIVER_NOT_EXPORTED signature permission." tools/check_manifest.sh enforces exactly that list.
     In the same edit, change "enforcement began 2026-09-30" to "enforcement begins 2026-09-30".
@@ -151,7 +151,7 @@
   depends_on: [W02, W03, W04]
   context: >
     Measured file sizes: Qwen3-0.6B Q4_K_M 396,705,472 B; Qwen3-1.7B Q4_K_M 1,107,409,472 B.
-    ORIGINAL PREMISE (from CLAUDE.md "combined install-time limit is 1GB") WAS WRONG.
+    ORIGINAL PREMISE (from BRIEF.md "combined install-time limit is 1GB") WAS WRONG.
     Correction (Compliance, play-policy-checklist.md §12, [V] support.google.com answer/9859372, checked
     2026-09-15): base module 500 MB; individual asset pack 1.5 GB; cumulative total for all modules and
     install-time packs 4 GB. The 1.7B Q4_K_M file fits in one install-time pack. Remaining costs of 1.7B are
@@ -164,7 +164,7 @@
     - fast-follow pack — breaks C1 ("no model download") in spirit
   recommendation: >
     Decide at W03 from W02 (tok/s, peak RSS) and W04 (D-017 quality). The size limit no longer rules 1.7B out;
-    speed, memory and download size still might. Correct CLAUDE.md "Build artifact" (1 GB → 1.5 GB per pack,
+    speed, memory and download size still might. Correct BRIEF.md "Build artifact" (1 GB → 1.5 GB per pack,
     4 GB cumulative).
   implemented_provisionally: "no (0.6B only is what ships)"
   if_rejected: n/a until W03.
@@ -188,9 +188,9 @@
     assets into assets/, so the PAD source likely works unchanged [B, verify in W18]; a Play-installed copy
     is split APKs and cannot seed P2P shares (R1 consequence).
   options:
-    - keep the interface as CLAUDE.md asks (recommended)
+    - keep the interface as BRIEF.md asks (recommended)
     - collapse to one implementation now
-  recommendation: keep the interface as CLAUDE.md asks; note the convergence; upstream the patch.
+  recommendation: keep the interface as BRIEF.md asks; note the convergence; upstream the patch.
   implemented_provisionally: yes
   if_rejected: merge the two classes; no user-visible change.
 
@@ -249,7 +249,7 @@
   raised_by: [Engineering]
   depends_on: [W02, W03]
   context: >
-    CLAUDE.md says "performance core count (usually 4)". A Helio G85 has 2 big (A75) + 6 little cores;
+    BRIEF.md says "performance core count (usually 4)". A Helio G85 has 2 big (A75) + 6 little cores;
     an SD680 has 4 + 4. The implemented heuristic counts non-lowest-frequency cores, clamped to [2,4],
     so G85 gets 2. W02 sweeps 2, 4 and the heuristic; pick from the numbers. No new evidence (emulator
     tok/s is explicitly non-representative, NOTES.md).
@@ -349,7 +349,7 @@
   context: >
     Since API 34, only TRIM_MEMORY_UI_HIDDEN and TRIM_MEMORY_BACKGROUND are delivered. Implemented:
     UI_HIDDEN frees context; BACKGROUND or higher frees the model (cheap: mmap'd, reload is a page-cache
-    hit); the 30s idle timer is the primary mechanism. Partly answers CLAUDE.md's open question by
+    hit); the 30s idle timer is the primary mechanism. Partly answers BRIEF.md's open question by
     platform docs; OEM behaviour still to observe in W08.
   evidence: >
     Emulator (NOTES.md): "context freed: idle 30000ms" 30.02 s after the last token; Home + am send-trim-memory
@@ -591,7 +591,7 @@
   deadline: before the first Play upload (the build already contains it) and before the first Play review
   raised_by: [GTM, Compliance, Engineering]
   merged: "GTM R-AI + Compliance 'D-018' (Report) + Engineering 'per-reply Report is Spine scope'."
-  spine_amendment: "SPINE §3 / CLAUDE.md 'Scope of the single screen': 'Send. Stop. Copy message.' → 'Send, Stop, Copy, Report'."
+  spine_amendment: "SPINE §3 / BRIEF.md 'Scope of the single screen': 'Send. Stop. Copy message.' → 'Send, Stop, Copy, Report'."
   context: >
     Play AI-Generated Content policy [V] (answer/13985936, 14094294; play-policy-checklist.md §1; store-listing.md
     R-AI): in-scope text chatbots "must contain in-app user reporting or flagging features that allow users to
@@ -783,13 +783,13 @@
   raised_by: [Architecture, Engineering]
   context: >
     Architecture B1: llama.cpp reserves worst-case logits scratch for n_outputs_max = n_batch (512 × 151,936 vocab
-    × 4 B ≈ 297 MiB) that engine.cpp never uses; CLAUDE.md budgets ~80 MB. Worst case peak ≈ 943 MB > 800 MB
+    × 4 B ≈ 297 MiB) that engine.cpp never uses; BRIEF.md budgets ~80 MB. Worst case peak ≈ 943 MB > 800 MB
     target (M3); with the fix ≈ 670 MB (architecture.md memory budget).
   evidence: >
     NOTES.md round 2: 309.34 MiB → 26.59 MiB on host, smoke ALL PASSED and greedy output identical; 28.09 MiB on
     the arm64 emulator. Resident size on a phone still W02's job.
   options: [n_outputs_max = 1 (implemented), default n_outputs_max]
-  recommendation: keep; update CLAUDE.md memory budget (compute buffers ~28 MiB, KV 119 MiB, weights 373 MiB mapped).
+  recommendation: keep; update BRIEF.md memory budget (compute buffers ~28 MiB, KV 119 MiB, weights 373 MiB mapped).
   implemented_provisionally: "yes (engine.cpp)"
   if_rejected: revert one line; M3 at risk (≈ 943 MB worst case).
 

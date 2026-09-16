@@ -93,15 +93,15 @@ Recommend (interim): remove "polite" from the listing and from the first empty-s
 | D-033 | Truncate whole exchanges, not single turns | Yes; Engineering + Design | |
 | D-034 | ~46 MB native heap after an idle free | Measure on the phone (W08) first | Emulator number only |
 
-## Proposed Spine and CLAUDE.md amendments (for you to approve, not applied)
+## Proposed Spine and BRIEF.md amendments (for you to approve, not applied)
 
 Approving any of these starts the propagation discipline: bump the version, add a changelog entry, run `tools/propagate.py`.
 
-1. **SPINE §3 and CLAUDE.md "Scope of the single screen"**: "Send. Stop. Copy message." becomes "Send, Stop, Copy, Report" (D-021). Add "Clear conversation" here too if D-011 is yes.
-2. **CLAUDE.md "Permissions"**: "None" becomes "No network or runtime-prompted permissions. Allowed: FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, and the AndroidX DYNAMIC_RECEIVER_NOT_EXPORTED signature permission" (D-002).
-3. **CLAUDE.md "Distribution"**: verification enforcement "began" becomes "begins" 2026-09-30 (D-002, D-020).
-4. **CLAUDE.md "Build artifact"**: the 1 GB install-time limit becomes 1.5 GB per pack and 4 GB total. The "Fallback model" row is no longer ruled out by size (D-004).
-5. **CLAUDE.md "Memory budget"**: compute buffers ~80 MB become ~28 MiB with n_outputs_max = 1. KV is 119 MiB and the weights map 373 MiB (D-028).
+1. **SPINE §3 and BRIEF.md "Scope of the single screen"**: "Send. Stop. Copy message." becomes "Send, Stop, Copy, Report" (D-021). Add "Clear conversation" here too if D-011 is yes.
+2. **BRIEF.md "Permissions"**: "None" becomes "No network or runtime-prompted permissions. Allowed: FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, and the AndroidX DYNAMIC_RECEIVER_NOT_EXPORTED signature permission" (D-002).
+3. **BRIEF.md "Distribution"**: verification enforcement "began" becomes "begins" 2026-09-30 (D-002, D-020).
+4. **BRIEF.md "Build artifact"**: the 1 GB install-time limit becomes 1.5 GB per pack and 4 GB total. The "Fallback model" row is no longer ruled out by size (D-004).
+5. **BRIEF.md "Memory budget"**: compute buffers ~80 MB become ~28 MiB with n_outputs_max = 1. KV is 119 MiB and the weights map 373 MiB (D-028).
 
 ## Loose ends found while triaging (owners, not decisions)
 

@@ -31,5 +31,5 @@ add_subdirectory("${LLAMA_DIR}" llama.cpp)
 
 add_library(arivu_llama SHARED engine.cpp jni_bridge.cpp)
 target_link_libraries(arivu_llama PRIVATE llama ggml android log)
-# 16KB page-size devices (CLAUDE.md: NDK r27+, mandatory)
+# 16KB page-size devices (BRIEF.md: NDK r27+, mandatory)
 target_link_options(arivu_llama PRIVATE "-Wl,-z,max-page-size=16384")

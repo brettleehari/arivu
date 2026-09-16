@@ -25,7 +25,7 @@ private fun corruptPrefix(file: File) = file.name + ".corrupt-"
 data class StoredConversation(val version: Int = 1, val messages: List<Message> = emptyList())
 
 /**
- * Flat JSON file (CLAUDE.md "Persistence"). App-private storage, excluded from backup (spine: C3).
+ * Flat JSON file (BRIEF.md "Persistence"). App-private storage, excluded from backup (spine: C3).
  * Writes go to a temp file then rename, so a kill mid-write never corrupts the conversation.
  */
 class ChatRepository(private val file: File) {

@@ -150,7 +150,7 @@ Measured on host (macOS arm64, CPU backend, pinned llama.cpp 38a5b42, 2026-09-15
 creates the context exactly as `engine.cpp` does. Buffer sizes are graph-determined, so they carry over
 to Android; **resident** size on the phone is still W02's job.
 
-| Allocation | CLAUDE.md budget | Measured (buffer size) | Reclaimable | Controlled by |
+| Allocation | BRIEF.md budget | Measured (buffer size) | Reclaimable | Controlled by |
 |---|---|---|---|---|
 | Weights, mmap'd file pages | ~400 MB | **372.65 MiB** mapped | yes | kernel |
 | KV cache 2048 × q8_0 | ~115 MB | **119.00 MiB** | no | `freeContext()` |
@@ -174,7 +174,7 @@ breach**. Setting `n_outputs_max = 1` removes the question at no cost to prefill
 |---|---|---|---|---|
 | B1 | Compute buffers | 300.75 MiB reserved vs ~80 MB budget; fix `n_outputs_max = 1` → 28.09 MiB | **Mismatch** | C2, M3 |
 | B2 | KV / weights | 119.00 / 372.65 MiB vs ~115 / ~400 | Minor, budget updated | C2 |
-| B3 | Native lib packaging | `useLegacyPackaging = true` → libs deflated in the APK (~4.9 MB) **and** extracted (~11.9 MB) ≈ 16.8 MB on disk vs 11.9 MB uncompressed-in-place; download ~7 MB smaller. Required because `ggml_backend_load_all_from_path` scans a directory. Only 1 of 7 CPU variants (~0.9 MB each) is used per phone. All 13 .so have 16 KB LOAD alignment [V-local]. CLAUDE.md BOM's "~3 MB .so" is low. | **Accepted** — net cost ~5 MB disk against a 400 MB app; smaller download matters more in these markets | C1, C2 |
+| B3 | Native lib packaging | `useLegacyPackaging = true` → libs deflated in the APK (~4.9 MB) **and** extracted (~11.9 MB) ≈ 16.8 MB on disk vs 11.9 MB uncompressed-in-place; download ~7 MB smaller. Required because `ggml_backend_load_all_from_path` scans a directory. Only 1 of 7 CPU variants (~0.9 MB each) is used per phone. All 13 .so have 16 KB LOAD alignment [V-local]. BRIEF.md BOM's "~3 MB .so" is low. | **Accepted** — net cost ~5 MB disk against a 400 MB app; smaller download matters more in these markets | C1, C2 |
 | B4 | `.gguf.so` alignment (D-013) | bundletool 1.18.3 `ModuleSplitSerializer.alignmentForEntry` returns `nativeLibraryAlignment` for **any** path ending `.so`, else 4 — unconditional, independent of `useLegacyPackaging` [V-local, bytecode]. Still an implementation detail of Play's server-side bundletool. Unknown [B]: whether Play's 16 KB / native-code scanners flag a non-ELF `.so` in assets. | Holds; W18 is mandatory, not optional | C1, C2 |
 | B5 | Foreground service | Manifest `shortService` + `FOREGROUND_SERVICE` matches D-002/D-003. **`GenerationService` overrides only `onTimeout(int, int)` (API 35+)**; Android 14 (API 34) calls `onTimeout(int)` (since 34) [V-local, api-versions.xml]. On API 34 a reply running > ~3 min is never stopped → ANR [V-doc: timeout without stopSelf → ANR]. At 768 max tokens that is reachable below 4.3 tok/s. Play Console requires declaring FGS types for targetSdk ≥ 34 [V-doc]. | **Mismatch** | C10, M6 | _Update 2026-09-15: Engineering added `onTimeout(int)`; emulator-verified API 36 only — API 34 test is W45._
 | B6 | Backup exclusion | `allowBackup=false`, `fullBackupContent=false`, extraction rules exclude all domains for cloud and D2D — matches. `check_manifest.sh` asserts `allowBackup` but not `dataExtractionRules`. `ChatRepository` keeps `conversation.json.corrupt-*` forever. | Match; two small gaps | C3 |

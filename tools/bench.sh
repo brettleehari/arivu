@@ -3,7 +3,7 @@
 #   tools/bench.sh                                  # full: threads 2,4,heuristic + 10-min thermal soak
 #   tools/bench.sh -e thermalMinutes 0              # quick
 #   tools/bench.sh -e repack false,true -e threads 4
-# Paste the summary into NOTES.md. Emulators do not count (CLAUDE.md "Test device").
+# Paste the summary into NOTES.md. Emulators do not count (BRIEF.md "Test device").
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ADB="${ADB:-$HOME/Library/Android/sdk/platform-tools/adb}"

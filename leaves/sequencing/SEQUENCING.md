@@ -176,7 +176,7 @@ W61 (Engineering), W66 (Hari), W60 (Engineering), W47 (GTM), W63 (Hari), W64 (Co
 | W40 D-017 interim: drop or keep "polite" in the listing and first example | Hari | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
 | W39 D-024 + D-025: target audience 18+; Data safety answer | Hari | PLAY | todo | 0.25d | 2026-09-18 | 2026-09-18 |
 | W34 Developer verification complete (Google's review) | Hari | PLAY | todo | ~0.25d + 3d elapsed | 2026-09-15 | 2026-09-18 |
-| W02 Run benchmark on the physical test phone; record NOTES.md | Engineering | BENCH | todo | 1d | 2026-09-18 | 2026-09-18 |
+| W02 Run benchmark on the physical test phone; record leaves/NOTES.md | Engineering | BENCH | todo | 1d | 2026-09-18 | 2026-09-18 |
 | W65 D-017 final — is 0.6B good enough; what the listing may promise | Hari | BENCH | todo | 0.5d | 2026-09-18 | 2026-09-18 |
 | W44 Privacy policy hosted at a public, non-geofenced URL (GitHub Pages, no | GTM | PLAY | todo | 0.25d | 2026-09-19 | 2026-09-19 |
 | W53 Listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 i | GTM | PLAY | todo | 0.25d | 2026-09-19 | 2026-09-19 |

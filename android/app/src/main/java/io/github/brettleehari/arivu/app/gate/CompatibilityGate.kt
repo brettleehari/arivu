@@ -6,7 +6,7 @@ import android.os.Build
 import android.os.StatFs
 import io.github.brettleehari.arivu.app.BuildConfig
 
-/** spine: C6 — layer 3 of the compatibility gate (BRIEF.md "Device compatibility gate"). */
+/** spine: C6 — layer 3 of the compatibility gate (leaves/BRIEF.md "Device compatibility gate"). */
 sealed interface GateResult {
     data object Pass : GateResult
     data class Fail(val failure: GateFailure) : GateResult
@@ -29,7 +29,7 @@ data class DeviceFacts(
 data class GateThresholds(val minTotalRamBytes: Long, val minFreeStorageBytes: Long)
 
 object CompatibilityGate {
-    /** Pure: checks run in the order BRIEF.md lists them; first failure wins. */
+    /** Pure: checks run in the order leaves/BRIEF.md lists them; first failure wins. */
     fun evaluate(facts: DeviceFacts, t: GateThresholds): GateResult = when {
         "arm64-v8a" !in facts.supportedAbis -> GateResult.Fail(GateFailure.NoArm64)
         facts.isLowRamDevice -> GateResult.Fail(GateFailure.LowRamDevice)

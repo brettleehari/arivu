@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Spine propagation check (SPINE.md "Propagation discipline").
+"""Spine propagation check (leaves/SPINE.md "Propagation discipline").
 
-Lists every Leaf stamped with an older spine_version than SPINE.md, in the fixed propagation order,
+Lists every Leaf stamped with an older spine_version than leaves/SPINE.md, in the fixed propagation order,
 and regenerates the two derived Leaves (Compliance, Sequencing). Exit 1 while anything is stale.
 
 To mark a Leaf current: review it against the new Spine, then update its `spine_version` stamp.
@@ -9,7 +9,7 @@ To mark a Leaf current: review it against the new Spine, then update its `spine_
 import pathlib, re, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-spine_v = re.search(r"spine_version:\s*([\d.]+)", (ROOT / "SPINE.md").read_text()).group(1)
+spine_v = re.search(r"spine_version:\s*([\d.]+)", (ROOT / "leaves/SPINE.md").read_text()).group(1)
 
 ORDER = [
     ("2. Architecture", ["leaves/architecture.md"]),
@@ -19,7 +19,7 @@ ORDER = [
 ]
 
 stale = 0
-print(f"SPINE.md spine_version {spine_v}")
+print(f"leaves/SPINE.md spine_version {spine_v}")
 for step, files in ORDER:
     for f in files:
         p = ROOT / f

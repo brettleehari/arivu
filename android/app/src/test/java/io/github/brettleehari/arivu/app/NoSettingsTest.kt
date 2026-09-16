@@ -70,7 +70,7 @@ class NoSettingsTest {
         fields.forEach {
             assertTrue("Policy.${it.name} is not static final", Modifier.isStatic(it.modifiers) && Modifier.isFinal(it.modifiers))
         }
-        // Spot-check the decisions that fixed them (BRIEF.md "Context", D-007).
+        // Spot-check the decisions that fixed them (leaves/BRIEF.md "Context", D-007).
         assertEquals(2048, Policy.N_CTX)
         assertEquals(0.7f, Policy.TEMPERATURE)
     }

@@ -23,7 +23,7 @@ TEST_MARKERS = ("/src/test/", "/src/androidTest/", "tools/host/", "tools/check_"
 SELF = {"tools/trace.py"}
 strict = "--strict" in sys.argv[1:]
 
-spine = (ROOT / "SPINE.md").read_text()
+spine = (ROOT / "leaves/SPINE.md").read_text()
 version = re.search(r"spine_version:\s*([\d.]+)", spine).group(1)
 commitments = dict(re.findall(r"^\| \*\*(C\d+)\*\* \| (.+?) \|$", spine, re.M))
 

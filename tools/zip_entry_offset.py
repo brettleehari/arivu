@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print compression and data offset of entries in an APK/zip.  spine: C1, C2
 
-Answers BRIEF.md's open question "asset page alignment behaviour": the model can only be
+Answers leaves/BRIEF.md's open question "asset page alignment behaviour": the model can only be
 mmap'd straight from the APK if it is STORED and its data offset is a multiple of 32
 (tensor alignment); a multiple of the page size is not required.
 

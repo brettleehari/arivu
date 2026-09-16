@@ -39,7 +39,7 @@ NDK 29.0.14206865, CMake 4.1.2, compileSdk 37 / targetSdk 36 / minSdk 30.
 On the phone:
 
 ```sh
-tools/bench.sh                      # W02: benchmark → build/bench/*.json → NOTES.md
+tools/bench.sh                      # W02: benchmark → build/bench/*.json → leaves/NOTES.md
 tools/install_bundle.sh             # install base + ABI split + model pack like Play does
 tools/verify_lifecycle.sh           # W08: RSS falls back after 30s idle
 adb shell am start -n io.github.brettleehari.arivu/io.github.brettleehari.arivu.app.MainActivity --el arivu.fakeTotalMem 2000000000   # W10 (debug)
@@ -99,7 +99,7 @@ Only steps 1–3 are one-time. Nothing here uploads anything by itself.
    (cd android && ./gradlew :app:testDebugUnitTest :app:lintRelease :app:bundleRelease)   # manifest check runs itself
    tools/release_check.sh          # must print RELEASE CHECK: PASSED
    ```
-5. Record in `NOTES.md`: AAB sha256 (`shasum -a 256 android/app/build/outputs/bundle/release/app-release.aab`),
+5. Record in `leaves/NOTES.md`: AAB sha256 (`shasum -a 256 android/app/build/outputs/bundle/release/app-release.aab`),
    versionCode, llama.cpp commit, model sha256.
 6. Upload `app-release.aab` to **Internal testing** in Play Console (keeps the default Play App Signing, D-018 in
    release-and-signing.md). Then W18 (download Play's APKs, check model offset and cert), W19 Console items
@@ -211,16 +211,16 @@ stateDiagram-v2
 ## Verified so far (and to what level)
 
 Levels: **host** = macOS arm64 CPU build sharing `engine.cpp`; **unit** = JVM tests; **build** = Gradle/scripts on the
-artifact; **emulator** = arm64 AVD, functional only (NOTES.md "Emulator functional run"); **phone** = the 4 GB test
+artifact; **emulator** = arm64 AVD, functional only (leaves/NOTES.md "Emulator functional run"); **phone** = the 4 GB test
 phone. Only *phone* counts for M1–M4.
 
 | Claim | Level | Evidence |
 |---|---|---|
 | Patched loader maps a GGUF at a non-page-aligned offset, matches a path load token-for-token | host | `tools/host/run_smoke.sh` [1] |
 | Prefix reuse, cancel, context-full reporting, UTF-8 boundary buffering | host, emulator | smoke [2]–[5]; logcat `reused=` |
-| Compute buffer 309.34 → 26.59 MiB (host) / 28.09 MiB (emulator) with `n_outputs_max = 1` | host, emulator | NOTES.md round 2 |
+| Compute buffer 309.34 → 26.59 MiB (host) / 28.09 MiB (emulator) with `n_outputs_max = 1` | host, emulator | leaves/NOTES.md round 2 |
 | Model entry STORED, offset 16384 in the device APK set; loads from `split_modelpack.apk` | build, emulator | `zip_entry_offset.py`; replies on emulator |
-| Release (R8) bundle installs like Play and runs: JNI, asset pack, streaming | emulator | NOTES.md |
+| Release (R8) bundle installs like Play and runs: JNI, asset pack, streaming | emulator | leaves/NOTES.md |
 | No network permission; allow-list; arm64-only; ram.normal; backup + D2D off — on every bundle build | build | `checkManifest<Variant>`, `check_manifest.sh` |
 | Native libs 16 KB aligned; licence texts incl. NOTICE in bundle | build | `release_check.sh` |
 | Every shipped `.so` maps to a licence entry; in-app NOTICE == root NOTICE | unit | `LicensesTest` |

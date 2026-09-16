@@ -10,7 +10,7 @@
 //   2. KV prefix reuse on a follow-up prompt.
 //   3. Cancel from another thread stops generation.
 //   4. A prompt that does not fit the context reports ContextFull instead of truncating silently.
-#include "engine.h"
+#include "arivu/engine.h"
 
 #include <cstdio>
 #include <cstring>

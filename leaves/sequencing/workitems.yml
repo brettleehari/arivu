@@ -23,7 +23,7 @@
 # Rendered by tools/sequence.py → leaves/sequencing/SEQUENCING.md
 
 slices:
-  BENCH: BRIEF.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
+  BENCH: leaves/BRIEF.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
   MVP:   steps 2–8, verified on the physical phone
   PLAY:  step 9, store submission and release
 
@@ -56,7 +56,7 @@ items:
     deps: [W00]
 
   - id: W02
-    title: Run benchmark on the physical test phone; record NOTES.md
+    title: Run benchmark on the physical test phone; record leaves/NOTES.md
     slice: BENCH
     spine: [C2]
     owner: Engineering
@@ -85,7 +85,7 @@ items:
     spine: [C2, C6]
     owner: Hari
     status: todo
-    needs: Engineering drafts the numbers into NOTES.md; Hari resolves the decisions
+    needs: Engineering drafts the numbers into leaves/NOTES.md; Hari resolves the decisions
     decisions: [D-004, D-008, D-009, D-015]
     deadline_note: D-009 before any track wider than Internal testing
     estimate_days: 0.5

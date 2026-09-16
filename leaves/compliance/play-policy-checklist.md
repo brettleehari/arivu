@@ -2,7 +2,7 @@
 spine_version: 0.1
 leaf: compliance
 checked_on: 2026-09-15
-artifact: android/app/build/outputs/bundle/release/app-release.aab (399,118,028 B at audit; final build 399,395,458 B per NOTES.md; versionCode 1, unsigned)
+artifact: android/app/build/outputs/bundle/release/app-release.aab (399,118,028 B at audit; final build 399,395,458 B per leaves/NOTES.md; versionCode 1, unsigned)
 ---
 
 # Google Play submission checklist — Compliance Leaf
@@ -223,7 +223,7 @@ it; accept whatever IARC assigns — it does not conflict with an 18+ target aud
 "September 30, 2026 — Regional deadline in Brazil, Indonesia, Singapore, and Thailand" for participating stores
 including Google Play; global rollout 2027. "Google Play automatically registers 99% of apps. Use Play Console to
 manually register remaining apps or those distributed outside Google Play."
-Note: BRIEF.md says enforcement "began" 2026-09-30 — as of today (2026-09-15) it is **15 days away**.
+Note: leaves/BRIEF.md says enforcement "began" 2026-09-30 — as of today (2026-09-15) it is **15 days away**.
 **needs Hari, BLOCKS for BR/ID/SG/TH installs:** complete Play Console identity verification now; after the first
 upload confirm the package shows as registered.
 
@@ -239,7 +239,7 @@ is ≥ 14 days after 12 testers opt in — the longest pole in the Play slice.
 native code must support 16 KB pages on 64-bit devices; the page names 2027-02-01 as the date updates without
 support can no longer be released. **Arivu:** NDK 29 (`android/llama/build.gradle.kts:11`),
 `-Wl,-z,max-page-size=16384` (`android/llama/src/main/cpp/CMakeLists.txt:35`); all 13 `.so` in the AAB have
-LOAD align 0x4000 (checked from the AAB by `tools/release_check.sh` step 5; NOTES.md). Native libs are compressed
+LOAD align 0x4000 (checked from the AAB by `tools/release_check.sh` step 5; leaves/NOTES.md). Native libs are compressed
 and extracted (`useLegacyPackaging = true`, `extractNativeLibs="true"`), so 16 KB zip alignment of `.so` entries
 does not apply; the page notes this costs install size [V]. The model asset's own alignment is D-013/W18. **met.**
 
@@ -258,7 +258,7 @@ base module 500 MB; individual asset pack 1.5 GB; "Cumulative total for all modu
 4 GB; users on mobile data see a non-blocking dialog above 200 MB. Install-time packs are served as split APKs and
 need ~2× their size free at install [V] ([asset delivery](https://developer.android.com/guide/playcore/asset-delivery)).
 **Arivu:** modelpack 396,705,472 B install-time (`android/modelpack/build.gradle.kts:9`), base+arm64 ≈ 6.9 MB. **met.**
-**Finding:** BRIEF.md and D-004 state an install-time limit of **1 GB**; the current Help Center table says **4 GB**
+**Finding:** leaves/BRIEF.md and D-004 state an install-time limit of **1 GB**; the current Help Center table says **4 GB**
 cumulative / 1.5 GB per pack. The 1.7B Q4_K_M (1,107,409,472 B) would fit. D-004's premise needs correcting
 (Engineering/Hari). Also: Amaka on mobile data sees the >200 MB warning — GTM copy should say "install on Wi-Fi".
 
@@ -286,5 +286,5 @@ Layer-2 device exclusion (D-009, W19) should be set *before* review so Play does
 ## 15. Signing
 
 `app-release.aab` has no `META-INF/*.RSA|EC` signature — it cannot be uploaded. Enrol in Play App Signing with an
-upload key (W17); the key custody matters for iteration-2 (BRIEF.md "Guard the signing key"). **gap, BLOCKS**;
+upload key (W17); the key custody matters for iteration-2 (leaves/BRIEF.md "Guard the signing key"). **gap, BLOCKS**;
 checked by `tools/release_check.sh` step 8.

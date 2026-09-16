@@ -92,7 +92,7 @@ NOTICE lines costs nothing and removes the argument.
 | L10 | `LicensesTest` checks presence of names only; no test ties shipped `.so` files to index entries | process | Proposed test: every `lib*.so` produced by `mergeReleaseNativeLibs` maps to an index entry via a small allowlist (`libggml*`/`libllama` → llama.cpp, `libc++_shared` → libc++, `libandroidx.*` → AndroidX, `libarivu_llama` → Arivu). |
 
 No copyleft component found. Every shipped component is Apache-2.0, MIT, BSD-3 (stdlib-embedded) or
-Apache-2.0 WITH LLVM-exception — consistent with C4 and the BRIEF.md BOM. The BOM should add "LLVM libc++" and
+Apache-2.0 WITH LLVM-exception — consistent with C4 and the leaves/BRIEF.md BOM. The BOM should add "LLVM libc++" and
 the embedded third-party notices above.
 
 ## 6. Proposed `NOTICE` additions (for the owner to apply to root `NOTICE` and the asset copy)

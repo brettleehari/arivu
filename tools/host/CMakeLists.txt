@@ -12,11 +12,10 @@ set(LLAMA_OPENSSL OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory("${LLAMA_DIR}" llama.cpp)
 
-set(ENGINE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../android/llama/src/main/cpp")
-add_executable(engine_smoke engine_smoke.cpp "${ENGINE_DIR}/engine.cpp")
-target_include_directories(engine_smoke PRIVATE "${ENGINE_DIR}")
-target_link_libraries(engine_smoke PRIVATE llama)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../../core" arivu_core)
 
-add_executable(apk_window_check apk_window_check.cpp "${ENGINE_DIR}/engine.cpp")
-target_include_directories(apk_window_check PRIVATE "${ENGINE_DIR}")
-target_link_libraries(apk_window_check PRIVATE llama)
+add_executable(engine_smoke engine_smoke.cpp)
+target_link_libraries(engine_smoke PRIVATE arivu_core)
+
+add_executable(apk_window_check apk_window_check.cpp)
+target_link_libraries(apk_window_check PRIVATE arivu_core)

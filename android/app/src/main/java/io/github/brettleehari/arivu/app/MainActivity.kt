@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         // up the phone next (threat-model T13). API 33+.
         if (Build.VERSION.SDK_INT >= 33) setRecentsScreenshotEnabled(false)
 
-        // Gate before anything can touch the model (BRIEF.md "Run this check before any model load").
+        // Gate before anything can touch the model (leaves/BRIEF.md "Run this check before any model load").
         val fake = intent.takeIf { BuildConfig.DEBUG && it.hasExtra(EXTRA_FAKE_TOTAL_MEM) }?.getLongExtra(EXTRA_FAKE_TOTAL_MEM, 0L)
         val gate = CompatibilityGate.check(this, fake)
 

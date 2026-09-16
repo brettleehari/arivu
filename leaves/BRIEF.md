@@ -1,8 +1,8 @@
-# BRIEF.md
+# leaves/BRIEF.md
 
 ## How this repo is run — Spine and Leaf
 
-- **`SPINE.md` is the single source of truth**: the user's problem, the persona, the direction,
+- **`leaves/SPINE.md` is the single source of truth**: the user's problem, the persona, the direction,
   commitments C1–C10, metrics M1–M6, refusals R1–R8. This file (below the line) is the settled
   *engineering brief* that the Spine was derived from; it is not the Spine.
 - **Leaves** (all versioned, stamped with `spine_version`):
@@ -158,7 +158,7 @@ Configure a minimum-RAM exclusion in the Play Console device catalog. Console
 configuration, not code, but it is the layer that actually keeps the app off
 underpowered devices and keeps 1-star "it's so slow" reviews off the listing.
 Set the threshold from the benchmark results in step 1, not from a guess.
-Record the chosen value in NOTES.md.
+Record the chosen value in leaves/NOTES.md.
 
 **Layer 3 — runtime gate on first launch (safety net for mis-catalogued devices):**
 

@@ -5,7 +5,7 @@ package io.github.brettleehari.arivu.app
  * Each constant names the decision that fixed it (leaves/decisions.yml).
  */
 object Policy {
-    /** BRIEF.md "Context": 2048 tokens, q8_0 KV. */
+    /** leaves/BRIEF.md "Context": 2048 tokens, q8_0 KV. */
     const val N_CTX = 2048
     const val N_BATCH = 512
     const val KV_Q8_0 = true
@@ -14,7 +14,7 @@ object Policy {
     const val REPLY_RESERVE_TOKENS = 512
     const val MAX_REPLY_TOKENS = 768
 
-    /** BRIEF.md "Lifecycle": free the context after ~30s idle. */
+    /** leaves/BRIEF.md "Lifecycle": free the context after ~30s idle. */
     const val CONTEXT_IDLE_MILLIS = 30_000L
 
     /** D-015: weights stay file-backed and evictable unless the benchmark proves repacking worth ~400MB RSS. */

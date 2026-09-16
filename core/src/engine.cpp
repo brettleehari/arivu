@@ -1,4 +1,4 @@
-#include "engine.h"
+#include "arivu/engine.h"
 
 #include "llama.h"
 
@@ -97,7 +97,7 @@ bool Engine::ensure_context(const ContextConfig & cfg, std::string * err) {
     p.n_seq_max       = 1;
     // spine: C2 — we only ever read logits for the last token of a batch. The default (n_batch outputs)
     // reserves n_batch x vocab x 4 bytes of logits (~300 MiB of compute buffer); 1 output reserves ~28 MiB.
-    // Measured on host: leaves/architecture.md B1, NOTES.md.
+    // Measured on host: leaves/architecture.md B1, leaves/NOTES.md.
     p.n_outputs_max         = 1;
     p.n_outputs_max_per_seq = 1;
     p.n_threads       = cfg.n_threads;

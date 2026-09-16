@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sequencing Leaf renderer.
 
-Reads leaves/sequencing/workitems.yml (and leaves/decisions.yml, SPINE.md for cross-checks) and writes
+Reads leaves/sequencing/workitems.yml (and leaves/decisions.yml, leaves/SPINE.md for cross-checks) and writes
 leaves/sequencing/SEQUENCING.md with:
   - validation: unknown deps / decisions / spine IDs, cycles, done items without a `verified` level
   - Ready-Now queue grouped by owner, Hari first
@@ -27,7 +27,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / "leaves/sequencing/workitems.yml"
 OUT = ROOT / "leaves/sequencing/SEQUENCING.md"
 DECISIONS = ROOT / "leaves/decisions.yml"
-SPINE = ROOT / "SPINE.md"
+SPINE = ROOT / "leaves/SPINE.md"
 STEP = 0.25
 
 ap = argparse.ArgumentParser()

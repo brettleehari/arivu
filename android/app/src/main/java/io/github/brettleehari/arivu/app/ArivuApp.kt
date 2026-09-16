@@ -16,7 +16,7 @@ import java.io.File
 class ArivuApp : Application() {
     val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Constructing these touches no native code and loads no model (BRIEF.md "never at app start").
+    // Constructing these touches no native code and loads no model (leaves/BRIEF.md "never at app start").
     val inference: InferenceController by lazy { InferenceController(this, PadInstallTimeModelSource(this)) }
     val chatRepository: ChatRepository by lazy { ChatRepository(File(filesDir, "conversation.json")) }
 

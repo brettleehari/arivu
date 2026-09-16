@@ -1,6 +1,6 @@
 // JNI surface for io.github.brettleehari.arivu.llama.LlamaNative. One Engine per handle; calls on a handle
 // are serialised by the Kotlin side (LlamaEngine), except cancel(), which is thread-safe.
-#include "engine.h"
+#include "arivu/engine.h"
 
 #include "ggml-backend.h"
 #include "llama.h"

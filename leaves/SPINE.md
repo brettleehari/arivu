@@ -12,7 +12,7 @@ product: Arivu
 ## Changelog
 
 - **0.1 — 2026-09-15** — First Spine, derived from the settled engineering
-  brief (now `BRIEF.md`). Customer quotes below are *design hypotheses*, not
+  brief (now `leaves/BRIEF.md`). Customer quotes below are *design hypotheses*, not
   field evidence; replace them with real interview lines before 0.2.
 
 ---
@@ -70,7 +70,7 @@ Anything that maps to none is scope creep or a missing Spine update.
 
 | ID | Metric | Target | Measured by |
 |---|---|---|---|
-| **M1** | Install → first reply, airplane mode, on the test phone | No screen other than chat; ≤ 15s from first send to first token (cold) | Manual run, recorded in `NOTES.md` |
+| **M1** | Install → first reply, airplane mode, on the test phone | No screen other than chat; ≤ 15s from first send to first token (cold) | Manual run, recorded in `leaves/NOTES.md` |
 | **M2** | Decode speed on test phone (Helio G85 / SD680 class) | ≥ 8 tok/s for 0.6B | Benchmark harness (W01) |
 | **M3** | Peak RSS during generation | ≤ 800MB | Benchmark harness, `VmHWM` |
 | **M4** | Idle RSS 30s after last token | ≈ Compose baseline (context freed) | `adb shell dumpsys meminfo` (W08) |

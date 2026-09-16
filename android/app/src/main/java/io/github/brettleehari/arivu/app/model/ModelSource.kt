@@ -5,7 +5,7 @@ import io.github.brettleehari.arivu.app.Policy
 import io.github.brettleehari.arivu.llama.ModelWindow
 
 /**
- * Where the shipped GGUF comes from. Two implementations per BRIEF.md "Build artifact";
+ * Where the shipped GGUF comes from. Two implementations per leaves/BRIEF.md "Build artifact";
  * iteration-1 wires only [PadInstallTimeModelSource]. decisions.yml D-005 records that both
  * end up as an uncompressed asset read through AssetManager.openFd().
  */

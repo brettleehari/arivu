@@ -28,12 +28,12 @@ Evidence labels used below:
 | A lost or compromised **upload key** can be reset by Google (new PEM certificate, Console request). A lost app signing key that you manage yourself cannot be recovered. | [V-doc] |
 | Key upgrade (rotation) of the app signing key: annual upgrade for installs on Android 17+; Android 13–16 enforce the latest classical key via v3.1; Android 7–12 rely on Play Protect. Because minSdk is 30, every Arivu device supports v3 key rotation lineage. | [V-doc] for Play rules; minSdk from `android/app/build.gradle.kts` [V-local] |
 | Developer verification: "If you use Play App Signing, … your eligible apps will be part of the automatic registration process." Multiple signing keys can be registered per package. Lost signing key → cannot register packages. Unregistered apps are blocked on certified devices in enforced regions (BR, ID, SG, TH from 2026-09-30; global 2027); ADB installs exempt. | [V-doc] developer-verification FAQ |
-| Whether an **off-Play** copy with the same package and the same Play-held key is covered by that automatic registration, or needs the manual step BRIEF.md names. | [B] ambiguous in docs — check in the Console's verification page before iteration-2 |
+| Whether an **off-Play** copy with the same package and the same Play-held key is covered by that automatic registration, or needs the manual step leaves/BRIEF.md names. | [B] ambiguous in docs — check in the Console's verification page before iteration-2 |
 | The current release AAB is **unsigned** (no top-level `META-INF/` signature; the release buildType has no `signingConfig`). Play rejects unsigned uploads. | [V-local] `unzip -l app-release.aab` |
 
 ### What that implies for "iteration-2 must share the key"
 
-BRIEF.md's instruction ("guard the signing key carefully from day one") was written as if Hari holds
+leaves/BRIEF.md's instruction ("guard the signing key carefully from day one") was written as if Hari holds
 *the* key. Under Play App Signing there are two keys, and only one of them decides whether a shared
 APK updates a Play install: the **app signing key**. There are exactly two ways to satisfy R1:
 
@@ -126,13 +126,13 @@ Rules:
 | 5 | Sign AAB with upload key; bump `arivu.versionCode` (monotonic, one train for all channels) | `jarsigner -verify`; versionCode > last uploaded | Release |
 | 6 | Upload to **Internal testing** (does not lock key choice); keep default Play App Signing | Console accepts; pre-launch report reviewed | Release |
 | 7 | **W18**: from Latest releases and bundles download (a) device-specific APKs for the test phone and (b) signed universal APK. Run `tools/zip_entry_offset.py <apk> .gguf` on the model pack split and on the universal APK; `apksigner verify --print-certs` both; confirm cert == Console app signing cert; install from Play on the phone, then `adb install -r` the universal APK over it, and back | offsets % 32 == 0, STORED; same cert; both upgrade paths work | Release + Architecture |
-| 8 | On-phone M1 run from the **Play-installed** build (airplane mode) | M1 recorded in NOTES.md | Engineering |
+| 8 | On-phone M1 run from the **Play-installed** build (airplane mode) | M1 recorded in leaves/NOTES.md | Engineering |
 | 9 | Closed testing — **for a personal developer account created after 2023-11-13, ≥ 12 testers opted in for 14 continuous days before production access can be requested** [V-doc] | 14 days elapsed | Hari |
 | 10 | Console config: device-catalog RAM exclusion rule (gate layer 2, from D-009), Data safety (no collection, no sharing), privacy policy URL, foreground-service declaration (shortService), content rating, AI-generated content declaration, target audience | Compliance Leaf checklist | Hari + Compliance |
 | 11 | Production (staged rollout). Signing key choice is now locked. | — | Hari |
 
 Every release: record AAB sha256, versionCode, llama.cpp commit, model sha256, and the Play app signing
-cert SHA-256 in `NOTES.md` — this is the minimum a later reproducible-build claim can stand on.
+cert SHA-256 in `leaves/NOTES.md` — this is the minimum a later reproducible-build claim can stand on.
 
 ## 5. Code transparency (adopt, cheap, strengthens C3)
 

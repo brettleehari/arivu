@@ -3,7 +3,7 @@ package io.github.brettleehari.arivu.llama
 /**
  * Fixed prompt set for W01. Chosen to match the product's positioning (spine: C5):
  * operating on text the user provides. Changing these invalidates comparisons with
- * earlier rows in NOTES.md — add new prompts instead of editing old ones.
+ * earlier rows in leaves/NOTES.md — add new prompts instead of editing old ones.
  */
 internal object BenchmarkPrompts {
     const val SYSTEM = "You are Arivu, an offline writing and comprehension assistant. " +

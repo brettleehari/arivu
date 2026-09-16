@@ -13,6 +13,8 @@ endif()
 
 # Portable arm64 build; the best CPU kernel variant (dotprod, i8mm, sve…) is chosen at runtime,
 # so a Helio G85 (armv8.2 dotprod) and an SD680 (armv8.0) each get their fastest path.
+set(CORE_DIR "${CMAKE_CURRENT_LIST_DIR}/../../../../../core" CACHE PATH "shared C++ core")
+
 set(BUILD_SHARED_LIBS     ON  CACHE BOOL "" FORCE)
 set(GGML_NATIVE           OFF CACHE BOOL "" FORCE)
 set(GGML_BACKEND_DL       ON  CACHE BOOL "" FORCE)
@@ -28,8 +30,10 @@ set(LLAMA_BUILD_SERVER    OFF CACHE BOOL "" FORCE)
 set(LLAMA_BUILD_APP       OFF CACHE BOOL "" FORCE)
 set(LLAMA_OPENSSL         OFF CACHE BOOL "" FORCE)
 add_subdirectory("${LLAMA_DIR}" llama.cpp)
+add_subdirectory("${CORE_DIR}" arivu_core)
 
-add_library(arivu_llama SHARED engine.cpp jni_bridge.cpp)
-target_link_libraries(arivu_llama PRIVATE llama ggml android log)
-# 16KB page-size devices (BRIEF.md: NDK r27+, mandatory)
+# Only the JNI bridge lives here; the engine itself is platform-free and shared with iOS.
+add_library(arivu_llama SHARED jni_bridge.cpp)
+target_link_libraries(arivu_llama PRIVATE arivu_core llama ggml android log)
+# 16KB page-size devices (leaves/BRIEF.md: NDK r27+, mandatory)
 target_link_options(arivu_llama PRIVATE "-Wl,-z,max-page-size=16384")

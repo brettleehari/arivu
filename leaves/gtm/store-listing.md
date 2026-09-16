@@ -93,7 +93,7 @@ Source code: [REPO_URL]
 | Privacy policy inside the app, readable offline | About → "Privacy policy" (`about_privacy_policy`, `privacy_*` strings) | C3, C9 | Wording must stay in step with `privacy-policy.html` (diffs listed in the GTM report) |
 | One screen, Send / Stop / Copy / Report (Report pending D-021), no settings | `ChatScreen.kt`, `Policy.kt` | C8, C10 | — |
 | Shows a line where memory stops | `context_divider` | C7 | — |
-| About 400 MB download | Release AAB 399,118,011 B, model pack 396.7 MB (NOTES.md). Play's device-specific download is not measured yet | C1 | W18: read real size in App bundle explorer; change the number if it differs by more than 10% |
+| About 400 MB download | Release AAB 399,118,011 B, model pack 396.7 MB (leaves/NOTES.md). Play's device-specific download is not measured yet | C1 | W18: read real size in App bundle explorer; change the number if it differs by more than 10% |
 | 64-bit, Android 11+, about 4 GB memory | `abiFilters arm64-v8a`, `minSdk 30`, `arivu.minTotalRamBytes` = 3.3 GiB (provisional) | C2, C6 | **D-009 / W03** — if the floor moves above a "4 GB" phone, change this line |
 | Will not start on a phone it cannot serve | Gate layer 3, `incompatible_*` strings, no continue-anyway | C6 | W10 on-device check |
 | Screens in English; replies try to match your language | `strings.xml` English only (D-014); system prompt "Reply in the language the user writes in" (`Policy.kt`) | C5 | D-014; D-017 non-English eval |
@@ -119,7 +119,7 @@ In the listing, screenshots, feature graphic, release notes, social posts and an
 extracts from this Leaf:
 
 1. **No speed or memory numbers.** Not "fast", not "instant", not "X words per second", not "runs on any
-   phone". M1–M4 are targets; NOTES.md W02 is empty. "Speed depends on your phone" is the only speed line.
+   phone". M1–M4 are targets; leaves/NOTES.md W02 is empty. "Speed depends on your phone" is the only speed line.
 2. **No accuracy claims.** Not "accurate", "correct answers", "smart", "knows everything", "your personal
    tutor", "ask anything". The product is "not an offline oracle".
 3. **No health, legal, financial or exam advice claims.** Not "understand your medical results", "check your
@@ -130,7 +130,7 @@ extracts from this Leaf:
 4b. **No translation promise.** Not "translate into Yoruba/Tagalog/…" until D-017's non-English eval passes.
 5. **No store-performance or price-promotion language.** No "best", "#1", "top", "popular", "new",
    "Editor's choice", award icons, "free for a limited time". (Play metadata policy.)
-6. **No testimonials, user counts or ratings we do not have.** The quotes in SPINE.md §1 are *hypotheses*,
+6. **No testimonials, user counts or ratings we do not have.** The quotes in leaves/SPINE.md §1 are *hypotheses*,
    never customer quotes. No "trusted by teachers" until someone real says so, with permission and attribution.
 7. **No keyword stuffing.** No lists of country names, languages or competitor names ("ChatGPT offline").
 8. **No absolute privacy overreach.** Say "has no permission to use the internet" and "stored only on this

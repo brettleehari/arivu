@@ -83,7 +83,7 @@ prompt; the per-reply Report is the real mechanism. Feeds D-017.
 
 ## Emulator functional run — 2026-09-15 (FUNCTIONAL ONLY, NOT PERFORMANCE)
 
-**Emulators misreport thermal throttling and memory pressure (BRIEF.md "Test device"). Nothing below is a measurement
+**Emulators misreport thermal throttling and memory pressure (leaves/BRIEF.md "Test device"). Nothing below is a measurement
 of M1–M4; every tok/s and RSS figure is non-representative and must not be quoted as product performance.**
 
 Setup: AVD `arivu_4gb` (API 36 google_apis arm64-v8a, 4 GB, 4 vCPU, 4K pages) headless, swiftshader. Release AAB signed

@@ -89,7 +89,7 @@ added to the exclusion list, not argued with.
 
 ## M6 — watching "slow / crash / doesn't work" reviews
 
-Target (SPINE.md M6): **fewer than 5% of reviews** in the first 90 days of production.
+Target (leaves/SPINE.md M6): **fewer than 5% of reviews** in the first 90 days of production.
 
 - **Owner:** GTM Leaf. **Cadence:** weekly, same weekday, Play Console → Ratings and reviews.
 - **Count:** every review in production countries since release (all star levels). A review counts toward

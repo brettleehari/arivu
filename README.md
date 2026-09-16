@@ -3,8 +3,8 @@
 A free, open-source, fully offline writing and comprehension assistant for Android.
 The model ships inside the app. It has no internet permission.
 
-- **Why and for whom:** [`SPINE.md`](SPINE.md)
-- **Engineering brief:** [`BRIEF.md`](BRIEF.md)
+- **Why and for whom:** [`leaves/SPINE.md`](leaves/SPINE.md)
+- **Engineering brief:** [`leaves/BRIEF.md`](leaves/BRIEF.md)
 - **How it's built:** [`leaves/engineering.md`](leaves/engineering.md) · [`leaves/architecture.md`](leaves/architecture.md)
 - **What's next:** [`leaves/sequencing/SEQUENCING.md`](leaves/sequencing/SEQUENCING.md) · open calls in [`leaves/decisions.yml`](leaves/decisions.yml)
 - **Guided tour:** open [`leaves/gtm/tour.html`](leaves/gtm/tour.html)

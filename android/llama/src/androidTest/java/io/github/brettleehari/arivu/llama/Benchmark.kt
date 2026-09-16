@@ -83,7 +83,10 @@ class Benchmark {
                     engine.ensureContext(ContextSpec(nCtx = nCtx, nBatch = 512, nThreads = t, kvQ8 = true))
                     val stats = generate(engine, BenchmarkPrompts.chatml(case.user), case.maxNew)
                     cases.put(statsJson(case.id, stats))
-                    log("threads=$t repack=$repack ${case.id}: prefill %.1f tok/s, decode %.1f tok/s".format(stats.prefillTokensPerSec, stats.decodeTokensPerSec))
+                    log(
+                        "threads=$t repack=$repack ${case.id}: ttft %.0f ms (cold %.0f ms), prefill %.1f tok/s, decode %.1f tok/s"
+                            .format(stats.timeToFirstTokenMs, loadMs + stats.timeToFirstTokenMs, stats.prefillTokensPerSec, stats.decodeTokensPerSec),
+                    )
                 }
                 engine.freeContext()
                 val afterFree = LlamaEngine.memoryKb()
@@ -101,6 +104,7 @@ class Benchmark {
             }
         }
         report.put("runs", runs)
+        report.put("headline", headline(report, runs))
 
         if (thermalMinutes > 0) {
             report.put("thermal", thermalSoak(afd, heuristic, nCtx, thermalMinutes))
@@ -169,6 +173,54 @@ class Benchmark {
         return engine.generate(prompt, maxNew, sampling).filterIsInstance<GenerationEvent.Done>().last().stats
     }
 
+    /**
+     * The three numbers that decide whether this product works on a given phone (M1, M2, M3),
+     * taken from the best thread count measured in this run:
+     *   cold time to first token = model load + prefill + first token
+     *   decode tokens per second = the median across the prompt set
+     *   peak RSS                 = VmHWM, the high-water mark for the whole process
+     */
+    private fun headline(report: JSONObject, runs: JSONArray): JSONObject {
+        var best: JSONObject? = null
+        var bestDecode = -1.0
+        for (i in 0 until runs.length()) {
+            val run = runs.getJSONObject(i)
+            val cases = run.getJSONArray("cases")
+            val decodes = (0 until cases.length()).map { cases.getJSONObject(it).getDouble("decodeTokPerSec") }.sorted()
+            if (decodes.isEmpty()) continue
+            val median = decodes[decodes.size / 2]
+            if (median > bestDecode) {
+                bestDecode = median
+                // Use the short rewrite: that is what a first message actually looks like.
+                // The long-summary case is reported separately in `cases`, and is the worst case.
+                val typical = (0 until cases.length())
+                    .map { cases.getJSONObject(it) }
+                    .firstOrNull { it.getString("case") == "rewrite-short" }
+                    ?: cases.getJSONObject(0)
+                val ttft = typical.getDouble("timeToFirstTokenMs")
+                best = JSONObject().apply {
+                    put("threads", run.getInt("threads"))
+                    put("repack", run.getBoolean("repack"))
+                    put("ttftCase", typical.getString("case"))
+                    put("coldTimeToFirstTokenMs", run.getLong("loadMs") + ttft)
+                    put("warmTimeToFirstTokenMs", ttft)
+                    put("decodeTokPerSecMedian", median)
+                    put("peakRssMb", run.getLong("peakRssKb") / 1024.0)
+                }
+            }
+        }
+        val h = best ?: JSONObject()
+        val device = report.getJSONObject("device")
+        log("─── headline ───────────────────────────────")
+        log("device            ${device.getString("manufacturer")} ${device.getString("model")} · ${device.getString("soc")} · ${"%.1f".format(device.getLong("totalMemBytes") / 1.073741824e9)} GiB")
+        log("cold first token  ${"%.1f".format(h.optDouble("coldTimeToFirstTokenMs") / 1000)} s   (M1 target ≤ 15 s)")
+        log("decode            ${"%.1f".format(h.optDouble("decodeTokPerSecMedian"))} tok/s   (M2 target ≥ 8)")
+        log("peak RSS          ${"%.0f".format(h.optDouble("peakRssMb"))} MB   (M3 target ≤ 800)")
+        log("at ${h.optInt("threads")} threads, repack=${h.optBoolean("repack")}")
+        log("────────────────────────────────────────────")
+        return h
+    }
+
     private fun statsJson(id: String, s: GenerationStats) = JSONObject().apply {
         put("case", id)
         put("stop", s.stop.name)
@@ -176,6 +228,7 @@ class Benchmark {
         put("generated", s.generated)
         put("prefillTokPerSec", s.prefillTokensPerSec)
         put("decodeTokPerSec", s.decodeTokensPerSec)
+        put("timeToFirstTokenMs", s.timeToFirstTokenMs)
         put("peakRssKb", LlamaEngine.memoryKb().second)
         s.error?.let { put("error", it) }
     }

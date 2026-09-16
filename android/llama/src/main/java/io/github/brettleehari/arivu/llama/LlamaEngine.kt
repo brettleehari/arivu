@@ -42,10 +42,15 @@ data class GenerationStats(
     val generated: Int,
     val prefillMicros: Long,
     val decodeMicros: Long,
+    /** generate() to first visible text. Add model load time for a cold-start figure (M1). */
+    val firstTokenMicros: Long,
     val error: String?,
 ) {
     val prefillTokensPerSec: Double
         get() = if (prefillMicros > 0) (promptTokens - reusedTokens) * 1e6 / prefillMicros else 0.0
+    val timeToFirstTokenMs: Double
+        get() = firstTokenMicros / 1000.0
+
     val decodeTokensPerSec: Double
         get() = if (decodeMicros > 0) generated * 1e6 / decodeMicros else 0.0
 }
@@ -125,6 +130,7 @@ class LlamaEngine(context: Context) : Closeable {
                         generated = r[3].toInt(),
                         prefillMicros = r[4],
                         decodeMicros = r[5],
+                        firstTokenMicros = r[6],
                         error = err[0],
                     ),
                 ),

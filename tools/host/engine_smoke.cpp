@@ -76,6 +76,8 @@ int main(int argc, char ** argv) {
         CHECK(e.ensure_context(cfg, &err), "context (q8_0 KV, flash attn)");
         ref = run(e, p1, 24, &st);
         printf("       path: %s\n", ref.c_str());
+        printf("       first token in %.0f ms, decode %.1f tok/s (host, not a phone measurement)\n",
+               st.first_token_ms, st.generated * 1000.0 / (st.decode_ms > 0 ? st.decode_ms : 1));
     }
     {
         arivu::Engine e;

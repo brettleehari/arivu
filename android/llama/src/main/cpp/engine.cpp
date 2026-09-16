@@ -236,6 +236,7 @@ GenerationStats Engine::generate(const std::string & prompt, int max_new, const 
     }
 
     const llama_vocab * vocab = llama_model_get_vocab(model_);
+    bool first_piece = true;
     std::string pending;
     char piece[256];
     auto t1 = clock_type::now();
@@ -251,6 +252,10 @@ GenerationStats Engine::generate(const std::string & prompt, int max_new, const 
             pending.append(piece, (size_t) n);
             const size_t ready = utf8_complete_prefix(pending.data(), pending.size());
             if (ready > 0) {
+                if (first_piece) {
+                    st.first_token_ms = ms_since(t0);
+                    first_piece = false;
+                }
                 on_piece(pending.data(), ready);
                 pending.erase(0, ready);
             }
@@ -275,7 +280,13 @@ GenerationStats Engine::generate(const std::string & prompt, int max_new, const 
         }
         cached_.push_back(tok);
     }
-    if (!pending.empty()) on_piece(pending.data(), pending.size());
+    if (!pending.empty()) {
+        if (first_piece) {
+            st.first_token_ms = ms_since(t0);
+            first_piece = false;
+        }
+        on_piece(pending.data(), pending.size());
+    }
     st.decode_ms = ms_since(t1);
     llama_sampler_free(chain);
     return st;

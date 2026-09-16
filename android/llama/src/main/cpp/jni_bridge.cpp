@@ -144,7 +144,7 @@ JNIEXPORT void JNICALL
 Java_io_github_brettleehari_arivu_llama_LlamaNative_nativeCancel(JNIEnv *, jclass, jlong h) { engine(h)->request_cancel(); }
 
 // prompt arrives as UTF-8 bytes; pieces go back as UTF-8 bytes via sink.onBytes([B)
-// Returns long[6]: stop, promptTokens, reusedTokens, generated, prefillMicros, decodeMicros
+// Returns long[7]: stop, promptTokens, reusedTokens, generated, prefillMicros, decodeMicros, firstTokenMicros
 JNIEXPORT jlongArray JNICALL
 Java_io_github_brettleehari_arivu_llama_LlamaNative_nativeGenerate(JNIEnv * env, jclass, jlong h, jbyteArray prompt_utf8, jint max_new,
                                                  jfloat temperature, jint top_k, jfloat top_p, jint seed,
@@ -174,12 +174,13 @@ Java_io_github_brettleehari_arivu_llama_LlamaNative_nativeGenerate(JNIEnv * env,
     });
     if (!st.error.empty()) set_error(env, err_out, st.error);
 
-    jlong vals[6] = {
+    jlong vals[7] = {
         (jlong) st.stop, st.prompt_tokens, st.reused_tokens, st.generated,
         (jlong) (st.prefill_ms * 1000.0), (jlong) (st.decode_ms * 1000.0),
+        (jlong) (st.first_token_ms * 1000.0),
     };
-    jlongArray out = env->NewLongArray(6);
-    env->SetLongArrayRegion(out, 0, 6, vals);
+    jlongArray out = env->NewLongArray(7);
+    env->SetLongArrayRegion(out, 0, 7, vals);
     return out;
 }
 

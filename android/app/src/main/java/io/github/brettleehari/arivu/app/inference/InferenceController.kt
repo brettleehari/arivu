@@ -71,7 +71,7 @@ class InferenceController(
             // Stop pressed while the model loaded or the context was created: the native cancel flag is reset when a
             // generation starts, so honour the request here instead. spine: C10
             if (isCancelled()) {
-                emit(GenerationEvent.Done(GenerationStats(StopReason.CANCELLED, 0, 0, 0, 0, 0, null)))
+                emit(GenerationEvent.Done(GenerationStats(StopReason.CANCELLED, 0, 0, 0, 0, 0, 0, null)))
                 return@flow
             }
             e.generate(prompt, maxNew, sampling).collect {
@@ -80,7 +80,8 @@ class InferenceController(
                     // One line per reply: the on-device evidence for M1/M2 (no text content is logged). spine: C2
                     val st = it.stats
                     Log.i(TAG, "generation done: stop=${st.stop} prompt=${st.promptTokens} reused=${st.reusedTokens} " +
-                        "generated=${st.generated} prefill=%.1f tok/s decode=%.1f tok/s threads=$threads".format(st.prefillTokensPerSec, st.decodeTokensPerSec))
+                        "generated=${st.generated} ttft=%.0f ms prefill=%.1f tok/s decode=%.1f tok/s threads=$threads"
+                            .format(st.timeToFirstTokenMs, st.prefillTokensPerSec, st.decodeTokensPerSec))
                 }
                 emit(it)
             }

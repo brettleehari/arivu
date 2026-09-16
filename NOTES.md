@@ -18,11 +18,27 @@ Machine: macOS arm64 (Apple Silicon), CPU backend only. llama.cpp 38a5b42 + patc
 | `tools/check_manifest.sh` | FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, DYNAMIC_RECEIVER_NOT_EXPORTED only; arm64-v8a only |
 | Release AAB size | 399,118,011 B (model pack 396.7 MB, base+arm64 ≈ 6.9 MB) |
 
+## The three numbers
+
+Everything else is detail. `tools/bench.sh` prints these and writes the full report to
+`build/bench/`; paste the row below.
+
+| Number | Target | Why it is the one that matters |
+|---|---|---|
+| Cold time to first token | M1: ≤ 15 s | Model load + prefill + first token, on the short rewrite case — what a first message feels like |
+| Decode | M2: ≥ 8 tok/s | Below this, reading the reply is faster than writing it, and the product is not usable |
+| Peak RSS | M3: ≤ 800 MB | Above this, a 4 GB phone starts killing the app under ordinary multitasking |
+
+Emulator dry run of the reporting path, 2026-09-15 (arm64 AVD on Apple silicon — **proves the
+harness works, says nothing about a phone**): cold first token 1.0 s, decode 109.9 tok/s median,
+peak RSS 695 MB, 4 threads, repack off. Worth noting even so: peak RSS on a build with nothing
+else running was already 695 MB against an 800 MB budget, so M3 has less headroom than M1 or M2.
+
 ## W02 — benchmark on the test phone
 
 _Not run yet. `tools/bench.sh`, then fill in:_
 
-| Device / SoC / RAM | Model | Threads | Repack | Prefill tok/s | Decode tok/s | Peak RSS | Throttle onset |
+| Device / SoC / RAM | Model | Threads | Repack | Cold first token | Decode tok/s | Peak RSS | Throttle onset |
 |---|---|---|---|---|---|---|---|
 | | | | | | | | |
 

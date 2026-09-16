@@ -46,6 +46,9 @@ struct GenerationStats {
     int         generated       = 0;
     double      prefill_ms      = 0;
     double      decode_ms       = 0;
+    // Wall time from generate() to the first byte handed to the caller. With a cold context
+    // this is prefill + one decode step; the caller adds model load time for the M1 figure.
+    double      first_token_ms  = 0;
     std::string error;
 };
 

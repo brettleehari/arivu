@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Entitlements.
+
+  `com.apple.developer.kernel.increased-memory-limit` is requested and is the ONLY entitlement here.
+  The justification, written down so a future reader can re-argue it rather than guess:
+
+    Arivu maps a ~396 MB GGUF and runs it. The weights are clean, file-backed pages, so jetsam
+    charges very little of them to phys_footprint; what IS charged is the KV cache (~115 MB at 2048
+    tokens, q8_0), the compute buffer (~28 MiB measured, D-028) and the app itself. That fits the
+    ordinary limit on a 4 GB iPhone with modest headroom — so this entitlement is insurance against
+    a transient spike during the first map, not a load-bearing part of the plan
+    (leaves/MULTIPLATFORM.md, caution 1).
+
+  If a future profile ships a larger model, this entitlement becomes load-bearing and must be
+  VERIFIED on a 4 GB device before that profile is committed to. Apple grants it without review for
+  most apps, but "we assumed it worked" is how a 2.5 GB model plan dies at submission.
+
+  `com.apple.developer.kernel.extended-virtual-addressing` is deliberately NOT requested: it matters
+  for mapping files larger than the 64-bit address-space cap a 32-bit-derived process gets, which a
+  400 MB file is nowhere near. Requesting entitlements we do not need is the opposite of C3's claim.
+
+  Nothing else. No keychain group, no App Groups, no push, no Siri, no associated domains.
+
+  UNVERIFIED: not built, not signed, not submitted.
+
+  spine: C2, C3
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.kernel.increased-memory-limit</key>
+    <true/>
+</dict>
+</plist>

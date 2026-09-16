@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Arivu — Info.plist.
+
+  What is NOT here is the point: no URL schemes, no background modes, no ATS exceptions, no
+  usage-description strings. Arivu asks the user for nothing and reaches nothing, so there is nothing
+  to declare (spine: C3, C8).
+
+  Note on background execution: `beginBackgroundTask` — the ~30 s assertion that lets a reply finish
+  after the user leaves — needs NO UIBackgroundModes entry. Declaring one would claim a capability
+  Arivu does not use and would invite a review question we would have to answer with "we don't".
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>Arivu</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <!-- The address a report is written to. Set from ARIVU_REPORT_EMAIL by
+         tools/ios/generate_project.sh; tools/ios/check_release.sh refuses the placeholder (D-010). -->
+    <key>ARIVUReportEmail</key>
+    <string>report@example.invalid</string>
+
+    <!-- The launch screen is the mark on brand green, in light and dark. Static by definition: no
+         spinner, no wordmark, no version (leaves/design.md §3). -->
+    <key>UILaunchScreen</key>
+    <dict>
+        <key>UIColorName</key>
+        <string>LaunchBackground</string>
+        <key>UIImageName</key>
+        <string>LaunchMark</string>
+        <key>UIImageRespectsSafeAreaInsets</key>
+        <true/>
+    </dict>
+
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>arm64</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIUserInterfaceStyle</key>
+    <string>Automatic</string>
+
+    <!-- The conversation is app-private. Neither of these is ever turned on: with them on, iOS would
+         show Arivu's storage in the Files app, and "stays only on this phone" would stop being the
+         whole story (spine: C3). -->
+    <key>UIFileSharingEnabled</key>
+    <false/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <false/>
+
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+</dict>
+</plist>

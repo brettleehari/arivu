@@ -1,0 +1,9 @@
+Notices (read first)|NOTICE|NOTICE.txt
+Arivu|Apache-2.0|Apache-2.0.txt
+Qwen3 0.6B model weights (Alibaba Cloud, Qwen team); Q4_K_M quantization by Unsloth|Apache-2.0|qwen3-Apache-2.0.txt
+llama.cpp and ggml (The ggml authors), with Arivu's fd-loading patch|MIT|llama.cpp-MIT.txt
+YaRN RoPE scaling in ggml (Jeffrey Quesnelle and Bowen Peng)|MIT|llama.cpp-embedded-MIT.txt
+BPE tokenizer code in llama.cpp adapted from ggllm.cpp (cmp-nct)|MIT|llama.cpp-embedded-MIT.txt
+Unicode Character Database tables in llama.cpp (Unicode, Inc.)|Unicode-3.0|Unicode-3.0.txt
+Swift standard library and Foundation (Apple and the Swift project authors)|Apache-2.0 WITH LLVM-exception|swift-Apache-2.0.txt
+LLVM libc++ runtime (LLVM Project)|Apache-2.0 WITH LLVM-exception|swift-Apache-2.0.txt

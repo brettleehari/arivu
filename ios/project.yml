@@ -1,0 +1,135 @@
+# XcodeGen spec for the Arivu iOS app.
+#
+# The .xcodeproj is generated, never committed: an Xcode project file is a merge-conflict machine and
+# nothing in it is a decision worth reviewing. `tools/ios/generate_project.sh` runs xcodegen if it is
+# installed and tells you how to install it if not.
+#
+# UNVERIFIED: xcodegen is not installed on the machine this was written on, and there is no Xcode, so
+# this spec has never been run. Every value in it is deliberate; none of it is proven.
+#
+# spine: C1, C3, C8
+
+name: Arivu
+options:
+  bundleIdPrefix: io.github.brettleehari
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # ArivuKit is built in Swift 6 language mode and `swift test` proves it; the app target follows.
+    SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES
+    CLANG_ENABLE_MODULES: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO   # the model copy phase reads models/ at the repo root
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_BITCODE: NO
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    # D-043: the App Store has no device-exclusion catalogue, so the minimum iOS version is the only
+    # exclusion there is. 17.0 implies an A12 or newer with >= 3 GB; the runtime gate does the rest.
+  configs:
+    Debug:
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      ONLY_ACTIVE_ARCH: YES
+    Release:
+      SWIFT_COMPILATION_MODE: wholemodule
+      VALIDATE_PRODUCT: YES
+
+packages:
+  ArivuKit:
+    path: ArivuKit
+
+targets:
+  Arivu:
+    type: application
+    platform: iOS
+    sources:
+      - path: App/Sources
+      # The asset catalogue must be compiled by actool, so it is a normal source, not a folder ref.
+      - path: App/Resources/Assets.xcassets
+      - path: App/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      # A FOLDER REFERENCE, on purpose: the app looks the licence texts up with
+      # `subdirectory: "licenses"`, which only works if the directory survives into the bundle.
+      # Added as a group, Xcode would flatten it and every licence row would open onto nothing.
+      - path: App/Resources/licenses
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: ArivuKit
+        product: ArivuKit
+      # Built by tools/ios/build_core.sh. Static, so it is linked and not embedded: an embedded
+      # dynamic framework would add a dylib to load at launch for no benefit.
+      - framework: ../build/ios/ArivuCore.xcframework
+        embed: false
+        link: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.brettleehari.arivu
+        PRODUCT_NAME: Arivu
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_FILE: App/Support/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/Support/Arivu.entitlements
+        # iPhone only, like the Android build: the layouts and the memory budget are phone-shaped.
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: BrandGreen
+        # llama.cpp and the Arivu core are C++; the app needs the C++ runtime to link them.
+        OTHER_LDFLAGS: "-lc++"
+        # A 400 MB resource makes a debug build slow to install; nothing here is size-sensitive at
+        # runtime, so the model is never compressed or stripped.
+        STRIP_INSTALLED_PRODUCT: YES
+        COPY_PHASE_STRIP: NO
+    preBuildScripts:
+      - name: Copy the model into the bundle
+        # The GGUF is not in the repo (models/ is gitignored, fetched by tools/fetch_model.sh).
+        # Copying it is a build phase so a fresh clone fails loudly rather than shipping without it.
+        script: "\"$SRCROOT/../tools/ios/copy_model.sh\""
+        inputFiles:
+          - $(SRCROOT)/../models/Qwen3-0.6B-Q4_K_M.gguf
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/qwen3-0.6b-q4_k_m.gguf
+        basedOnDependencyAnalysis: true
+    postBuildScripts:
+      - name: Refuse to ship a placeholder or a bundle with no model
+        # The iOS twin of tools/release_check.sh (D-010). AFTER the build, because it inspects the
+        # bundle that was produced; and only when installing, so a laptop debug build still works.
+        script: "\"$SRCROOT/../tools/ios/check_release.sh\""
+        basedOnDependencyAnalysis: false
+        runOnlyWhenInstalling: true
+
+  ArivuTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: App/Tests
+        optional: true
+    dependencies:
+      - target: Arivu
+      - package: ArivuKit
+        product: ArivuKit
+    settings:
+      base:
+        # The ArivuKit suites run on macOS with `swift test`; this bundle exists for the few things
+        # that can only be checked on a device or the Simulator (the model is really in the bundle,
+        # the privacy manifest parses, the app launches into a chat and nothing else).
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  Arivu:
+    build:
+      targets:
+        Arivu: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ArivuTests
+    archive:
+      config: Release

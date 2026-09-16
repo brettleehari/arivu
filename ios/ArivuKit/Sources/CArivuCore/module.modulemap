@@ -1,0 +1,11 @@
+// The platform boundary, as a Clang module.
+//
+// The header is /core/include/arivu/arivu.h — the contract, owned by the core, read here and never
+// copied. There is deliberately no `link` directive: importing this module must not force a link, so
+// ArivuEngine type-checks on a machine with no native library (that is how `swift test` passes here).
+// The real symbols come from ArivuCore.xcframework, linked by the app target; in tests they come from
+// ArivuEngineTestSupport.
+module CArivuCore {
+    header "../../../../core/include/arivu/arivu.h"
+    export *
+}

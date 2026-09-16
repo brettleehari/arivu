@@ -1,0 +1,182 @@
+/*
+  Arivu — iOS copy catalogue.
+
+  One catalogue, one text (leaves/design.md §6). Keys are the SAME KEYS as
+  android/app/src/main/res/values/strings.xml, so translation later is a data change and a parity
+  check can compare the two files key by key (Design's W68, tools/check_copy.py).
+
+  A string diverges from Android ONLY where the platform noun or the platform fact differs — the
+  object the user touches (Home Screen, Mail, the App Store), or a capability that exists on one OS
+  and not the other. Every divergence below is one of the rows in design.md §6 and says so.
+  Tone, structure and claims never diverge.
+
+  Copy rules (leaves/design.md §6):
+  - Plain words, short sentences. Many readers use English as a second language.
+  - One idea per string. Never build a sentence by joining strings in code; use %1$@ / %1$ld.
+  - Name what the user can do next. No jargon ("tokens", "context", "jetsam").
+  - British spelling, kept consistent. Translation is decision D-014.
+  - Typographic apostrophes and quotes (’ “ ”).
+  - "This phone", not "iPhone", except where the user must do something iPhone-shaped (D-044).
+  - a11y_* strings are read by VoiceOver only.
+
+  SOURCE: leaves/design/copy.md (Design, spine 0.2). This file is a RENDERING of it, not a source.
+  Two mechanical differences from the catalogue, both required by the platform and neither a change
+  of text:
+    - placeholders: the catalogue writes `%1$s` (Java/Kotlin); iOS writes `%1$@` for a string and
+      `%1$ld` for an integer. Same position, same meaning. tools/check_copy.py must normalise these.
+    - `back`, `incompatible_uninstall`, `gate_abi`, `gate_low_ram`, `notification_channel` and
+      `notification_writing` are marked `platforms: [android]` in the catalogue and are absent here.
+
+  The `privacy_*` bodies are owned by COMPLIANCE (D-022, W43). The catalogue records only how the iOS
+  text must differ, not the words. What is below is Engineering's rendering of those change notes so
+  the app is readable offline today; Compliance's final text replaces it, in both platform renderings
+  at once. D-038 settles the claim in `about_private_body` and `privacy_internet_body`.
+*/
+
+"app_name" = "Arivu";
+
+/* ---- Chat (leaves/design.md §3) ---- */
+"input_hint" = "Type or paste your text";
+"send" = "Send";
+"stop" = "Stop";
+"copy" = "Copy";
+"copied" = "Copied";
+"ok" = "OK";
+"about" = "About";
+"cancel" = "Cancel";
+"report" = "Report";
+"reported" = "Reported";
+"empty_title" = "Works with no internet";
+"empty_body" = "Arivu helps with text you give it. It can rewrite, shorten, explain, summarise and draft.\n\nIt runs only on this phone. It is not good at facts, news or numbers, so check anything important.";
+"empty_examples_label" = "For example, you can write:";
+"empty_example_1" = "Rewrite this to sound polite: …";
+"empty_example_2" = "Explain this paragraph in simple words: …";
+"empty_example_3" = "Write a short letter to parents about …";
+"state_starting" = "Starting Arivu. This can take a few seconds…";
+/* design.md §5.2 — the first map of a 400 MB bundle file, cold, on a phone that has just installed. */
+"state_starting_first_run" = "Starting Arivu for the first time. This is the slowest it will ever be. Keep Arivu open.";
+/* design.md §5.2 — replaces the Starting line after 15 s. Replaced, never appended. */
+"state_starting_long" = "Still starting Arivu. Keep Arivu open.";
+"state_reading" = "Reading…";
+"context_divider" = "Arivu can no longer see the messages above this line";
+"stopped_by_user" = "Stopped";
+"stopped_context_full" = "Cut off: this conversation is now too long for Arivu to hold. Its next reply will leave out the oldest messages.";
+"stopped_max_tokens" = "This reply reached its length limit. Send “continue” to get more.";
+"stopped_error" = "Something went wrong while writing this reply. Try sending again.";
+/* design.md §7 — same key, same words on both platforms. */
+"stopped_low_memory" = "Stopped: your phone ran low on memory. Close other apps, then send “continue” to get the rest.";
+/* design.md §5.1 — iOS today; a capability behaviour, not a platform one. */
+"stopped_backgrounded" = "Stopped: Arivu cannot keep writing while you are in another app. Send “continue” to get the rest.";
+/* %1$ld = how long a shorter part should be, as a percentage of this message (1–99). */
+"message_too_long" = "This message is too long for Arivu to read at once. Try sending a part about %1$ld%% as long.";
+/* Diverges (design.md §6): "Close Arivu fully" names an Android gesture. */
+"load_failed" = "Arivu could not start on this phone. Close Arivu from the app switcher, then open it again.";
+/* design.md §7 — a specific, actionable cause never wears the generic failure message. */
+"load_failed_low_memory" = "Arivu could not start: your phone is low on memory. Close other apps, then send your message again.";
+
+/* ---- VoiceOver only ---- */
+/* %1$@ = the message text the user wrote */
+"a11y_from_user" = "You wrote: %1$@";
+/* %1$@ = the reply text Arivu wrote */
+"a11y_from_arivu" = "Arivu wrote: %1$@";
+"a11y_writing" = "Arivu is writing";
+"a11y_reply_done" = "Reply finished";
+"a11y_copy_message" = "Copy this message";
+"a11y_report_reply" = "Report this reply";
+"a11y_stop" = "Stop writing the reply";
+"a11y_expanded" = "Open";
+"a11y_collapsed" = "Closed";
+
+/* ---- About ---- */
+"about_title" = "About Arivu";
+"about_what_title" = "What Arivu is";
+"about_what_body" = "A helper for writing and understanding text, with no internet. A small language model (Qwen3 0.6B) runs fully on this phone.";
+"about_good_title" = "Good at";
+"about_good_body" = "Rewriting, shortening, explaining, summarising and drafting text you give it.";
+"about_bad_title" = "Not good at";
+"about_bad_body" = "Facts, news, dates, numbers, maths, and medical or legal answers. It can sound sure and still be wrong.";
+"about_private_title" = "Private by design";
+/* Diverges (design.md §1, §6 — D-038): iOS has no permission to withhold, so the claim is the
+   weaker, true one. Do not copy the Android sentence here. */
+"about_private_body" = "Arivu has no code that can reach the internet — you can check that, because Arivu is open source. Your messages stay only on this phone and are not backed up.";
+"about_report_title" = "Report a harmful reply";
+/* Diverges (design.md §6): the composer opens inside Arivu. */
+"about_report_body" = "If Arivu wrote something offensive or harmful, tap Report under that reply. You can also send a general report here. Both open a message in your Mail app, already written. Nothing is sent until you send it.";
+"about_report_button" = "Report a reply";
+"about_report_subject" = "Arivu: report of harmful output";
+/* %1$@ = app version */
+"about_report_template" = "Paste the reply here:\n\n\nWhat was wrong with it:\n\n\nApp version: %1$@";
+/* %1$@ = app version, %2$@ = reason, %3$@ = the user's note, %4$@ = the reply text */
+"report_reply_template" = "Reason: %2$@\n\nMy note: %3$@\n\nThe reply Arivu wrote:\n%4$@\n\nApp version: %1$@";
+"report_no_note" = "(none)";
+/* Activity-sheet fallback when there is no mail account. %1$@ = report address, %2$@ = report text */
+"report_share_prefix" = "To: %1$@\n\n%2$@";
+
+/* ---- Report sheet (leaves/design.md §3) ---- */
+"report_sheet_title" = "Report this reply";
+"report_sheet_body" = "Tell us what is wrong with this reply. It helps us make Arivu safer.";
+"report_reason_label" = "What is wrong?";
+"report_reason_offensive" = "Offensive";
+"report_reason_harmful" = "Harmful";
+"report_reason_wrong_dangerous" = "Wrong in a dangerous way";
+"report_reason_other" = "Something else";
+"report_note_label" = "Anything to add? (optional)";
+/* Diverges (design.md §6): on iOS the composer opens inside Arivu. */
+"report_sheet_privacy" = "Arivu cannot use the internet, so your Mail app sends the report. The message opens here, already written, with this reply and your note in it. Nothing is sent until you press send.";
+/* Diverges (design.md §6): the button no longer leaves the app. */
+"report_send" = "Write the email";
+
+/* ---- Privacy policy, readable offline ---- */
+"about_privacy_policy" = "Privacy policy";
+/* %1$@ = app version. Diverges (design.md §6): names the platform. */
+"privacy_intro" = "Privacy policy for Arivu on iPhone, version %1$@.";
+"privacy_short_title" = "The short version";
+/* Diverges: the first paragraph carries the iOS form of the C3 claim (D-038). */
+"privacy_short_body" = "Arivu has no code that can reach the internet. It contains no networking, and you can check that yourself, because Arivu is open source.\n\nWhat you type and what Arivu writes is stored only on your phone, in the app’s private storage. It is not included in iCloud backups or in a transfer to a new phone.\n\nWe do not collect, receive, sell or share your messages. There is no account, no advertising, no analytics and no crash-reporting software in the app.\n\nIf you choose to report a reply, Arivu writes an email with that reply and your note. You check it, and your own Mail app sends it. We receive only what you send.";
+/* Diverges (design.md §6). */
+"privacy_internet_title" = "Arivu has no way to reach the internet";
+/* Diverges (design.md §6): the Android text enumerates permissions iOS does not have.
+   Final text with Compliance (D-038). */
+"privacy_internet_body" = "Arivu contains no networking code and links no networking library. There is nothing in it that opens a connection, and nothing that would work if it tried. Because Arivu is open source, anyone can read the code and rebuild it to check that the app on the App Store is the app in the source. The App Store privacy label says Data Not Collected, and that is the same claim in Apple’s words.";
+"privacy_stored_title" = "What is stored on your phone";
+/* Diverges (design.md §6): iPhone’s own encryption, iCloud backup and device transfer. */
+"privacy_stored_body" = "Your conversation: the messages you send, the replies, when each was created, why a reply stopped, and whether you reported it. It is one file in Arivu’s private storage, kept until you delete Arivu. If that file is ever damaged, Arivu keeps only the newest damaged copy there and starts a new conversation.\n\nA note that your phone passed Arivu’s compatibility check, so the check does not run on every launch.\n\nThe file is excluded from iCloud backup and from transfers to a new phone. It is protected by your iPhone’s own encryption and your passcode. Anyone who can unlock your phone and open Arivu can read the conversation.";
+"privacy_collect_title" = "What we collect";
+"privacy_collect_body" = "Nothing, through the app. Arivu contains no analytics, advertising, tracking, crash-reporting or payment software, and it cannot send data. We never see your messages, and they are not used to train any AI model.";
+"privacy_report_title" = "Reporting a reply";
+/* Diverges (design.md §6): the composer opens inside Arivu; the fallback is the share sheet. */
+"privacy_report_body" = "Under each reply there is a Report button, and there is a general Report button on this screen. Report opens a message in your own Mail app, inside Arivu, with our address, a subject and the app version already written. A report from under a reply also adds the reason you chose, your note and the text of that reply — only that reply, not the rest of the conversation. The general report on this screen is a blank form. Nothing is sent until you press send, and your Mail app, not Arivu, sends it. Arivu marks the reply as reported on your phone. If you have no mail account set up, Arivu offers the share sheet instead, with our address written into the text.\n\nIf you send a report, we receive what is in it and whatever your mail service adds, such as your email address. We use reports only to understand harmful replies, make Arivu safer and reply to you if needed. We do not sell or share them, and we delete them when we no longer need them. You can ask us to delete your report sooner.";
+"privacy_copy_title" = "Copying text and your keyboard";
+/* Diverges (design.md §6): Android can ask the keyboard not to learn; iOS offers no such request,
+   and the text says so rather than implying we made one. */
+"privacy_copy_body" = "Copy puts text on your phone’s clipboard, like any copied text. Your keyboard learns from what you type in every app, and iPhone gives Arivu no way to turn that off. Other apps work under their own privacy policies.";
+/* Diverges (design.md §6): the App Store, not Google Play. */
+"privacy_play_title" = "The App Store";
+"privacy_play_body" = "You install and update Arivu through the App Store, which has its own privacy policy. Apple gives developers summary statistics, such as installs by country and device model, and crash statistics from people who chose to share them with Apple. Installing uses data. Once installed, Arivu itself uses none.";
+"privacy_children_title" = "Children";
+"privacy_children_body" = "Arivu is not designed for children. The app collects nothing from anyone. If a child has sent us a report, write to us and we will delete it.";
+"privacy_choices_title" = "Your choices";
+/* Diverges (design.md §6): there is no "clear storage" for one app on iOS. */
+"privacy_choices_body" = "To delete your conversation, delete Arivu: touch and hold its icon on the Home Screen, then choose Delete App. iPhone has no way to clear one app’s storage without deleting the app. Arivu is open source, so anyone can check these claims. Depending on where you live, you may have further rights over a report you sent us, and you can complain to your data protection authority.";
+"privacy_changes_title" = "Changes";
+"privacy_changes_body" = "If a future version changes what Arivu stores or sends, this policy changes before that version is released. A version that needed the internet would be a different app, and we would say so plainly.";
+"privacy_contact_title" = "Contact";
+/* %1$@ = privacy and report contact address */
+"privacy_contact_body" = "%1$@";
+
+"about_licenses_title" = "Open-source licences";
+/* %1$@ = component name, %2$@ = licence id such as MIT. Not translatable. */
+"about_license_entry" = "%1$@ · %2$@";
+/* %1$@ = app version */
+"about_version" = "Version %1$@";
+
+/* ---- Incompatible device (the gate) ---- */
+"incompatible_title" = "Arivu can’t run well on this phone";
+"incompatible_body" = "Arivu runs a language model on the phone itself. That needs more than this phone has. Rather than run slowly or crash, Arivu will not start.";
+/* Diverges (design.md §5.4, D-042): iOS apps cannot delete themselves, so there is no button —
+   one line of plain instructions instead. `incompatible_uninstall` is deliberately absent. */
+"incompatible_remove_ios" = "To remove Arivu: touch and hold its icon on the Home Screen, then choose Delete App.";
+/* %1$@ = this phone's memory, %2$@ = memory Arivu needs; both formatted like "3.5 GB" */
+"gate_total_ram" = "This phone has %1$@ of memory. Arivu needs at least %2$@.";
+/* %1$@ = free storage now, %2$@ = storage Arivu needs; both formatted like "268 MB" */
+"gate_storage" = "This phone has %1$@ of free storage. Arivu needs at least %2$@.";

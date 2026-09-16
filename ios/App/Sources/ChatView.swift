@@ -1,0 +1,326 @@
+// The one screen: message list, input, Send, Stop, Copy, Report. Nothing else (SPINE §3, R5).
+//
+// Every state in leaves/design.md §3 is here, and the behaviour is tested without SwiftUI in
+// ArivuChatTests — this file renders that state machine and adds nothing to it.
+//
+// UNVERIFIED: not compiled. There is no iOS SDK on the machine this was written on.
+//
+// spine: C1, C5, C7, C9, C10
+
+import ArivuChat
+import ArivuCore
+import SwiftUI
+import UIKit
+
+struct ChatView: View {
+    @ObservedObject var session: ChatSession
+    @State private var input = ""
+    @State private var reportingID: String?
+    @State private var copiedID: String?
+    @State private var followsNewestLine = true
+    @FocusState private var inputFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                content
+                session.notice.map { NoticeBar(notice: $0, onDismiss: session.dismissNotice) }
+                composer
+            }
+            .background(Palette.surface)
+            .navigationTitle(Strings.string(.app_name))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    // A word, not a gear: there are no settings to put behind one (C8).
+                    NavigationLink(Strings.string(.about)) { AboutView() }
+                }
+            }
+        }
+        .sheet(item: Binding(get: { reportingID.map(Identified.init) },
+                             set: { reportingID = $0?.id })) { wrapper in
+            if let reply = session.messages.first(where: { $0.id == wrapper.id }) {
+                ReportSheet(replyText: reply.text,
+                            onReported: { session.markReported(wrapper.id) },
+                            onDismiss: { reportingID = nil })
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if !session.loaded {
+            // History is still being read: show nothing rather than flash the empty state.
+            Color.clear.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if session.messages.isEmpty {
+            EmptyState()
+        } else {
+            messageList
+        }
+    }
+
+    private var messageList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    ForEach(session.messages) { message in
+                        if message.id == session.contextStartID { ContextDivider() }
+                        MessageBubble(
+                            message: message,
+                            streaming: session.generating && message.id == session.messages.last?.id && !message.fromUser,
+                            startingPhase: session.startingPhase,
+                            engineState: session.engineState,
+                            copied: copiedID == message.id,
+                            onCopy: { copy(message) },
+                            onReport: { reportingID = message.id })
+                        .id(message.id)
+                    }
+                    // An anchor at the very end, so "follow the newest line" lands on the last line
+                    // of a long reply rather than the top of it.
+                    Color.clear.frame(height: 1).id(ScrollAnchor.bottom)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: session.messages.last?.text) { _, _ in follow(proxy) }
+            .onChange(of: session.messages.count) { _, _ in follow(proxy) }
+            // A reply that ends gains a label and a Copy/Report row without its text changing, and
+            // that row must be scrolled into view too (found on the Android emulator run, bug 1).
+            .onChange(of: session.messages.last?.stop) { _, _ in follow(proxy) }
+            .onChange(of: session.generating) { _, _ in follow(proxy) }
+        }
+    }
+
+    private func follow(_ proxy: ScrollViewProxy) {
+        guard followsNewestLine else { return }
+        proxy.scrollTo(ScrollAnchor.bottom, anchor: .bottom)
+    }
+
+    private var composer: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            TextField(Strings.string(.input_hint), text: $input, axis: .vertical)
+                .textFieldStyle(.plain)
+                .lineLimit(1...6)
+                .textInputAutocapitalization(.sentences)
+                .focused($inputFocused)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Palette.outline, lineWidth: 1))
+                // Return inserts a newline (pasted text has paragraphs); ⌘Return sends.
+                .onSubmit { /* nothing: Return is a newline */ }
+
+            sendOrStop
+        }
+        .padding(12)
+        .background(Palette.surface)
+    }
+
+    /// spine: C10 — Send and Stop share one slot at one size. There is never a moment with neither.
+    @ViewBuilder
+    private var sendOrStop: some View {
+        if session.generating {
+            Button(Strings.string(.stop)) { session.stop() }
+                .buttonStyle(.bordered)
+                .frame(minWidth: Metrics.sendSlotWidth, minHeight: Metrics.sendSlotHeight)
+                .accessibilityLabel(Strings.string(.a11y_stop))
+        } else {
+            Button(Strings.string(.send)) { send() }
+                .buttonStyle(.borderedProminent)
+                .frame(minWidth: Metrics.sendSlotWidth, minHeight: Metrics.sendSlotHeight)
+                .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !session.loaded)
+                .keyboardShortcut(.return, modifiers: .command)
+        }
+    }
+
+    private func send() {
+        let text = input
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !session.generating else { return }
+        session.send(text)
+        input = ""
+        followsNewestLine = true
+    }
+
+    /// leaves/design.md §4 — iOS confirms nothing, so Arivu confirms itself: the Copy button's own
+    /// label becomes "Copied" for 2 s. No toast, no banner, no overlay of our own.
+    private func copy(_ message: Message) {
+        UIPasteboard.general.string = message.text
+        copiedID = message.id
+        UIAccessibility.post(notification: .announcement, argument: Strings.string(.copied))
+        Task {
+            try? await Task.sleep(nanoseconds: UInt64(Policy.copiedFeedbackSeconds * 1_000_000_000))
+            if copiedID == message.id { copiedID = nil }
+        }
+    }
+}
+
+private enum ScrollAnchor: Hashable { case bottom }
+
+/// `sheet(item:)` needs an Identifiable; a message id is a String.
+private struct Identified: Identifiable { let id: String }
+
+// MARK: - Pieces
+
+private struct EmptyState: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                Text(Strings.string(.empty_title))
+                    .font(.title2.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
+                Text(Strings.string(.empty_body))
+                    .font(.body)
+                    .foregroundStyle(Palette.onSurfaceVariant)
+                    .multilineTextAlignment(.center)
+                Text(Strings.string(.empty_examples_label))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(Palette.onSurfaceVariant)
+                    .padding(.top, 8)
+                // Plain text, not buttons (D-030 is still open).
+                VStack(spacing: 6) {
+                    ForEach([StringKey.empty_example_1, .empty_example_2, .empty_example_3], id: \.self) { key in
+                        Text(Strings.string(key))
+                            .font(.body)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Palette.surfaceVariant, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(24)
+        }
+    }
+}
+
+/// spine: C7 — the visible edge of what the model can see.
+private struct ContextDivider: View {
+    var body: some View {
+        VStack(spacing: 4) {
+            Rectangle().fill(Palette.outline).frame(height: 1)
+            Text(Strings.string(.context_divider))
+                .font(.caption)
+                .foregroundStyle(Palette.onSurfaceVariant)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 4)
+    }
+}
+
+private struct MessageBubble: View {
+    let message: Message
+    let streaming: Bool
+    let startingPhase: StartingPhase
+    let engineState: EngineState
+    let copied: Bool
+    let onCopy: () -> Void
+    let onReport: () -> Void
+
+    var body: some View {
+        HStack {
+            if message.fromUser { Spacer(minLength: Metrics.userBubbleLeadingInset) }
+            VStack(alignment: .leading, spacing: 6) {
+                if message.text.isEmpty && streaming {
+                    HStack(spacing: 8) {
+                        ProgressView().accessibilityHidden(true)
+                        Text(Strings.string(startingLineKey))
+                            .font(.body)
+                    }
+                } else if !message.text.isEmpty {
+                    Text(message.text)
+                        .font(.body)
+                        .textSelection(.enabled)
+                        .accessibilityLabel(Strings.string(message.fromUser ? .a11y_from_user : .a11y_from_arivu,
+                                                           message.text))
+                }
+
+                stopLabelKey.map { key in
+                    Text(Strings.string(key))
+                        .font(.caption)
+                        .foregroundStyle(isErrorLabel ? Palette.error : Palette.onSurfaceVariant)
+                }
+
+                if !message.fromUser && message.reported {
+                    Text(Strings.string(.reported))
+                        .font(.caption)
+                        .foregroundStyle(Palette.onSurfaceVariant)
+                }
+
+                if !message.text.isEmpty && !streaming {
+                    HStack(spacing: 4) {
+                        Spacer(minLength: 0)
+                        if !message.fromUser {
+                            // Report first, so Copy keeps its place at the edge.
+                            Button(Strings.string(.report), action: onReport)
+                                .accessibilityLabel(Strings.string(.a11y_report_reply))
+                                .frame(minHeight: Metrics.minTouchTarget)
+                        }
+                        Button(copied ? Strings.string(.copied) : Strings.string(.copy), action: onCopy)
+                            .accessibilityLabel(Strings.string(.a11y_copy_message))
+                            .frame(minHeight: Metrics.minTouchTarget)
+                    }
+                    .font(.subheadline)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Palette.primary)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: Metrics.bubbleMaxWidth, alignment: .leading)
+            .background(message.fromUser ? Palette.primaryContainer : Palette.surfaceVariant,
+                        in: RoundedRectangle(cornerRadius: 14))
+            .foregroundStyle(message.fromUser ? Palette.onPrimaryContainer : Palette.onSurfaceVariant)
+            if !message.fromUser { Spacer(minLength: Metrics.replyBubbleTrailingInset) }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityValue(streaming ? Strings.string(.a11y_writing) : "")
+    }
+
+    /// While the model is being mapped the line is `state_starting`, or the first-run line, or —
+    /// after 15 s — `state_starting_long`. Replaced, never appended (leaves/design.md §5.2).
+    private var startingLineKey: StringKey {
+        engineState == .starting ? startingPhase.key : .state_reading
+    }
+
+    private var stopLabelKey: StringKey? {
+        switch message.stop {
+        case nil, .endOfTurn: return nil
+        case .cancelled: return .stopped_by_user
+        case .contextFull: return .stopped_context_full
+        case .maxTokens: return .stopped_max_tokens
+        case .error: return .stopped_error
+        case .lowMemory: return .stopped_low_memory
+        case .backgrounded: return .stopped_backgrounded
+        }
+    }
+
+    private var isErrorLabel: Bool {
+        message.stop == .error || message.stop == .contextFull || message.stop == .lowMemory
+    }
+}
+
+private struct NoticeBar: View {
+    let notice: Notice
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(notice.text)
+                .font(.body)
+                .foregroundStyle(Palette.onErrorContainer)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button(Strings.string(.ok), action: onDismiss)
+                .foregroundStyle(Palette.onErrorContainer)
+                .frame(minHeight: Metrics.minTouchTarget)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Palette.errorContainer)
+        .accessibilityElement(children: .combine)
+        .onAppear { UIAccessibility.post(notification: .announcement, argument: notice.text) }
+    }
+}

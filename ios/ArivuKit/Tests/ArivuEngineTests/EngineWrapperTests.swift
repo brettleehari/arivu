@@ -252,9 +252,12 @@ struct DeviceMemoryTests {
     func availableMemoryIsOptional() {
         #if os(iOS)
         #expect(DeviceMemory.availableBytes() != nil)
+        #expect(DeviceMemory.memorySource() == .probed)
         #else
         #expect(DeviceMemory.availableBytes() == nil)
-        #expect(DeviceMemory.hasRoomForContext() == nil)
+        #expect(DeviceMemory.hasRoomForContext(for: .compact) == nil)
+        // macOS cannot answer, and says so rather than reporting a number nothing measured.
+        #expect(DeviceMemory.memorySource() == .unmeasured)
         #endif
     }
 
@@ -310,31 +313,27 @@ struct CoreParityTests {
         #expect(CoreParity.assistantOpen == PromptBuilder.assistantOpen)
     }
 
-    /// Skipped against the fake core, which deliberately implements neither the profile arithmetic
-    /// nor the prompt builder. It runs on a device, and on a Mac once tools/ios/build_core.sh has
-    /// produced ArivuCore.xcframework.
-    @Test("the shipped profile matches the core's", .enabled(if: CoreParity.isRealCore))
-    func profileMatchesCore() {
-        let core = CoreParity.defaultProfile()
-        #expect(core.nCtx == Profile.compact.nCtx)
-        #expect(core.nBatch == Profile.compact.nBatch)
-        #expect(core.kvQ8_0 == Profile.compact.kvQ8_0)
-        #expect(core.replyReserveTokens == Profile.compact.replyReserveTokens)
-        #expect(core.maxReplyTokens == Profile.compact.maxReplyTokens)
-        #expect(core.capabilities == Profile.compact.capabilities)
+    /// Skipped against the fake core, which implements neither the profile arithmetic nor the
+    /// prompt builder. The comparison itself lives in `CoreParity.disagreements()` so that this
+    /// suite and the app's `CoreParityTests` — the bundle that actually links the real core, and so
+    /// the only place these ever execute — cannot drift into two ideas of what parity means.
+    ///
+    /// Left in place rather than deleted because it is the suite that runs if ArivuKit is ever
+    /// built against a real core directly, e.g. on a device.
+    @Test("the Swift copies agree with the core", .enabled(if: CoreParity.isRealCore))
+    func swiftAgreesWithCore() {
+        let disagreements = CoreParity.disagreements()
+        #expect(disagreements.isEmpty,
+                "the Swift copies and /core disagree:\n  - " + disagreements.joined(separator: "\n  - "))
     }
 
-    @Test("the core and Swift agree on which devices fit", .enabled(if: CoreParity.isRealCore))
-    func fitMatchesCore() {
-        let devices = [
-            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 8_000_000_000),
-            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 2_000_000_000, freeStorageBytes: 8_000_000_000),
-            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 1_000),
-            DeviceFacts(arm64: false, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 8_000_000_000),
-        ]
-        for device in devices {
-            #expect(CoreParity.fit(.compact, on: device) == Profile.compact.fits(device),
-                    "disagreement for \(device)")
-        }
+    /// `disagreements()` must not report agreement when it compared nothing. Against the stub it
+    /// returns exactly one note saying so, and that is the behaviour the app's suite relies on.
+    @Test("the comparison refuses to pass vacuously against a fake core")
+    func vacuousPassIsImpossible() {
+        guard !CoreParity.isRealCore else { return }
+        let disagreements = CoreParity.disagreements()
+        #expect(disagreements.count == 1)
+        #expect(disagreements.first?.contains("fake core") == true)
     }
 }

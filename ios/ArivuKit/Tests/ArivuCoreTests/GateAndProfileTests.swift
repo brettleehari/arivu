@@ -131,10 +131,26 @@ struct ProfileTests {
         let phone = DeviceFacts(arm64: true, lowRamFlagged: false,
                                 totalRamBytes: 8_000_000_000, freeStorageBytes: 8_000_000_000)
         #expect(Profile.compact.fits(phone) == .ok)
-        #expect(Profile.compact.fits(phone, availableMemoryBytes: 300_000_000)
-                == .availableMemory(actual: 300_000_000, required: Profile.compact.estimatedPeakBytes))
-        // Zero means "not measured", which is what Android always reports. It is not a failure.
-        #expect(Profile.compact.fits(phone, availableMemoryBytes: 0) == .ok)
+
+        // The ceiling applies to the charged footprint plus headroom, never to the peak: the mapped
+        // weights are clean file-backed pages the kernel can evict and re-read, and charging a
+        // device for them would refuse phones that would have run this profile perfectly (B23).
+        let required = Profile.compact.requiredAvailableBytes(.probed)
+        #expect(required == Profile.compact.footprintBytes * 14 / 10)
+        #expect(required < Profile.compact.estimatedPeakBytes, "the peak must not be the ceiling")
+        #expect(Profile.compact.fits(phone, availableMemoryBytes: 300_000_000, memorySource: .probed)
+                == .availableMemory(actual: 300_000_000, required: required))
+        #expect(Profile.compact.fits(phone, availableMemoryBytes: required, memorySource: .probed) == .ok)
+
+        // A probed reading earns *more* headroom than an inferred one, because it is an
+        // instantaneous best case taken at the calmest moment in the app's life.
+        #expect(Profile.compact.requiredAvailableBytes(.inferred) < required)
+
+        // Zero means "not measured", which is what Android always reports. It is not a failure —
+        // and neither is a tiny reading when the platform admits it did not measure.
+        #expect(Profile.compact.fits(phone, availableMemoryBytes: 0, memorySource: .probed) == .ok)
+        #expect(Profile.compact.fits(phone, availableMemoryBytes: 1, memorySource: .unmeasured) == .ok)
+        #expect(Profile.compact.requiredAvailableBytes(.unmeasured) == 0)
     }
 
     @Test("selection takes the first profile that fits, richest first")

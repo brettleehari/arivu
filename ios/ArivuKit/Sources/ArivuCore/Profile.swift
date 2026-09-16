@@ -70,13 +70,16 @@ public struct Profile: Equatable, Sendable {
         self.capabilities = capabilities
     }
 
-    /// The profile Arivu ships today. Every number is a decision already made (C8) or a measurement
-    /// (leaves/NOTES.md): KV ≈ 56 KiB/token at q8_0 for Qwen3-0.6B, compute buffer 28.09 MiB measured
-    /// on the emulator with `n_outputs_max = 1` (D-028), runtime overhead the app + framework baseline.
+    /// The profile Arivu ships today.
+    ///
+    /// Every number here is `arivu_default_profile()` in core/src/profile.cpp, to the byte. The core
+    /// is the authority: it is the copy both platforms link, and `ProfileParityTest` fails the build
+    /// if these drift again. They had drifted — see the note on `kvBytesPerToken`.
     public static let compact = Profile(
         id: "compact",
         modelID: "qwen3-0.6b-q4km",
-        modelBytes: 396_000_000,
+        // tools/fetch_model.sh, sha256-pinned. Not rounded: the parity test compares literals.
+        modelBytes: 396_705_472,
         nCtx: Policy.nCtx,
         nBatch: Policy.nBatch,
         nThreads: 4,
@@ -84,18 +87,45 @@ public struct Profile: Equatable, Sendable {
         repack: Policy.repackWeights,
         replyReserveTokens: Policy.replyReserveTokens,
         maxReplyTokens: Policy.maxReplyTokens,
-        kvBytesPerToken: 57_344,
-        computeBufferBytes: 29_452_206,
-        runtimeOverheadBytes: 150_000_000,
+        // Qwen3-0.6B: 28 layers x 8 KV heads x 128 head dim, K and V, at q8_0's 34 bytes per 32
+        // values = 1.0625 B/value  ->  28*8*128*2*1.0625 = 60928 B per token (119 MiB at 2048 ctx).
+        //
+        // This was 57_344 — which is that same expression *without* the 1.0625, i.e. the number of
+        // KV values per token rather than the bytes q8_0 actually spends on them. It understated the
+        // KV cache by 7.3 MB at 2048 ctx, and no parity test covered this field.
+        kvBytesPerToken: 60_928,
+        // 27 MiB. Host-measured with n_outputs_max = 1 (leaves/NOTES.md "Host verification, round 2":
+        // 26.59 MiB). The emulator reading behind the old 29_452_206 was 28.09 MiB (D-028); the two
+        // measurements disagree and picking the shipped one is a decision, so this takes the core's
+        // value and the disagreement is recorded rather than split.
+        computeBufferBytes: 28_311_552,
+        // 160 MiB, provisional: ART/Compose/allocator remainder from the emulator dry run. The W02
+        // test-phone numbers replace it, in core/src/profile.cpp first.
+        runtimeOverheadBytes: 167_772_160,
         minTotalRamBytes: Policy.minTotalRamBytes,
         minFreeStorageBytes: Policy.minFreeStorageBytes,
         capabilities: [.chat]
     )
 
-    /// model + KV + compute + runtime. The number M3 is measured against (≤ 800 MB).
-    public var estimatedPeakBytes: UInt64 {
-        modelBytes + kvBytesPerToken * UInt64(max(nCtx, 0)) + computeBufferBytes + runtimeOverheadBytes
+    /// Clean, file-backed, evictable: the mmap'd weights. Counts against physical RAM and against
+    /// the page cache, but `phys_footprint` — the number jetsam charges — excludes clean file-backed
+    /// pages, so this half is very nearly free against that ceiling (architecture B23).
+    public var mappedBytes: UInt64 { modelBytes }
+
+    /// Dirty and anonymous: KV cache, compute buffer, runtime overhead, and a repacked copy of the
+    /// weights if the profile asks for one. **This is what gets the app killed.**
+    ///
+    /// Mirrors `arivu_profile_footprint_bytes`. Repacking *adds* the copy rather than moving it,
+    /// because the file mapping stays — which is the whole reason D-015 leaves repacking off.
+    public var footprintBytes: UInt64 {
+        let kv = kvBytesPerToken * UInt64(max(nCtx, 0))
+        let repacked = repack ? modelBytes : 0
+        return repacked + kv + computeBufferBytes + runtimeOverheadBytes
     }
+
+    /// mapped + footprint: the worst case where nothing has been evicted. The number M3 is measured
+    /// against (≤ 800 MB). Mirrors `arivu_profile_estimated_peak_bytes`.
+    public var estimatedPeakBytes: UInt64 { mappedBytes + footprintBytes }
 
     public func has(_ capability: Capabilities) -> Bool { capabilities.contains(capability) }
 
@@ -128,19 +158,71 @@ public enum ProfileFit: Equatable, Sendable {
     case storage(actual: UInt64, required: UInt64)
 }
 
+/// How good the available-memory number is. Raw values match `arivu_memory_source`.
+///
+/// The two platforms are not equally able to answer "how much may this process use before it is
+/// killed", and the asymmetry must be visible rather than hidden behind a zero: a platform that does
+/// not know says so, and the arithmetic then declines to invent a ceiling (architecture B23).
+public enum MemorySource: Int32, Sendable, CaseIterable {
+    /// The platform declined to answer; only the RAM floor applies. Android always reports this.
+    case unmeasured = 0
+    /// Derived from total RAM or a device class, not asked of the OS.
+    case inferred = 1
+    /// The OS was asked directly (`os_proc_available_memory()`).
+    case probed = 2
+
+    /// Headroom required over the estimated footprint, in parts per thousand.
+    ///
+    /// A probed number needs *more* headroom, not less: `os_proc_available_memory()` is an
+    /// instantaneous reading taken at the calmest moment in the app's life, and it shrinks under
+    /// system pressure. An inferred number is already a conservative derivation. Mirrors
+    /// `arivu_headroom_permille`.
+    public var headroomPermille: UInt32 {
+        switch self {
+        case .probed: return 1400
+        case .inferred: return 1250
+        case .unmeasured: return 0
+        }
+    }
+}
+
 public extension Profile {
+    /// The room this profile needs before it will be attempted, given how the ceiling was measured.
+    ///
+    /// The ceiling applies to the **charged footprint plus headroom, never to the peak**: charging a
+    /// device for clean file-backed pages it can evict and re-read would refuse phones that would
+    /// have run the profile perfectly well (architecture B23).
+    ///
+    /// The arithmetic is `footprint/1000*permille + footprint%1000*permille/1000` rather than the
+    /// obvious multiply — integer, in that order, to match `arivu_profile_fits` bit for bit and to
+    /// keep a large footprint from overflowing on the way through.
+    func requiredAvailableBytes(_ source: MemorySource) -> UInt64 {
+        let permille = UInt64(source.headroomPermille)
+        guard permille != 0 else { return 0 }
+        let footprint = footprintBytes
+        return footprint / 1000 * permille + footprint % 1000 * permille / 1000
+    }
+
     /// "Can this device run this profile", answered from measured numbers only.
-    /// `availableMemoryBytes == 0` means "not measured" and is not a failure — on Android there is
-    /// no equivalent reading, and on iOS a transient value must never condemn a device (design.md §5.4).
-    func fits(_ device: DeviceFacts, availableMemoryBytes: UInt64 = 0) -> ProfileFit {
+    ///
+    /// A `memorySource` of `.unmeasured` — or an `availableMemoryBytes` of 0 — skips the ceiling
+    /// check entirely rather than guessing one: on Android there is no equivalent reading, and on
+    /// iOS a transient value must never condemn a device (design.md §5.4). The checks run in the
+    /// order leaves/BRIEF.md lists them and the first failure wins, so the user is told which one.
+    ///
+    /// Mirrors `arivu_profile_fits`; `CoreParityTests.fitMatchesCore` runs both over the same inputs.
+    func fits(_ device: DeviceFacts,
+              availableMemoryBytes: UInt64 = 0,
+              memorySource: MemorySource = .unmeasured) -> ProfileFit {
         if let problem = validationError { return .invalidProfile(problem) }
         if !device.arm64 { return .noArm64 }
         if device.lowRamFlagged { return .lowRamDevice }
         if device.totalRamBytes < minTotalRamBytes {
             return .totalRam(actual: device.totalRamBytes, required: minTotalRamBytes)
         }
-        if availableMemoryBytes > 0 && availableMemoryBytes < estimatedPeakBytes {
-            return .availableMemory(actual: availableMemoryBytes, required: estimatedPeakBytes)
+        let required = requiredAvailableBytes(memorySource)
+        if required > 0 && availableMemoryBytes > 0 && availableMemoryBytes < required {
+            return .availableMemory(actual: availableMemoryBytes, required: required)
         }
         if device.freeStorageBytes < minFreeStorageBytes {
             return .storage(actual: device.freeStorageBytes, required: minFreeStorageBytes)
@@ -151,7 +233,10 @@ public extension Profile {
     /// The first profile in `candidates` that fits, richest first; `nil` if none does.
     /// The candidate list is a product decision; this is only the arithmetic (C11).
     static func select(from candidates: [Profile], for device: DeviceFacts,
-                       availableMemoryBytes: UInt64 = 0) -> Int? {
-        candidates.firstIndex { $0.fits(device, availableMemoryBytes: availableMemoryBytes) == .ok }
+                       availableMemoryBytes: UInt64 = 0,
+                       memorySource: MemorySource = .unmeasured) -> Int? {
+        candidates.firstIndex {
+            $0.fits(device, availableMemoryBytes: availableMemoryBytes, memorySource: memorySource) == .ok
+        }
     }
 }

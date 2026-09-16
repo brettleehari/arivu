@@ -59,11 +59,28 @@ public enum DeviceMemory {
     /// room there is right now. Re-read on every cold start rather than cached across launches.
     public static func physicalBytes() -> UInt64 { ProcessInfo.processInfo.physicalMemory }
 
-    /// Is there room to create a context right now? `nil` where the platform cannot say, which is
-    /// treated as "go ahead and try" — the allocation failing is itself an answer, and it produces
-    /// `load_failed_low_memory` rather than a guess.
-    public static func hasRoomForContext(_ required: UInt64 = Policy.minAvailableMemoryForContextBytes) -> Bool? {
+    /// How good this platform's available-memory number is, so the arithmetic can demand the right
+    /// headroom over it instead of treating every platform's reading as equally trustworthy.
+    ///
+    /// `.probed` only where `os_proc_available_memory()` actually answered. Everywhere else —
+    /// macOS, or an iOS reading of zero — `.unmeasured`, which is the honest answer and the one that
+    /// makes the ceiling check stand down rather than invent a limit (architecture B23).
+    public static func memorySource() -> MemorySource {
+        availableBytes() != nil ? .probed : .unmeasured
+    }
+
+    /// Is there room to create a context for `profile` right now? `nil` where the platform cannot
+    /// say, which is treated as "go ahead and try" — the allocation failing is itself an answer, and
+    /// it produces `load_failed_low_memory` rather than a guess.
+    ///
+    /// The requirement comes from the profile's charged footprint plus the headroom its measurement
+    /// quality earns (`Profile.requiredAvailableBytes`), not from a flat constant: a profile with a
+    /// bigger context must raise this number by itself, or the check silently stops matching what
+    /// the app is about to allocate.
+    public static func hasRoomForContext(for profile: Profile) -> Bool? {
         guard let available = availableBytes() else { return nil }
+        let required = profile.requiredAvailableBytes(memorySource())
+        guard required > 0 else { return nil }
         return available >= required
     }
 

@@ -74,8 +74,10 @@ public enum Policy {
     public static let minTotalRamBytes: UInt64 = 3_543_348_019   // 3.3 GiB, shown as "3.5 GB"
     public static let minFreeStorageBytes: UInt64 = 268_435_456  // 256 MB
 
-    /// What one context needs before the engine will try to create it. `os_proc_available_memory()`
-    /// is a reading of this second, so it gates a *load attempt* and never the device
-    /// (leaves/design.md §5.4). KV @2048 q8_0 ≈ 115 MB + compute buffer ≈ 28 MiB + headroom.
-    public static let minAvailableMemoryForContextBytes: UInt64 = 350_000_000
+    // What one context needs before the engine will try to create it is NOT a constant here any
+    // more. It was `minAvailableMemoryForContextBytes = 350_000_000`, a flat number unconnected to
+    // the profile the app was about to load, so raising n_ctx would have left the check guarding the
+    // wrong size. It now comes from `Profile.requiredAvailableBytes(_:)` — the charged footprint
+    // plus the headroom the measurement quality earns — which is the same arithmetic
+    // `arivu_profile_fits` applies in the core (architecture B23; leaves/design.md §5.4).
 }

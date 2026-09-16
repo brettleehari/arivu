@@ -228,7 +228,7 @@ public actor InferenceController {
 
         // Ask before allocating, where the platform can say. A context that cannot be created is a
         // different screen from one that failed for any other reason (leaves/design.md §7).
-        if DeviceMemory.hasRoomForContext() == false {
+        if DeviceMemory.hasRoomForContext(for: profile) == false {
             throw ArivuEngineError.contextCreateFailed("not enough memory available for a context")
         }
         try await engine.ensureContext(ContextParameters(profile: profile,

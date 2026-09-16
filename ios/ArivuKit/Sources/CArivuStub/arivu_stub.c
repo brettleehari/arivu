@@ -288,10 +288,34 @@ bool arivu_profile_has(const arivu_profile * profile, arivu_capability cap) {
     return profile && (profile->capabilities & (uint32_t) cap) != 0;
 }
 
+// The memory model, in the two halves a ceiling charges separately (architecture B23). Present here
+// only so the stub keeps its promise to implement every symbol in arivu.h — these three were
+// missing, which meant the Swift wrapper could not so much as *reference* them without failing to
+// link against the fake core. The arithmetic mirrors core/src/profile.cpp; the numbers it is given
+// by arivu_default_profile() above are zeros, so nothing here stands in for a measurement.
+uint64_t arivu_profile_mapped_bytes(const arivu_profile * profile) {
+    return profile ? profile->model_bytes : 0;
+}
+
+uint64_t arivu_profile_footprint_bytes(const arivu_profile * profile) {
+    if (!profile) return 0;
+    const uint64_t kv = profile->kv_bytes_per_token * (uint64_t) (profile->n_ctx > 0 ? profile->n_ctx : 0);
+    const uint64_t repacked = profile->repack ? profile->model_bytes : 0u;
+    return repacked + kv + profile->compute_buffer_bytes + profile->runtime_overhead_bytes;
+}
+
 uint64_t arivu_profile_estimated_peak_bytes(const arivu_profile * profile) {
     if (!profile) return 0;
-    return profile->model_bytes + profile->kv_bytes_per_token * (uint64_t) profile->n_ctx
-         + profile->compute_buffer_bytes + profile->runtime_overhead_bytes;
+    return arivu_profile_mapped_bytes(profile) + arivu_profile_footprint_bytes(profile);
+}
+
+uint32_t arivu_headroom_permille(arivu_memory_source source) {
+    switch (source) {
+        case ARIVU_MEM_PROBED:     return 1400;
+        case ARIVU_MEM_INFERRED:   return 1250;
+        case ARIVU_MEM_UNMEASURED: return 0;
+    }
+    return 0;
 }
 
 arivu_profile_check arivu_profile_fits(const arivu_profile * profile, const arivu_device * device) {
@@ -372,7 +396,6 @@ arivu_prompt_result arivu_prompt_builder_build(arivu_prompt_builder * builder,
 // The real rule, implemented for real: a test compares the Swift streaming buffer against it.
 size_t arivu_utf8_complete_prefix(const char * bytes, size_t len) {
     if (!bytes || len == 0) return 0;
-    size_t i = len;
     // Walk back over continuation bytes to the start of the last sequence.
     size_t start = len;
     size_t back = 0;

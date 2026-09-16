@@ -58,6 +58,10 @@ void set_err(char * buf, size_t len, const std::string & msg) {
 arivu::Engine * as_engine(arivu_engine * e) { return reinterpret_cast<arivu::Engine *>(e); }
 const arivu::Engine * as_engine(const arivu_engine * e) { return reinterpret_cast<const arivu::Engine *>(e); }
 
+int32_t count_with_engine(const char * utf8, size_t len, void * user_data) {
+    return arivu_count_tokens(reinterpret_cast<const arivu_engine *>(user_data), utf8, len);
+}
+
 arivu::ContextConfig to_config(arivu_context_params p) {
     arivu::ContextConfig cfg;
     cfg.n_ctx = p.n_ctx;
@@ -71,25 +75,8 @@ arivu::ContextConfig to_config(arivu_context_params p) {
 
 extern "C" {
 
-arivu_context_params arivu_default_context_params(void) {
-    // Mirrors the shipped profile; the app layer overrides per device (spine: C8, C11).
-    arivu_context_params p;
-    p.n_ctx = 2048;
-    p.n_batch = 512;
-    p.n_threads = 4;
-    p.kv_q8_0 = true;
-    p.repack = false;
-    return p;
-}
-
-arivu_sampling_params arivu_default_sampling_params(void) {
-    arivu_sampling_params p;
-    p.temperature = 0.7f;
-    p.top_k = 20;
-    p.top_p = 0.8f;
-    p.seed = 0xA417;
-    return p;
-}
+// arivu_default_context_params / arivu_default_sampling_params live in profile.cpp: they are
+// the shipped profile's numbers, and nothing about them needs llama.cpp.
 
 arivu_engine * arivu_engine_create(void) {
     install_log_hook_once();
@@ -100,6 +87,7 @@ void arivu_engine_free(arivu_engine * engine) { delete as_engine(engine); }
 
 bool arivu_load_model_fd(arivu_engine * engine, int fd, uint64_t offset, uint64_t length,
                          bool repack, char * err_buf, size_t err_len) {
+    if (engine == nullptr) { set_err(err_buf, err_len, "no engine"); return false; }
     std::string err;
     const bool ok = as_engine(engine)->load_model_fd(fd, offset, length, repack, &err);
     if (!ok) set_err(err_buf, err_len, err);
@@ -108,34 +96,46 @@ bool arivu_load_model_fd(arivu_engine * engine, int fd, uint64_t offset, uint64_
 
 bool arivu_load_model_path(arivu_engine * engine, const char * path, bool repack,
                            char * err_buf, size_t err_len) {
+    if (engine == nullptr) { set_err(err_buf, err_len, "no engine"); return false; }
+    if (path == nullptr) { set_err(err_buf, err_len, "no model path"); return false; }
     std::string err;
     const bool ok = as_engine(engine)->load_model_path(path, repack, &err);
     if (!ok) set_err(err_buf, err_len, err);
     return ok;
 }
 
-bool arivu_has_model(const arivu_engine * engine) { return as_engine(engine)->has_model(); }
-void arivu_free_model(arivu_engine * engine) { as_engine(engine)->free_model(); }
+bool arivu_has_model(const arivu_engine * engine) { return engine != nullptr && as_engine(engine)->has_model(); }
+void arivu_free_model(arivu_engine * engine) { if (engine != nullptr) as_engine(engine)->free_model(); }
 
 bool arivu_ensure_context(arivu_engine * engine, arivu_context_params params, char * err_buf, size_t err_len) {
+    if (engine == nullptr) { set_err(err_buf, err_len, "no engine"); return false; }
     std::string err;
     const bool ok = as_engine(engine)->ensure_context(to_config(params), &err);
     if (!ok) set_err(err_buf, err_len, err);
     return ok;
 }
 
-bool arivu_has_context(const arivu_engine * engine) { return as_engine(engine)->has_context(); }
-void arivu_free_context(arivu_engine * engine) { as_engine(engine)->free_context(); }
-int32_t arivu_n_ctx(const arivu_engine * engine) { return as_engine(engine)->n_ctx(); }
+bool arivu_has_context(const arivu_engine * engine) { return engine != nullptr && as_engine(engine)->has_context(); }
+void arivu_free_context(arivu_engine * engine) { if (engine != nullptr) as_engine(engine)->free_context(); }
+int32_t arivu_n_ctx(const arivu_engine * engine) { return engine != nullptr ? as_engine(engine)->n_ctx() : 0; }
 
 int32_t arivu_count_tokens(const arivu_engine * engine, const char * utf8, size_t len) {
-    return as_engine(engine)->count_tokens(std::string(utf8, len));
+    if (engine == nullptr || (utf8 == nullptr && len > 0)) return -1;
+    return as_engine(engine)->count_tokens(std::string(utf8 != nullptr ? utf8 : "", len));
 }
 
 arivu_stats arivu_generate(arivu_engine * engine, const char * prompt_utf8, size_t prompt_len,
                            int32_t max_new_tokens, arivu_sampling_params sampling,
                            arivu_piece_fn on_piece, void * user_data,
                            char * err_buf, size_t err_len) {
+    arivu_stats out;
+    if (engine == nullptr || (prompt_utf8 == nullptr && prompt_len > 0)) {
+        set_err(err_buf, err_len, "no engine");
+        out.stop = ARIVU_STOP_ERROR;
+        out.prompt_tokens = out.reused_tokens = out.generated = 0;
+        out.prefill_ms = out.decode_ms = out.first_token_ms = 0;
+        return out;
+    }
     arivu::Sampling s;
     s.temperature = sampling.temperature;
     s.top_k = sampling.top_k;
@@ -149,7 +149,6 @@ arivu_stats arivu_generate(arivu_engine * engine, const char * prompt_utf8, size
         });
     if (!st.error.empty()) set_err(err_buf, err_len, st.error);
 
-    arivu_stats out;
     out.stop = (arivu_stop_reason) st.stop;
     out.prompt_tokens = st.prompt_tokens;
     out.reused_tokens = st.reused_tokens;
@@ -160,7 +159,7 @@ arivu_stats arivu_generate(arivu_engine * engine, const char * prompt_utf8, size
     return out;
 }
 
-void arivu_cancel(arivu_engine * engine) { as_engine(engine)->request_cancel(); }
+void arivu_cancel(arivu_engine * engine) { if (engine != nullptr) as_engine(engine)->request_cancel(); }
 
 void arivu_memory_kb(int64_t * rss_kb, int64_t * peak_kb) {
     int64_t rss = -1;
@@ -186,7 +185,7 @@ void arivu_memory_kb(int64_t * rss_kb, int64_t * peak_kb) {
 }
 
 int64_t arivu_compute_buffer_kib(const arivu_engine * engine) {
-    return as_engine(engine)->has_context() ? g_compute_buffer_kib.load() : -1;
+    return arivu_has_context(engine) ? g_compute_buffer_kib.load() : -1;
 }
 
 void arivu_set_log_fn(arivu_log_fn fn, void * user_data) {
@@ -194,6 +193,16 @@ void arivu_set_log_fn(arivu_log_fn fn, void * user_data) {
     std::lock_guard<std::mutex> lock(g_log_mutex);
     g_log_fn = fn;
     g_log_ud = user_data;
+}
+
+// spine: C7, C11 — the prompt builder is shared logic (src/prompt.cpp); this is only the
+// factory that lets it count tokens with the engine's own tokenizer instead of a callback.
+arivu_prompt_builder * arivu_prompt_builder_create_for_engine(const char * system_prompt,
+                                                              int32_t n_ctx, int32_t reply_reserve,
+                                                              const arivu_engine * engine) {
+    if (engine == nullptr) return nullptr;
+    return arivu_prompt_builder_create(system_prompt, n_ctx, reply_reserve, count_with_engine,
+                                       const_cast<arivu_engine *>(engine));
 }
 
 const char * arivu_version(void) { return "0.1.0"; }

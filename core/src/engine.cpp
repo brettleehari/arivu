@@ -33,21 +33,7 @@ llama_model_params model_params(bool use_repack) {
 
 }  // namespace
 
-size_t utf8_complete_prefix(const char * buf, size_t len) {
-    // Walk back from the end over at most 3 continuation bytes to find a lead byte.
-    size_t i = len;
-    size_t back = 0;
-    while (i > 0 && back < 4) {
-        unsigned char c = (unsigned char) buf[i - 1];
-        if ((c & 0xC0) != 0x80) {
-            size_t need = (c < 0x80) ? 1 : ((c & 0xE0) == 0xC0) ? 2 : ((c & 0xF0) == 0xE0) ? 3 : ((c & 0xF8) == 0xF0) ? 4 : 1;
-            return (back + 1 >= need) ? len : i - 1;
-        }
-        --i;
-        ++back;
-    }
-    return len;  // malformed run of continuation bytes: pass through rather than stall
-}
+// utf8_complete_prefix lives in text.cpp: it needs no llama.cpp, so core/tests can link it alone.
 
 Engine::Engine() { backend_init_once(); }
 

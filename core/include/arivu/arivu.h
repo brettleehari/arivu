@@ -103,6 +103,192 @@ void arivu_set_log_fn(arivu_log_fn fn, void * user_data);
 
 const char * arivu_version(void);
 
+// ---------------------------------------------------------------------------------------------
+// Device profiles (spine: C11, C8; MULTIPLATFORM.md appendix "the device tier is a config object").
+//
+// What the app can do is chosen by what the device can carry, never by which platform it is.
+// An 8GB Android phone and an 8GB iPhone get the same profile. Nothing here is #ifdef'd by
+// platform; the platform layer only *measures* the device and hands the numbers in.
+
+typedef enum {
+    ARIVU_CAP_CHAT     = 1u << 0,  // the shipped product: one screen, user's own text
+    ARIVU_CAP_TOOLS    = 1u << 1,  // reserved; SPINE R2 refuses it in iteration-1
+    ARIVU_CAP_LONGFORM = 1u << 2,  // reserved; needs a context a 4GB phone cannot hold
+} arivu_capability;
+
+// A tier, not a platform. Every number is either a decision already made (spine: C8) or a
+// measurement; see leaves/NOTES.md for where the memory figures come from.
+typedef struct {
+    const char * id;            // "compact"
+    const char * model_id;      // "qwen3-0.6b-q4km"
+    uint64_t     model_bytes;   // weights on disk, and the mapped size of the weights
+
+    int32_t  n_ctx;
+    int32_t  n_batch;
+    int32_t  n_threads;
+    bool     kv_q8_0;
+    bool     repack;
+
+    int32_t  reply_reserve_tokens;  // held back for the reply when fitting history
+    int32_t  max_reply_tokens;      // may exceed the reserve; overrun is reported, never silent (C7)
+
+    // Memory model, in bytes. Peak working set is estimated as
+    //   model_bytes + kv_bytes_per_token * n_ctx + compute_buffer_bytes + runtime_overhead_bytes.
+    uint64_t kv_bytes_per_token;
+    uint64_t compute_buffer_bytes;
+    uint64_t runtime_overhead_bytes;
+
+    // Floors the platform gate also enforces before the engine is ever created.
+    uint64_t min_total_ram_bytes;
+    uint64_t min_free_storage_bytes;
+
+    uint32_t capabilities;      // bitmask of arivu_capability
+} arivu_profile;
+
+// How good the available-memory number is. The two platforms are not equally able to answer
+// "how much may this process use before it is killed", and the asymmetry must be visible rather
+// than hidden behind a zero: a platform that does not know says so, and the core then declines to
+// invent a ceiling instead of guessing one (architecture B23).
+typedef enum {
+    ARIVU_MEM_UNMEASURED = 0,  // the platform declined to answer; only the RAM floor applies
+    ARIVU_MEM_INFERRED   = 1,  // derived from total RAM or a device class, not asked of the OS
+    ARIVU_MEM_PROBED     = 2,  // the OS was asked directly (os_proc_available_memory())
+} arivu_memory_source;
+
+// What the platform measured. Android fills this from ActivityManager.MemoryInfo / StatFs;
+// iOS from os_proc_available_memory() and NSFileManager. Zero means "not measured".
+typedef struct {
+    uint64_t total_ram_bytes;
+    uint64_t available_memory_bytes;  // what this process may use before it is killed
+    uint64_t free_storage_bytes;
+    int32_t  performance_cores;
+    bool     arm64;
+    bool     low_ram_flagged;         // Android isLowRamDevice(); false on iOS
+    // Zero-initialising this struct gives ARIVU_MEM_UNMEASURED, which is the safe answer.
+    arivu_memory_source memory_source;
+} arivu_device;
+
+typedef enum {
+    ARIVU_FIT_OK                 = 0,
+    ARIVU_FIT_INVALID_PROFILE    = 1,
+    ARIVU_FIT_NO_ARM64           = 2,
+    ARIVU_FIT_LOW_RAM_DEVICE     = 3,
+    ARIVU_FIT_TOTAL_RAM          = 4,
+    ARIVU_FIT_AVAILABLE_MEMORY   = 5,  // the charged footprint, plus headroom, does not fit
+    ARIVU_FIT_STORAGE            = 6,
+} arivu_fit;
+
+typedef struct {
+    arivu_fit fit;
+    uint64_t  required_bytes;             // what the failing check needed; 0 if it is not a size check
+    uint64_t  actual_bytes;               // what the device reported
+    uint64_t  estimated_peak_bytes;       // whole working set, mapped weights included
+    uint64_t  estimated_footprint_bytes;  // the charged half — what a memory ceiling applies to
+} arivu_profile_check;
+
+// The profile Arivu ships today: Qwen3-0.6B Q4_K_M, 2048 ctx, q8_0 KV, 4 threads, chat only.
+arivu_profile arivu_default_profile(void);
+arivu_context_params arivu_profile_context_params(const arivu_profile * profile);
+
+// Internally consistent? (n_batch <= n_ctx, reserve < n_ctx, a capability the context can carry…)
+// err_buf receives the first problem; pass NULL to ignore.
+bool arivu_profile_valid(const arivu_profile * profile, char * err_buf, size_t err_len);
+bool arivu_profile_has(const arivu_profile * profile, arivu_capability cap);
+
+// The memory model, in two halves, because a memory ceiling charges only one of them
+// (architecture B23):
+//
+//   mapped     clean, file-backed, evictable — the mmap'd weights. Counts against physical RAM
+//              and against the page cache, but iOS jetsam charges phys_footprint, which excludes
+//              clean file-backed pages, so this half does not count against that ceiling.
+//   footprint  dirty and anonymous — KV cache, compute buffer, runtime overhead, and a repacked
+//              copy of the weights if the profile asks for one. This is what gets the app killed.
+//
+// peak = mapped + footprint: the worst case where nothing has been evicted.
+uint64_t arivu_profile_mapped_bytes(const arivu_profile * profile);
+uint64_t arivu_profile_footprint_bytes(const arivu_profile * profile);
+uint64_t arivu_profile_estimated_peak_bytes(const arivu_profile * profile);
+
+// Headroom required over the estimated footprint, in parts per thousand, by how the ceiling was
+// obtained. A probed number needs *more* headroom, not less: os_proc_available_memory() is an
+// instantaneous reading taken at the calmest moment in the app's life, and it shrinks under system
+// pressure. An inferred number is already a conservative derivation. Returns 0 for
+// ARIVU_MEM_UNMEASURED, where no ceiling check is made at all.
+uint32_t arivu_headroom_permille(arivu_memory_source source);
+
+// "Can this device run this profile", answered from measured numbers only. The memory ceiling is
+// applied to the charged footprint plus headroom, never to the peak: charging a device for clean
+// file-backed pages it can evict would refuse phones that would have run the profile perfectly.
+arivu_profile_check arivu_profile_fits(const arivu_profile * profile, const arivu_device * device);
+
+// Picks the first profile in `candidates` that fits, richest first. Returns the index, or -1 if
+// none fits. The candidate list is the caller's product decision; this function is only the
+// arithmetic (spine: C11).
+int32_t arivu_profile_select(const arivu_profile * candidates, size_t n_candidates,
+                             const arivu_device * device);
+
+const char * arivu_fit_name(arivu_fit fit);
+const char * arivu_stop_reason_name(arivu_stop_reason reason);
+
+// ---------------------------------------------------------------------------------------------
+// Prompt building and token-budget truncation (spine: C7, C11).
+//
+// Shared because "keep whole turns" is a product decision, not a platform one
+// (MULTIPLATFORM.md appendix). Qwen3 ChatML, non-thinking mode (decisions.yml D-007).
+// History is dropped oldest-first, whole turns only; the caller is told which turn is the
+// oldest one the model can see, so dropped history is shown and never silently lost.
+
+typedef struct {
+    const char * id;         // stable per turn; keys the token-count cache
+    const char * text;       // UTF-8, not NUL-terminated necessarily
+    size_t       text_len;
+    bool         from_user;
+} arivu_turn;
+
+typedef enum {
+    ARIVU_PROMPT_OK       = 0,
+    ARIVU_PROMPT_TOO_LONG = 1,  // the newest user message alone does not fit
+    ARIVU_PROMPT_INVALID  = 2,  // empty history, newest turn not the user's, or counting failed
+} arivu_prompt_status;
+
+typedef struct {
+    arivu_prompt_status status;
+    int32_t prompt_tokens;    // OK: system + included turns + assistant open
+    int32_t first_included;   // OK: index of the oldest turn the model sees
+    int32_t message_tokens;   // TOO_LONG: what the newest message costs
+    int32_t limit_tokens;     // TOO_LONG: what was available for it
+    size_t  text_len;         // full prompt length in bytes, whatever out_cap was
+    bool    output_truncated; // out_buf was NULL or too small; text_len says how much was needed
+} arivu_prompt_result;
+
+// Counts tokens in UTF-8 text as the model sees it; negative means the count failed.
+typedef int32_t (*arivu_count_fn)(const char * utf8, size_t len, void * user_data);
+
+typedef struct arivu_prompt_builder arivu_prompt_builder;
+
+const char * arivu_assistant_open(void);
+
+arivu_prompt_builder * arivu_prompt_builder_create(const char * system_prompt, int32_t n_ctx,
+                                                   int32_t reply_reserve, arivu_count_fn count,
+                                                   void * user_data);
+// Same, counting with the engine's own tokenizer. The engine must outlive the builder.
+arivu_prompt_builder * arivu_prompt_builder_create_for_engine(const char * system_prompt,
+                                                              int32_t n_ctx, int32_t reply_reserve,
+                                                              const arivu_engine * engine);
+void arivu_prompt_builder_free(arivu_prompt_builder * builder);
+
+// Writes a NUL-terminated prompt into out_buf (pass NULL/0 to measure first; text_len is always
+// set to the full length). Only ARIVU_PROMPT_OK writes anything to out_buf — on TOO_LONG or
+// INVALID the caller has a status to show the user (spine: C7), not a prompt to send.
+arivu_prompt_result arivu_prompt_builder_build(arivu_prompt_builder * builder,
+                                               const arivu_turn * turns, size_t n_turns,
+                                               char * out_buf, size_t out_cap, size_t * out_len);
+
+// Bytes at the front of buf that form complete UTF-8 sequences. Exposed because a platform that
+// does its own streaming buffer must use the same rule the engine uses.
+size_t arivu_utf8_complete_prefix(const char * bytes, size_t len);
+
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

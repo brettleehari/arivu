@@ -1,0 +1,366 @@
+diff --git a/include/llama.h b/include/llama.h
+index 3ab9359..cc09074 100644
+--- a/include/llama.h
++++ b/include/llama.h
+@@ -522,6 +522,18 @@ extern "C" {
+                                    FILE * file,
+               struct llama_model_params   params);
+ 
++    // Load a model from a byte window [offset, offset + length) of an open file descriptor.
++    // Intended for GGUF files stored uncompressed inside another file (e.g. an Android APK asset).
++    // mmap is used when enabled in params. offset must be a multiple of 32 (tensor alignment); it does
++    // not need to be page-aligned.
++    // The caller keeps ownership of fd; it may be closed once this returns.
++    // POSIX only; returns NULL elsewhere.
++    LLAMA_API struct llama_model * llama_model_load_from_fd(
++                                      int    fd,
++                                 uint64_t    offset,
++                                 uint64_t    length,
++              struct llama_model_params      params);
++
+     // Load a model from multiple splits (support custom naming scheme)
+     // The paths must be in the correct order
+     LLAMA_API struct llama_model * llama_model_load_from_splits(
+diff --git a/src/llama-mmap.cpp b/src/llama-mmap.cpp
+index 715a6e3..0f5a61b 100644
+--- a/src/llama-mmap.cpp
++++ b/src/llama-mmap.cpp
+@@ -10,6 +10,8 @@
+ #include <stdexcept>
+ #include <cerrno>
+ #include <algorithm>
++#include <map>
++#include <mutex>
+ 
+ #ifdef __has_include
+     #if __has_include(<unistd.h>)
+@@ -66,6 +68,135 @@ static std::string llama_format_win_err(DWORD err) {
+ 
+ // llama_file
+ 
++// file windows: FILE * -> (fd, offset) so llama_mmap can map the real descriptor
++
++struct llama_file_window {
++    int      fd;
++    uint64_t offset;
++    uint64_t length;
++    uint64_t pos;
++};
++
++static std::mutex & llama_file_window_mutex() {
++    static std::mutex m;
++    return m;
++}
++
++static std::map<FILE *, llama_file_window *> & llama_file_windows() {
++    static std::map<FILE *, llama_file_window *> m;
++    return m;
++}
++
++#if !defined(_WIN32)
++static ssize_t llama_file_window_read_impl(llama_file_window * w, char * buf, size_t n) {
++    if (w->pos >= w->length) {
++        return 0;
++    }
++    n = (size_t) std::min<uint64_t>(n, w->length - w->pos);
++    ssize_t ret;
++    do {
++        ret = pread(w->fd, buf, n, (off_t) (w->offset + w->pos));
++    } while (ret == -1 && errno == EINTR);
++    if (ret > 0) {
++        w->pos += (uint64_t) ret;
++    }
++    return ret;
++}
++
++static int64_t llama_file_window_seek_impl(llama_file_window * w, int64_t off, int whence) {
++    int64_t base;
++    switch (whence) {
++        case SEEK_SET: base = 0; break;
++        case SEEK_CUR: base = (int64_t) w->pos; break;
++        case SEEK_END: base = (int64_t) w->length; break;
++        default: errno = EINVAL; return -1;
++    }
++    if (base + off < 0) {
++        errno = EINVAL;
++        return -1;
++    }
++    w->pos = (uint64_t) (base + off);
++    return (int64_t) w->pos;
++}
++
++static void llama_file_window_forget(llama_file_window * w) {
++    std::lock_guard<std::mutex> lock(llama_file_window_mutex());
++    auto & windows = llama_file_windows();
++    for (auto it = windows.begin(); it != windows.end(); ++it) {
++        if (it->second == w) {
++            windows.erase(it);
++            break;
++        }
++    }
++}
++
++#if defined(__APPLE__) || defined(__ANDROID__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
++static int llama_file_window_read(void * c, char * buf, int n) {
++    return (int) llama_file_window_read_impl((llama_file_window *) c, buf, (size_t) n);
++}
++static fpos_t llama_file_window_seek(void * c, fpos_t off, int whence) {
++    return (fpos_t) llama_file_window_seek_impl((llama_file_window *) c, (int64_t) off, whence);
++}
++static int llama_file_window_close(void * c) {
++    auto * w = (llama_file_window *) c;
++    llama_file_window_forget(w);
++    close(w->fd);
++    delete w;
++    return 0;
++}
++#elif defined(__linux__)
++static ssize_t llama_file_window_read(void * c, char * buf, size_t n) {
++    return llama_file_window_read_impl((llama_file_window *) c, buf, n);
++}
++static int llama_file_window_seek(void * c, off64_t * off, int whence) {
++    int64_t ret = llama_file_window_seek_impl((llama_file_window *) c, (int64_t) *off, whence);
++    if (ret < 0) {
++        return -1;
++    }
++    *off = ret;
++    return 0;
++}
++static int llama_file_window_close(void * c) {
++    auto * w = (llama_file_window *) c;
++    llama_file_window_forget(w);
++    close(w->fd);
++    delete w;
++    return 0;
++}
++#endif
++#endif
++
++FILE * llama_file_window_open(int fd, uint64_t offset, uint64_t length) {
++#if defined(_WIN32)
++    GGML_UNUSED(fd);
++    GGML_UNUSED(offset);
++    GGML_UNUSED(length);
++    errno = ENOTSUP;
++    return nullptr;
++#else
++    int own_fd = dup(fd);
++    if (own_fd == -1) {
++        return nullptr;
++    }
++    auto * w = new llama_file_window{ own_fd, offset, length, 0 };
++    FILE * fp = nullptr;
++#if defined(__APPLE__) || defined(__ANDROID__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
++    fp = funopen(w, llama_file_window_read, nullptr, llama_file_window_seek, llama_file_window_close);
++#elif defined(__linux__)
++    cookie_io_functions_t io = { llama_file_window_read, nullptr, llama_file_window_seek, llama_file_window_close };
++    fp = fopencookie(w, "rb", io);
++#endif
++    if (fp == nullptr) {
++        close(own_fd);
++        delete w;
++        return nullptr;
++    }
++    std::lock_guard<std::mutex> lock(llama_file_window_mutex());
++    llama_file_windows()[fp] = w;
++    return fp;
++#endif
++}
++
+ struct llama_file::impl {
+ #if defined(_WIN32)
+     HANDLE fp_win32;
+@@ -228,6 +359,14 @@ struct llama_file::impl {
+ 
+     impl(FILE * file) : fname("(file*)"), owns_fp(false) {
+         fp = file;
++        {
++            std::lock_guard<std::mutex> lock(llama_file_window_mutex());
++            auto it = llama_file_windows().find(file);
++            if (it != llama_file_windows().end()) {
++                window_fd     = it->second->fd;
++                window_offset = (size_t) it->second->offset;
++            }
++        }
+         seek(0, SEEK_END);
+         size = tell();
+         seek(0, SEEK_SET);
+@@ -394,6 +533,9 @@ struct llama_file::impl {
+     FILE * fp{};
+     size_t size{};
+     bool owns_fp = true;
++
++    int    window_fd     = -1;
++    size_t window_offset = 0;
+ };
+ 
+ llama_file::llama_file(const char * fname, const char * mode, const bool use_direct_io) :
+@@ -424,6 +566,14 @@ int llama_file::file_id() const {
+ #endif
+ }
+ 
++int llama_file::mmap_fd() const {
++    return pimpl->window_fd != -1 ? pimpl->window_fd : file_id();
++}
++
++size_t llama_file::mmap_offset() const {
++    return pimpl->window_offset;
++}
++
+ void llama_file::seek(size_t offset, int whence) const { pimpl->seek(offset, whence); }
+ void llama_file::read_raw(void * ptr, size_t len) { pimpl->read_raw(ptr, len); }
+ #ifdef _WIN32
+@@ -468,31 +618,38 @@ struct llama_mmap::impl {
+ 
+     impl(struct llama_file * file, size_t prefetch, bool numa, const llama_mmap::ranges & lazy_ranges) {
+         size = file->size();
+-        int fd = file->file_id();
++        int fd = file->mmap_fd();
+         int flags = MAP_SHARED;
+         if (numa) { prefetch = 0; }
++        {
++            const size_t page_size = sysconf(_SC_PAGESIZE);
++            const size_t base      = file->mmap_offset();
++            delta = base & (page_size - 1);
++            map_offset = base - delta;
++        }
+ #ifdef __linux__
+-        if (posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL)) {
++        if (posix_fadvise(fd, (off_t) (map_offset + delta), (off_t) size, POSIX_FADV_SEQUENTIAL)) {
+             LLAMA_LOG_WARN("warning: posix_fadvise(.., POSIX_FADV_SEQUENTIAL) failed: %s\n",
+                     strerror(errno));
+         }
+         // MAP_POPULATE would fault in the lazy ranges too
+         if (prefetch && lazy_ranges.empty()) { flags |= MAP_POPULATE; }
+ #endif
+-        addr = mmap(NULL, file->size(), PROT_READ, flags, fd, 0);
+-        if (addr == MAP_FAILED) {
++        void * raw = mmap(NULL, file->size() + delta, PROT_READ, flags, fd, (off_t) map_offset);
++        if (raw == MAP_FAILED) {
+             throw std::runtime_error(format("mmap failed: %s", strerror(errno)));
+         }
++        addr = (char *) raw + delta;
+ 
+         // page-aligned madvise over [beg, end), clamped to the file
+         auto advise = [&](size_t beg, size_t end, int advice, const char * name) {
+             const size_t page_size = sysconf(_SC_PAGESIZE);
+-            beg = beg & ~(page_size - 1);
+-            end = std::min((end + page_size - 1) & ~(page_size - 1), file->size());
++            beg = (beg + delta) & ~(page_size - 1);
++            end = std::min((end + delta + page_size - 1) & ~(page_size - 1), file->size() + delta);
+             if (beg >= end) {
+                 return;
+             }
+-            if (posix_madvise((char *) addr + beg, end - beg, advice)) {
++            if (posix_madvise((char *) addr - delta + beg, end - beg, advice)) {
+                 LLAMA_LOG_WARN("warning: posix_madvise(.., %s) failed: %s\n", name, strerror(errno));
+             }
+         };
+@@ -506,13 +663,14 @@ struct llama_mmap::impl {
+             advise(range.first, range.second, POSIX_MADV_RANDOM, "POSIX_MADV_RANDOM");
+         }
+         if (numa) {
+-            if (posix_madvise(addr, file->size(), POSIX_MADV_RANDOM)) {
++            if (posix_madvise((char *) addr - delta, file->size() + delta, POSIX_MADV_RANDOM)) {
+                 LLAMA_LOG_WARN("warning: posix_madvise(.., POSIX_MADV_RANDOM) failed: %s\n",
+                         strerror(errno));
+             }
+         }
+ 
+-        mapped_fragments.emplace_back(0, file->size());
++        // fragments are tracked in raw mapping coordinates (addr - delta)
++        mapped_fragments.emplace_back(0, file->size() + delta);
+     }
+ 
+     static void align_range(size_t * first, size_t * last, size_t page_size) {
+@@ -529,6 +687,8 @@ struct llama_mmap::impl {
+ 
+     void unmap_fragment(size_t first, size_t last) {
+         int page_size = sysconf(_SC_PAGESIZE);
++        first += delta;
++        last  += delta;
+         align_range(&first, &last, page_size);
+         size_t len = last - first;
+ 
+@@ -540,7 +700,7 @@ struct llama_mmap::impl {
+         GGML_ASSERT(last % page_size == 0);
+         GGML_ASSERT(last > first);
+ 
+-        void * next_page_start = (uint8_t *) addr + first;
++        void * next_page_start = (uint8_t *) addr - delta + first;
+ 
+         if (munmap(next_page_start, len)) {
+             LLAMA_LOG_WARN("warning: munmap failed: %s\n", strerror(errno));
+@@ -565,7 +725,7 @@ struct llama_mmap::impl {
+ 
+     ~impl() {
+         for (const auto & frag : mapped_fragments) {
+-            if (munmap((char *) addr + frag.first, frag.second - frag.first)) {
++            if (munmap((char *) addr - delta + frag.first, frag.second - frag.first)) {
+                 LLAMA_LOG_WARN("warning: munmap failed: %s\n", strerror(errno));
+             }
+         }
+@@ -661,6 +821,8 @@ struct llama_mmap::impl {
+ 
+     void * addr;
+     size_t size;
++    size_t delta      = 0; // addr - start of the page-aligned mapping
++    size_t map_offset = 0; // page-aligned file offset passed to mmap
+ };
+ 
+ llama_mmap::llama_mmap(struct llama_file * file, size_t prefetch, bool numa,
+diff --git a/src/llama-mmap.h b/src/llama-mmap.h
+index cc28c8a..a3b558b 100644
+--- a/src/llama-mmap.h
++++ b/src/llama-mmap.h
+@@ -36,6 +36,11 @@ struct llama_file {
+ 
+     size_t read_alignment() const;
+     bool has_direct_io() const;
++
++    // descriptor and byte offset that mmap should use for this file's content
++    // (differ from file_id() / 0 for windows created by llama_file_window_open)
++    int    mmap_fd() const;
++    size_t mmap_offset() const;
+ private:
+     struct impl;
+     std::unique_ptr<impl> pimpl;
+@@ -77,3 +82,7 @@ private:
+ };
+ 
+ size_t llama_path_max();
++
++// FILE * exposing bytes [offset, offset + length) of fd as a standalone file, starting at position 0.
++// llama_file(FILE *) on the returned pointer maps the underlying fd directly. Close with fclose().
++FILE * llama_file_window_open(int fd, uint64_t offset, uint64_t length);
+diff --git a/src/llama.cpp b/src/llama.cpp
+index ad8e443..029403d 100644
+--- a/src/llama.cpp
++++ b/src/llama.cpp
+@@ -495,6 +495,26 @@ struct llama_model * llama_model_load_from_file_ptr(FILE * file, struct llama_mo
+     return llama_model_load_from_file_impl(nullptr, nullptr, nullptr, path_model, splits, file, params);
+ }
+ 
++struct llama_model * llama_model_load_from_fd(int fd, uint64_t offset, uint64_t length, struct llama_model_params params) {
++    // A file mapping keeps each byte at (file offset mod page size) within its page, so tensor
++    // pointers inherit the window offset's low bits. The CPU backend requires 32-byte alignment.
++    const uint64_t tensor_alignment = 32;
++    if (offset % tensor_alignment != 0) {
++        LLAMA_LOG_ERROR("%s: window offset %llu is not a multiple of %llu; re-align the container entry\n",
++                __func__, (unsigned long long) offset, (unsigned long long) tensor_alignment);
++        return nullptr;
++    }
++    FILE * file = llama_file_window_open(fd, offset, length);
++    if (!file) {
++        LLAMA_LOG_ERROR("%s: failed to open fd %d window [%llu, +%llu): %s\n", __func__, fd,
++                (unsigned long long) offset, (unsigned long long) length, strerror(errno));
++        return nullptr;
++    }
++    struct llama_model * model = llama_model_load_from_file_ptr(file, params);
++    fclose(file);
++    return model;
++}
++
+ void llama_model_save_to_file(const struct llama_model * model, const char * path_model) {
+     llama_model_saver ms(model);
+     ms.add_kv_from_model();

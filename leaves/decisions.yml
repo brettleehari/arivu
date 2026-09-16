@@ -1,0 +1,919 @@
+# Decisions Leaf — Arivu
+# spine_version: 0.1
+# last_triaged: 2026-09-15 (Decisions Leaf: merged proposals from Architecture, Design, GTM, Compliance, Engineering)
+#
+# Every open call lives here, not in chat threads. Each entry names the Spine commitment it touches.
+# SLA: 2 days from raised_at. Adjudication is HUMAN by default: on SLA expiry the entry is flagged
+# "overdue" in Sequencing, not auto-committed. AI adjudication is opt-in per entry
+# (adjudication: ai_on_expiry), with a 24h human override window. No entry here has opted in.
+#
+# status: pending | resolved_human | resolved_ai | overridden
+# blocks_release: true = Arivu cannot reach Play production (or will likely fail review) until Hari decides.
+# implemented_provisionally: code already follows the recommendation, so the build is not blocked;
+#   resolving the other way is the change listed under `if_rejected`.
+# evidence_settles: true = a measurement makes the answer uncontroversial; still needs Hari's rubber stamp.
+# raised_by: D-001..D-017 were raised in the first Engineering pass; D-018+ name the proposing Leaves.
+#
+# ID note: Leaves numbered proposals independently. Architecture's D-018 (signing key) and D-019 (model
+# provenance) keep their numbers because architecture.md, release-and-signing.md, threat-model.md and
+# engineering.md already cite them. Compliance's "D-018" (Report) is now D-021 and its "D-019" (output
+# safeguards) is now D-026; play-policy-checklist.md §1 and §1b still cite the old numbers (owner to fix).
+#
+# ======================================================================================================
+# HARI'S DECISION QUEUE — blocking decisions, in the order they must be made (today: 2026-09-15)
+# ======================================================================================================
+#  1. D-020  Which Play developer account (personal or organisation), and verify it now?
+#            DEADLINE 2026-09-30: unverified developers' apps stop installing in BR, ID, SG, TH.
+#  2. D-001  Package name: io.github.brettleehari.arivu (only if you control arivu.org) or another domain you own?
+#            DEADLINE: before the first Play upload (irreversible; also what verification registers).
+#  3. D-010  Which monitored mailbox receives reports (also the public Play contact and privacy contact)?
+#            DEADLINE: before the first Play upload (tools/release_check.sh fails on the placeholder).
+#  4. D-021  Accept a per-reply Report button (in-app sheet, then email) and amend SPINE §3 to
+#            "Send, Stop, Copy, Report"?  DEADLINE: before the first upload (the build already carries it).
+#  5. D-022  Privacy policy: host it on GitHub Pages, and who owns the text (developer name, repo URL)?
+#            DEADLINE: before the first upload (in-app text ships in the build) and before Console forms.
+#  6. D-023  How long are report emails kept? (proposed 12 months)  DEADLINE: with D-022.
+#  7. D-024  Target audience 18+ only, "appeals to children: No"?  DEADLINE: before Console App content (W19).
+#  8. D-025  Data safety: answer "No data collected", with report emails described in the policy?
+#            DEADLINE: before Console App content (W19).
+#  9. D-018  App signing key: Google-generated (A) or your own via PEPK (B)?
+#            Provisional A at first Internal upload; FINAL after the W18 universal-APK check;
+#            DEADLINE: before the first Open testing or Production release (irreversible after that).
+# 10. D-009  RAM floor for gate layers 2 and 3.  Needs W02 phone numbers first;
+#            DEADLINE: before any track wider than Internal testing (closed test included).
+# 11. D-017  Is 0.6B good enough, and may the listing promise "polite" rewrites meanwhile?
+#            Needs W04 eval for the final call; interim call on the listing copy before W19/W20.
+# ======================================================================================================
+
+- id: D-001
+  title: Package name (applicationId)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1]
+  adjudication: human
+  status: resolved_human
+  decided_at: 2026-09-15
+  decided_by: Hari
+  resolution: >
+    Package name is io.github.brettleehari.arivu. No domain is owned; the GitHub namespace
+    brettleehari is the namespace Hari controls, which is the standard convention for
+    open-source Android apps without a domain. arivu.org, .app, .dev, .io, .in, .me, .net and
+    .xyz were all checked and are registered to others. arivu.fyi ($5.66/yr flat) and
+    arivu.page ($10.81/yr flat) were available and declined in favour of the free namespace.
+    Applied in android/gradle.properties and across the source tree; emulator-verified that
+    JNI symbols still bind after the rename.
+  blocks_release: true
+  deadline: before the first Play upload
+  raised_by: [Engineering]
+  blocks: [W16, W17, W19]
+  context: >
+    Irreversible once uploaded to Play, and iteration-2's shareable APK must carry the same one.
+    Reverse-DNS convention expects a domain you control. arivu.org is registered (since 2012-09-22,
+    registrar PDR Ltd.) — ownership not verified from here. Developer verification registers this package
+    name to Hari's account; register it early against renamed clones (threat-model.md T1, T2). If Hari
+    controls arivu.org it can also host the privacy policy (D-022).
+  options:
+    - "io.github.brettleehari.arivu: only if you control arivu.org"
+    - "com.arivu.app: conventional, but implies arivu.com ownership, which is also unverified"
+    - "a domain you already own, e.g. <yourdomain>.arivu"
+  recommendation: io.github.brettleehari.arivu if Hari confirms control of arivu.org; otherwise a reverse domain he owns.
+  implemented_provisionally: "io.github.brettleehari.arivu (android/gradle.properties arivu.applicationId)"
+  if_rejected: change one property before the first Play upload; nothing else depends on it.
+
+- id: D-002
+  title: "\"Permissions: None\" vs the permissions the settled design needs (CLAUDE.md correction)"
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C3, C10, C6]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, Compliance]
+  context: >
+    A foreground service needs android.permission.FOREGROUND_SERVICE; ACTION_DELETE for our own
+    package needs REQUEST_DELETE_PACKAGES when targetSdk >= 28 (see D-006). Both are "normal"
+    permissions: granted at install, no prompt, no network. AndroidX also adds a signature permission,
+    io.github.brettleehari.arivu.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION (NOTES.md host verification; check_manifest.sh
+    allows exactly these three). POST_NOTIFICATIONS is deliberately NOT requested. Compliance confirms
+    REQUEST_DELETE_PACKAGES is not on Play's sensitive-permission declaration list
+    (play-policy-checklist.md §5, [V]). The core claim (no INTERNET) is intact.
+  related_claude_md_correction: >
+    Compliance (play-policy-checklist.md §9): CLAUDE.md "Distribution" says developer verification
+    enforcement "began 2026-09-30". It BEGINS 2026-09-30 (15 days from today) in Brazil, Indonesia,
+    Singapore, Thailand; global in 2027 [V: developer.android.com/developer-verification]. The action it
+    requires is tracked in D-020. Both corrections go to Hari as one CLAUDE.md edit.
+  options:
+    - amend CLAUDE.md to the enforced allow-list (below)
+    - keep "None" literally (drop the foreground service and ACTION_DELETE)
+  recommendation: >
+    Amend CLAUDE.md to "No network permissions and no runtime-prompted permissions. Allowed:
+    FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, and the AndroidX-generated
+    DYNAMIC_RECEIVER_NOT_EXPORTED signature permission." tools/check_manifest.sh enforces exactly that list.
+    In the same edit, change "enforcement began 2026-09-30" to "enforcement begins 2026-09-30".
+  implemented_provisionally: yes (manifest, check_manifest.sh; in-app privacy text privacy_internet_body describes all three)
+  if_rejected: drop the foreground service (C10 weakens) and use the app-settings page instead of ACTION_DELETE; rewrite privacy_internet_body.
+
+- id: D-003
+  title: "\"Free context immediately in onStop\" vs \"foreground service until the last token\""
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2, C10]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  context: >
+    Taken literally, onStop kills a reply the service exists to protect.
+  evidence: >
+    Emulator (functional only, NOTES.md "Emulator functional run"): app backgrounded 2.5 s into a
+    208-token reply → GenerationService isForeground=true, type shortService; reply completed hidden;
+    "context freed: generation finished while hidden". Architecture B5 found onTimeout(int) (API 34) missing;
+    Engineering now overrides both (engineering.md map) — API 34 timeout still NOT verified.
+  options:
+    - onStop frees the context unless a reply is being written (recommended)
+    - onStop always frees the context (a hidden reply dies)
+  recommendation: >
+    onStop frees the context unless a reply is being written; the service keeps the process alive;
+    when the reply finishes while hidden, the context is freed at once. Service type shortService
+    (~3 min limit, no extra permission). On timeout: cancel if hidden, continue if visible.
+  implemented_provisionally: "InferenceController.onUiHidden / GenerationService"
+  if_rejected: remove the generating exemption in onUiHidden; C10's "survives a brief app switch" no longer holds.
+
+- id: D-004
+  title: 1.7B fallback and the Play asset-pack size limit (premise corrected)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, Compliance]
+  depends_on: [W02, W03, W04]
+  context: >
+    Measured file sizes: Qwen3-0.6B Q4_K_M 396,705,472 B; Qwen3-1.7B Q4_K_M 1,107,409,472 B.
+    ORIGINAL PREMISE (from CLAUDE.md "combined install-time limit is 1GB") WAS WRONG.
+    Correction (Compliance, play-policy-checklist.md §12, [V] support.google.com answer/9859372, checked
+    2026-09-15): base module 500 MB; individual asset pack 1.5 GB; cumulative total for all modules and
+    install-time packs 4 GB. The 1.7B Q4_K_M file fits in one install-time pack. Remaining costs of 1.7B are
+    not size limits: ~1.1 GB download for users who ration data (C1), install-time packs need ~2× their size
+    free at install [V], weights mmap ~2.8× larger against the 800 MB peak RSS target (M3), and tok/s (M2).
+  options:
+    - drop the fallback; 0.6B only
+    - 1.7B Q4_K_M in the install-time pack (now allowed by size) — only if W02 shows >= 8 tok/s and M3 holds
+    - 1.7B at Q3_K_M (~0.9 GB) — quality and speed must be re-benchmarked
+    - fast-follow pack — breaks C1 ("no model download") in spirit
+  recommendation: >
+    Decide at W03 from W02 (tok/s, peak RSS) and W04 (D-017 quality). The size limit no longer rules 1.7B out;
+    speed, memory and download size still might. Correct CLAUDE.md "Build artifact" (1 GB → 1.5 GB per pack,
+    4 GB cumulative).
+  implemented_provisionally: "no (0.6B only is what ships)"
+  if_rejected: n/a until W03.
+
+- id: D-005
+  title: The two ModelSource implementations converge
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, Architecture]
+  depends_on: [W18]
+  context: >
+    Install-time pack assets and base-APK assets are both read via AssetManager.openFd() from inside
+    an APK. The interface is kept (PadInstallTimeModelSource wired, EmbeddedApkModelSource stubbed),
+    but they will differ only in naming and verification, not mechanism. Also: llama.cpp cannot load
+    from fd+offset; tools/llama/patches/0001 adds llama_model_load_from_fd (verified on host).
+    Architecture adds (architecture.md, iteration-2 note): Play's universal APK merges install-time pack
+    assets into assets/, so the PAD source likely works unchanged [B, verify in W18]; a Play-installed copy
+    is split APKs and cannot seed P2P shares (R1 consequence).
+  options:
+    - keep the interface as CLAUDE.md asks (recommended)
+    - collapse to one implementation now
+  recommendation: keep the interface as CLAUDE.md asks; note the convergence; upstream the patch.
+  implemented_provisionally: yes
+  if_rejected: merge the two classes; no user-visible change.
+
+- id: D-006
+  title: ACTION_DELETE may require REQUEST_DELETE_PACKAGES
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C6]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  depends_on: [W10]
+  context: >
+    AOSP's uninstaller refuses callers targeting P+ without REQUEST_DELETE_PACKAGES. Declared; falls
+    back to the app-settings page if the uninstaller cannot be launched.
+  evidence: >
+    Emulator API 36 (NOTES.md, shot-7-incompatible-debug.png, ev-uninstall-dialog.png): debug fake totalMem →
+    incompatible screen → Uninstall → system "Do you want to uninstall this app?". Not a Play-policy issue
+    (play-policy-checklist.md §5 [V]). Still needs an OEM phone (W10).
+  options:
+    - declare REQUEST_DELETE_PACKAGES + settings-page fallback (current)
+    - no permission; always open the app-settings page
+  recommendation: keep as implemented; confirm on the test phone in W10.
+  implemented_provisionally: yes
+  if_rejected: remove the permission; the button opens app settings (one more step for the user, C6).
+
+- id: D-007
+  title: Qwen3 thinking mode off; fixed sampling
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C5, C8, C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  options:
+    - non-thinking mode with Qwen's non-thinking sampling (recommended)
+    - thinking mode
+  recommendation: >
+    Non-thinking mode (empty <think></think>) — thinking burns hundreds of tokens per reply at single-digit
+    tok/s. Qwen's non-thinking sampling: temperature 0.7, top_p 0.8, top_k 20. No repetition penalty
+    (rewrites legitimately repeat the user's words). Revisit only with eval evidence (D-017).
+    Note: the system prompt now also carries a safeguard sentence (+44 tokens; D-026).
+  implemented_provisionally: "Policy.kt"
+  if_rejected: change Policy.kt sampling; re-run W02 (thinking multiplies reply length and time).
+
+- id: D-008
+  title: Thread count heuristic
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  depends_on: [W02, W03]
+  context: >
+    CLAUDE.md says "performance core count (usually 4)". A Helio G85 has 2 big (A75) + 6 little cores;
+    an SD680 has 4 + 4. The implemented heuristic counts non-lowest-frequency cores, clamped to [2,4],
+    so G85 gets 2. W02 sweeps 2, 4 and the heuristic; pick from the numbers. No new evidence (emulator
+    tok/s is explicitly non-representative, NOTES.md).
+  options: [heuristic (non-lowest-frequency cores, clamp 2..4), fixed 4, fixed 2]
+  recommendation: pick from W02 numbers.
+  implemented_provisionally: heuristic
+  if_rejected: one constant in Policy.kt.
+
+- id: D-009
+  title: RAM floor for gate layers 2 and 3
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C6, C2]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before any Play track wider than Internal testing (layer-2 rules do not apply to internal testers)
+  raised_by: [Engineering, Architecture, GTM, Compliance]
+  depends_on: [W02, W03]
+  blocks: [W19]
+  context: >
+    A "4 GB" phone reports ~3.5–3.8 GiB. Set from W02 peak RSS plus headroom; record in NOTES.md and
+    mirror in the Play Console device-exclusion rule. Architecture B9: rules not applied to internal testers,
+    so W21 on internal will not exercise layer 2. Compliance §13: set layer 2 before review so reviewers'
+    small devices are not offered the app, and explain the gate in App access notes. GTM: the listing says
+    "about 4 GB of memory"; if the floor moves above what a 4 GB phone reports, that line changes.
+    Emulator (4 GB AVD, totalMem 4.11 GB) passes the 3.3 GiB floor, which Android displays as "3.5 GB"
+    (CAPTURE-LOG shot 7). Architecture's measured budget with n_outputs_max=1 is ≈ 670 MB peak (D-028).
+  options:
+    - keep 3.3 GiB totalMem if W02 peak RSS leaves headroom on a real 4 GB phone
+    - raise the floor (excludes some "4 GB" phones; listing copy changes)
+  recommendation: decide from W02; mirror the same value in Console layer 2 before the closed test.
+  implemented_provisionally: "3.3 GiB totalMem (android/gradle.properties arivu.minTotalRamBytes)"
+  if_rejected: change one property + the Console rule + store-listing "about 4 GB" line + design.md gate copy.
+
+- id: D-010
+  title: Report-output destination (also Play public contact and privacy contact)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C9]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before the first Play upload
+  raised_by: [Engineering, GTM, Compliance]
+  blocks: [W16, W19]
+  context: >
+    A monitored address for harmful-output reports. Placeholder report@example.invalid in gradle.properties;
+    tools/release_check.sh FAILS on it. GTM (store-listing.md) recommends the same mailbox as the public Play
+    contact email; the in-app privacy policy's Contact section shows this address (design.md About). With
+    D-021 the reports now include the reply text, so the mailbox receives user text: retention is D-023.
+  options:
+    - one dedicated mailbox for reports, Play contact and privacy contact (GTM recommendation)
+    - separate addresses for reports and public contact
+  recommendation: one dedicated, monitored mailbox used in all three places.
+  implemented_provisionally: "no (placeholder)"
+  if_rejected: n/a — any real address unblocks; separate addresses mean two placeholders to fill (listing, policy).
+
+- id: D-011
+  title: One conversation forever?
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C7, C8, C3]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, Architecture]
+  context: >
+    Scope is "message list, input, send, stop, copy". With no way to clear, the list and JSON file grow
+    without bound, and a writing assistant's old pasted text stays on the phone indefinitely. The model
+    side is handled (context divider). Adding "New conversation" is a Spine scope change.
+  evidence_from_privacy_and_report_work: >
+    - The in-app privacy policy (privacy_choices_body, provisional) now tells users to delete the conversation by
+      uninstalling or Android Settings → Apps → Arivu → Storage → Clear storage: a documented but out-of-app path.
+    - privacy_stored_body promises what the file holds, including a per-message `reported` flag (D-021); any clear
+      or cap option must keep that text true (D-022 sync).
+    - Corrupt copies are now pruned to the newest one (engineering.md ChatRepository), closing Architecture B6.
+    - Threat model T13 (shared phone, High likelihood) recommends a "Clear conversation" action before production.
+    - A Clear action touches the same SPINE §3 sentence as D-021; decide both in one Spine amendment.
+  options: [keep as is (delete via system settings), add a single "Clear conversation" action, cap stored history]
+  recommendation: >
+    Architecture (threat-model.md T13): add "Clear conversation" before production. Decisions Leaf: if accepted,
+    fold it into the D-021 SPINE §3 amendment so the Spine changes once.
+  implemented_provisionally: "no (keep as is)"
+  if_rejected: "n/a (current state)"
+
+- id: D-012
+  title: TRIM_MEMORY_COMPLETE is not delivered on Android 14+
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  depends_on: [W08]
+  context: >
+    Since API 34, only TRIM_MEMORY_UI_HIDDEN and TRIM_MEMORY_BACKGROUND are delivered. Implemented:
+    UI_HIDDEN frees context; BACKGROUND or higher frees the model (cheap: mmap'd, reload is a page-cache
+    hit); the 30s idle timer is the primary mechanism. Partly answers CLAUDE.md's open question by
+    platform docs; OEM behaviour still to observe in W08.
+  evidence: >
+    Emulator (NOTES.md): "context freed: idle 30000ms" 30.02 s after the last token; Home + am send-trim-memory
+    BACKGROUND → "context freed: ui hidden", "model freed: trim level 40". Architecture B11: matches.
+  options: [idle timer primary + UI_HIDDEN/BACKGROUND handlers (current), rely on trim callbacks only]
+  recommendation: keep as implemented; confirm on an OEM ROM in W08.
+  implemented_provisionally: yes
+  if_rejected: n/a (the alternative cannot work on API 34+).
+
+- id: D-013
+  title: Model asset alignment — name it *.gguf.so
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, Architecture]
+  depends_on: [W18]
+  context: >
+    Measured (tools/zip_entry_offset.py): a file mmap keeps each byte at its file offset mod page size,
+    so tensor pointers inherit the asset's offset; ggml's CPU backend needs a multiple of 32.
+    - bundletool 1.18.3, asset named .gguf    → stored, offset 696 (mod 32 = 24): NOT mmappable
+    - bundletool 1.18.3, asset named .gguf.so → stored, offset 16384: OK (split); universal APK offset 49152: OK
+    - AGP 9.4 APK packager, .gguf.so          → offset mod 32 = 8: NOT mmappable (zipalign 16384 fixes)
+    bundletool's ModuleSplitSerializer.alignmentForEntry page-aligns any path ending ".so" (Architecture B4:
+    verified in bytecode, unconditional, independent of useLegacyPackaging).
+    Host test loads the model straight out of the bundletool split APK and generates text.
+  evidence: >
+    Emulator confirmation (NOTES.md "Emulator functional run", 2026-09-15): release AAB installed via
+    bundletool build-apks --connected-device --local-testing; model entry asset-slices/modelpack-master.apk
+    STORED at offset 16384 (mod 16384 = 0); the app loads it from split_modelpack.apk and streams replies.
+    This confirms the device path with local bundletool — NOT Play's server-side bundletool (W18).
+  risk: >
+    Relies on a bundletool implementation detail that Play runs server-side. Unknown [B]: whether Play's
+    16 KB / native-code scanners flag a non-ELF .so in assets. Mitigations: runtime check rejects misaligned
+    offsets with a clear error; W18 downloads Play's generated APKs (splits AND the signed universal APK, see
+    D-018) and runs tools/zip_entry_offset.py before every release.
+  options: [".gguf.so naming (current)", "relax ggml host-pointer assert to 4 bytes on aarch64 (patch)", "copy model to internal storage (breaks storage budget)"]
+  recommendation: keep .gguf.so; W18 is mandatory, not optional.
+  implemented_provisionally: yes
+  if_rejected: carry the ggml patch or accept a second 400 MB copy on disk.
+
+- id: D-014
+  title: UI language
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering, GTM, Design]
+  context: >
+    Target markets span Portuguese, Spanish, Indonesian, Filipino, Swahili, Hausa, Yoruba… UI strings are
+    English-only and externalised in strings.xml. The model replies in the user's language (system prompt).
+    Bundle language splits are disabled so one install is complete offline.
+    GTM (launch-plan.md): Wave A countries (NG, GH, KE, UG, ZA, PH) use English for school/office text, so
+    English UI is not a wall there; Wave B (ID, BR) is gated on this decision (D-029). The listing already says
+    "The app's screens are in English". Design's British-spelling rule waits on this (D-031).
+  options: [English only for iteration-1, translate strings for Wave B languages (pt-BR, id) before Wave B]
+  recommendation: English for Wave A; decide translation before Wave B (not a blocker for first release).
+  implemented_provisionally: English only
+  if_rejected: add values-pt-rBR / values-in strings; privacy text (D-022) must be translated too.
+
+- id: D-015
+  title: Weight repacking and KleidiAI
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  depends_on: [W02, W03]
+  context: >
+    Repacked ARM kernels are faster but copy weights into anonymous memory (~400 MB unreclaimable),
+    which breaks the "weights are evictable" memory model. Off by default; W02 runs repack=false,true.
+    KleidiAI also downloads sources at build time (FetchContent disabled, threat-model.md T6). No new evidence.
+  options: [repack off (current), repack on]
+  recommendation: decide from tok/s vs peak RSS in W02.
+  implemented_provisionally: "repack off (Policy.REPACK_WEIGHTS)"
+  if_rejected: flip Policy.REPACK_WEIGHTS; peak RSS budget grows ~400 MB (M3 at risk).
+
+- id: D-016
+  title: compileSdk 37
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  context: >
+    Compose BOM 2026.09.00 requires compiling against API 37. targetSdk stays 36 as settled
+    (Play requires >= 36 from 2026-08-31, play-policy-checklist.md §6 [V]); compileSdk does not change runtime behaviour.
+  options: [compileSdk 37 with Compose BOM 2026.09.00, pin an older Compose BOM and compileSdk 36]
+  recommendation: compileSdk 37.
+  implemented_provisionally: yes
+  evidence_settles: true
+  if_rejected: downgrade the Compose BOM.
+
+- id: D-017
+  title: Is 0.6B good enough at the job the Spine promises? (and what may the listing promise meanwhile)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C5]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: final call after W04; interim listing-copy call before W19/W20 uploads the store listing
+  raised_by: [Engineering, GTM, Compliance]
+  depends_on: [W04]
+  blocks: [W03, W19, W20]
+  merged: "Engineering 'Shot 2 / polite-rewrite promise' merged here."
+  context: >
+    Host greedy runs: "Rewrite more politely: send me the report now." → "Sure! Please find the report now."
+    (misread the task). "Shorten: I am writing to let you know that the meeting has been moved." →
+    "I am writing to let you know the meeting has been moved." Anecdotal, greedy, host — but it is the
+    positioning's central claim. Needs a 30–50 case writing/comprehension eval (EN + two target
+    languages) before W19, and is the real input to 0.6B vs 1.7B alongside tok/s (D-004 now fits by size).
+  evidence: >
+    - Polite rewrite, "Parents must pay the trip money by Friday or the child stays home.": echoed unchanged or
+      near-unchanged 6/6 on the emulator build (CAPTURE-LOG shot 2 a1–a3 + earlier build; NOTES.md), and 3/3 on
+      host with both old and new system prompt — a model trait, not caused by the safeguard sentence.
+    - Backup polite rewrite, "Send me the lesson notes today. You are late again.": polite tone but flips who is
+      late and who sends, 3/3 (CAPTURE-LOG); host 1/3 usable with the new prompt (NOTES.md probe).
+    - Summary of a one-term trial circular said "for the next two school terms" (CAPTURE-LOG shot-4-stopped).
+    - Explain-in-simple-words worked (shot-3-explain.png).
+    - Store listing promises "Rewrite your text so it sounds polite, clear or formal"; the empty state's first
+      example is "Rewrite this to sound polite: …" (strings.xml empty_example_1). No Done screenshot is usable.
+  options:
+    - "interim: keep listing and empty-state wording; GTM swaps the shot-2 example for a task that works (shot 3's)"
+    - "interim: soften now — drop 'polite' from the listing bullet and replace empty_example_1 until W04 passes"
+    - "final (after W04): 0.6B ships as is / 0.6B ships with narrowed 'good at' copy / move to 1.7B (D-004)"
+  recommendation: >
+    Decisions Leaf: interim option 2 (cheap, reversible, keeps the store listing inside its own "no accuracy
+    claims" rule); final call from W04. Do not upload a polite-rewrite screenshot (CAPTURE-LOG says the same).
+  implemented_provisionally: "no (listing and strings still promise polite rewrites)"
+  if_rejected: "if interim option 1: GTM re-shoots shot 2 with another task; the claim stands on no evidence until W04."
+
+# ------------------------------------------------------------------------------------------------------
+# New entries raised 2026-09-15 by the Leaf agents (merged and de-duplicated)
+# ------------------------------------------------------------------------------------------------------
+
+- id: D-018
+  title: App signing key custody — Google-generated key (A) or Hari's own key via PEPK (B)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C3, R1]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: >
+    Provisional choice at the first Internal testing upload (Internal does not lock it); final after the W18
+    universal-APK check; hard limit before the first Open testing or Production release — "Signing keys can only
+    be changed before the app is released to Open testing or Production tracks" [V-doc].
+  raised_by: [Architecture]
+  depends_on: [W48]  # provisional A at W52 internal upload; final at W49
+  blocks: [W49, W19]
+  context: >
+    Under Play App Signing there are two keys; only the app signing key decides whether iteration-2's shared APK
+    updates a Play install. Google does not let you download a Google-generated key; it offers a signed
+    universal APK for distribution elsewhere [V-doc]. A lost upload key can be reset; a lost self-managed app
+    signing key cannot. New apps default to hybrid RSA-4096 + ML-DSA-65 Google-generated keys [V-doc].
+    Full analysis: leaves/architecture/release-and-signing.md §1–§3; threat-model.md T11, T12.
+    Unknowns for A [B]: does Play's universal APK (a) include the install-time model pack, (b) keep the model
+    STORED at offset % 32 == 0, (c) exist for hybrid-signed apps.
+  options:
+    - "A: Google-generated key; the off-Play APK is Play's signed universal APK. Leak risk sits with Google's HSM; off-Play builds only via Console/API."
+    - "B: Hari's own RSA-4096 key uploaded via PEPK; Hari signs off-Play APKs himself. A leak lets attackers ship trusted updates (T12, Critical); loss ends off-Play updates forever."
+  recommendation: >
+    Architecture: A, conditional on W18 showing Play's signed universal APK contains the model stored and
+    aligned, and installs over the Play copy and is updated by it. If W18 fails, switch to B before any Open
+    testing release.
+  implemented_provisionally: "yes (engineering.md release step 6 keeps Play's default; release_check.sh rejects the throwaway test key)"
+  if_rejected: generate the app signing key offline, upload via PEPK before Open testing, three encrypted offline copies, rotation plan (release-and-signing.md §3 rule 4).
+
+- id: D-019
+  title: Model provenance — Unsloth re-quantisation; document now, self-quantise later?
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C4, C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Architecture, Compliance]
+  context: >
+    The GGUF is unsloth/Qwen3-0.6B-GGUF (general.quantized_by = Unsloth), not Qwen's own artifact; the sha256 pin
+    fixes which file, not that it is faithful to Qwen's weights (threat-model.md T7). Compliance licence audit L6:
+    Apache-2.0 §4(b) — the quantiser and the .gguf.so rename were not stated (licence-audit.md §2, §5).
+    Engineering reports licence fixes L1–L10 applied, including the NOTICE line (engineering.md changelog).
+  options:
+    - document provenance now (NOTICE + licences screen); self-quantise from Qwen safetensors with pinned llama.cpp in iteration-2
+    - self-quantise before iteration-1 release
+    - keep as is, undocumented
+  recommendation: document now (done provisionally); self-quantise reproducibly for iteration-2's reproducible-build claim.
+  implemented_provisionally: "yes (NOTICE / assets/licenses/NOTICE.txt per licence-audit.md §6)"
+  if_rejected: "self-quantise now: new sha256, re-run host smoke, W02 and W04 on the new file."
+
+- id: D-020
+  title: Play developer account type, and developer verification before 2026-09-30
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: 2026-09-30 (verification enforcement in Brazil, Indonesia, Singapore, Thailand)
+  raised_by: [Architecture, Compliance, GTM]
+  merged: "Architecture 'account type' + Compliance 'developer verification by 2026-09-30'."
+  blocks: [W19]
+  context: >
+    Verification [V] (play-policy-checklist.md §9): "September 30, 2026 — Regional deadline in Brazil, Indonesia,
+    Singapore, and Thailand" incl. Google Play; global 2027; Play auto-registers Play-distributed packages once the
+    account is verified. Unverified developers' apps are blocked on certified devices in those regions.
+    Closed test [V] (answer/14151465): personal accounts created after 2023-11-13 need >= 12 testers opted in for
+    14 continuous days before applying for production. The organisation-account position is not stated on that
+    page [V: absent]; organisation accounts need a D-U-N-S number. Architecture B12: the 14-day wait is not on the
+    Sequencing critical path (3.5 days). GTM's launch plan assumes a personal account and runs a 20–25 tester closed
+    test either way.
+  options:
+    - "personal account: verify now; production is >= 14 days after 12 testers opt in"
+    - "organisation account: needs D-U-N-S (lead time unknown here); exemption from 12x14 unverified"
+  recommendation: >
+    Decisions Leaf (from launch-plan.md): use whichever account Hari can verify before 2026-09-30, and plan the
+    closed test regardless — the organisation route buys no confirmed time. Start verification today; after the
+    first upload confirm the package shows as registered. Add the 14-day closed test to Sequencing's critical path.
+  implemented_provisionally: "n/a (Console action)"
+  if_rejected: "if verification misses 2026-09-30: closed testers and Wave B (ID, BR) cannot install on certified devices until it completes."
+
+- id: D-021
+  title: Per-reply Report (in-app sheet, then email hand-off) and the SPINE §3 scope amendment
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C9, C3, C8]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before the first Play upload (the build already contains it) and before the first Play review
+  raised_by: [GTM, Compliance, Engineering]
+  merged: "GTM R-AI + Compliance 'D-018' (Report) + Engineering 'per-reply Report is Spine scope'."
+  spine_amendment: "SPINE §3 / CLAUDE.md 'Scope of the single screen': 'Send. Stop. Copy message.' → 'Send, Stop, Copy, Report'."
+  context: >
+    Play AI-Generated Content policy [V] (answer/13985936, 14094294; play-policy-checklist.md §1; store-listing.md
+    R-AI): in-scope text chatbots "must contain in-app user reporting or flagging features that allow users to
+    report or flag offensive content to developers without needing to exit the app". Arivu is in scope. The
+    policy says nothing about per-output flags or on-device models [V: absent]. Without INTERNET (C3) no report
+    can reach the developer unless another app carries it, so the literal text cannot be met offline; the
+    achievable reading is "the flagging happens in-app, on the output; only the transport leaves".
+    Residual risk [U]: a reviewer may still reject the email hand-off.
+  evidence: >
+    Emulator (NOTES.md; evidence/ev-report-*.png): Report on a reply → sheet (4 reason chips, note) → reply marked
+    "Reported" → ACTION_SEND with mailto: selector resolved to Gmail; with Gmail disabled → share-sheet fallback.
+    About's general Report still works. Not yet verified: that Play review accepts it.
+  options:
+    - "(a) email only, from About (the original design): fails 'without exiting' most clearly; two screens and a manual copy from the output"
+    - "(b) Report on every reply → in-app sheet (reason + note, reply attached) → marked Reported locally → email with share-sheet fallback; About entry kept"
+    - "(c) (b) plus a local report log screen"
+  recommendation: >
+    (b), recommended by GTM and Compliance and implemented provisionally by Engineering. (c) adds a screen for no
+    policy gain. A network call is the only fully literal option and breaks C3 — not offered.
+    Follow-ups if accepted: explain the mechanism in Console App access / review notes (Compliance §1); Design
+    reviews sheet wording (design.md: 4 reasons vs Compliance's suggested 5); store listing text still says
+    "report it from the About screen" and "Send / Stop / Copy" and must be updated (GTM).
+  implemented_provisionally: "yes (ui/ReportOutput.kt ReportSheet, ChatScreen Report/Copy row, Message.reported, privacy_report_body)"
+  if_rejected: "(a): remove ReportSheet, Report button and Message.reported; rewrite privacy_report_body; accept higher review risk. (c): add a log screen (another scope change)."
+
+- id: D-022
+  title: Privacy policy — where it is hosted, and who owns the one text (in-app strings and hosted page)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C3, C9]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before the first Play upload (text ships in the build) and before Console Data safety (URL required)
+  raised_by: [GTM, Compliance, Engineering, Architecture]
+  merged: "GTM 'privacy policy host + in-app text' + Engineering 'privacy policy content owner'."
+  depends_on: [D-001, D-010, D-023]
+  blocks: [W19]
+  context: >
+    User Data policy [V] (answer/9888076): a policy URL in Console AND a link or text in the app; public,
+    non-geofenced, not a PDF; must include developer information and privacy contact, data handled, and
+    retention/deletion. Required even when nothing is collected [V] (answer/10787469).
+    State today: leaves/gtm/privacy-policy.html (GTM draft) has placeholders [REPORT_RETENTION], [CONTACT_EMAIL]
+    and others; the in-app text (strings.xml privacy_*, About → Privacy policy, provisional) is Engineering's
+    derivation, updated for per-reply reports, and has no developer name, retention period or repo URL
+    (engineering.md). The two texts ALREADY DIFFER on retention: HTML "We keep them for [REPORT_RETENTION]";
+    in-app "we delete them when we no longer need them".
+    Hosting: Architecture suggests arivu.org if D-001 confirms control, else the repo's GitHub Pages; GTM
+    recommends GitHub Pages. [REPO_URL] is also unfilled in the store listing.
+  options:
+    - "host on GitHub Pages of the public repo, no analytics (GTM)"
+    - "host on arivu.org/privacy (only if Hari controls arivu.org, D-001)"
+    - "ownership: one source text with one owner, the other copy derived and checked for sync"
+  recommendation: >
+    GitHub Pages (GTM), no analytics; in-app text kept (required, readable offline). Decisions Leaf sharpening:
+    name ONE owner for the policy text (proposed: Compliance Leaf owns content, GTM hosts, Engineering mirrors
+    into strings.xml) and treat any divergence as a release-check failure. Hari supplies: developer name as shown
+    on Play, public repo URL, contact (D-010), retention (D-023).
+  implemented_provisionally: "partly (in-app text exists; hosted page and placeholders not done)"
+  if_rejected: "arivu.org: same text, different URL in Console and listing. No in-app text: fails the User Data policy [V]."
+  partly_resolved: >
+    2026-09-15, Hari: host is GitHub Pages on the public repo github.com/brettleehari/arivu
+    (see D-035). Still open: developer name, retention period (D-023), and who owns the policy text.
+
+- id: D-023
+  title: Report email retention period
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C3, C9]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: with D-022 (the policy must state retention/deletion [V])
+  raised_by: [GTM, Engineering]
+  context: >
+    With D-021 a report includes the reply text, the user's note, the app version and whatever the email app
+    adds (sender address). Play requires retention/deletion in the policy [V] (play-policy-checklist.md §3).
+    GTM draft proposes 12 months (privacy-policy.html line 18); in-app text says "when we no longer need them".
+  options: ["12 months, then delete (GTM)", "a shorter fixed period", "no fixed period ('when no longer needed')"]
+  recommendation: 12 months, stated identically in both copies; honour earlier deletion on request (both drafts already say this).
+  implemented_provisionally: "no (in-app text has no period; HTML has a placeholder)"
+  if_rejected: change one sentence in privacy_report_body and privacy-policy.html.
+
+- id: D-024
+  title: "Target audience 18+ only; appeals to children: No"
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C9, C5]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before Console App content forms (W19)
+  raised_by: [GTM, Compliance]
+  merged: "GTM 'target audience 18+' + Compliance 'target audience 18+, appeals to children: No'."
+  blocks: [W19]
+  context: >
+    Families policy [V] (answer/9893335; play-policy-checklist.md §7): including under-13 brings Families
+    requirements and a higher AI-content bar. Persona is an adult (SPINE §2); the model has no output filter
+    (D-026). Declaring 18+ does not stop younger users installing; it sets the review bar. GTM chose category
+    Productivity, not Education, to avoid a children's audience (store-listing.md). IARC rating is separate and
+    may still come out low (§8) without conflict.
+  options: ["18+ only, appeals to children No", "16+ (after D-026 safeguards are evidenced)", "include under-13 (Families policy in full)"]
+  recommendation: "18+ only; appeals to children: No. Revisit 16–17 later with D-026 evidence."
+  implemented_provisionally: "yes (privacy_children_body: 'Arivu is not designed for children')"
+  if_rejected: "16+: listing/policy wording. Under-13: Families policy in full, listing and icon reviewed for child appeal, output-safety bar becomes a hard requirement."
+
+- id: D-025
+  title: Data safety form — "No data collected"; user-started report emails treated as not collected by the app
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C3, C9]
+  adjudication: human
+  status: pending
+  blocks_release: true
+  deadline: before Console App content forms (W19)
+  raised_by: [Compliance]
+  depends_on: [D-022]
+  blocks: [W19]
+  context: >
+    Data safety [V] (answer/10787469; play-policy-checklist.md §2): "'Collect' means transmitting data from your
+    app off a user's device"; sharing exemption for "a specific user-initiated action, where the user reasonably
+    expects the data to be shared". Evidence nothing leaves: no INTERNET, backups off, no analytics/ads SDKs
+    (check_manifest.sh, build.gradle.kts). Interpretation [U]: the report email is sent by the user's email app,
+    on an explicit user action — not collection by Arivu. Android vitals data is collected by Google Play, not the app [U].
+  options:
+    - "answer 'No' to collection and sharing; describe report emails explicitly in the privacy policy (Compliance)"
+    - "declare Messages → emails/other in-app messages: collected, optional, user-initiated, purpose app safety"
+  recommendation: answer "No"; describe report emails in the policy (D-022, D-023).
+  implemented_provisionally: "n/a (Console form); in-app privacy text already describes reports"
+  if_rejected: declare the Messages data type; the listing loses the "No data collected" label (C3's cheapest credibility); policy wording changes.
+
+- id: D-026
+  title: Output safeguards — system-prompt refusal guidance plus a red-team slice in the eval
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C9, C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  review_risk: true
+  raised_by: [Compliance, Engineering]
+  depends_on: [W04]
+  context: >
+    AI-Generated Content policy [V]: apps must prohibit and prevent restricted content (CSAE, content enabling
+    deceptive behaviour e.g. forged official documents, bullying, malicious code) (play-policy-checklist.md §1b).
+    Compliance: review risk, not a hard block. Engineering added a short safeguard sentence to Policy.SYSTEM_PROMPT.
+  evidence: >
+    Host probe, n = 3 seeds, shipped sampling (NOTES.md, a smoke check not an eval): fake national ID card → 1/3
+    refuses both before and after (after: 2/3 vague steps with a warning); "I want to hurt myself" → 3/3 kind, and
+    suggestions of help rose from 1/3 to 3/3. Engineering's reading: the prompt helps self-harm and barely moves
+    refusals at 0.6B; the per-reply Report (D-021) is the real mechanism.
+  options:
+    - "(a) system-prompt sentence only (current)"
+    - "(b) (a) + red-team slice (CSAE, self-harm, weapons, forged official letters) in W04 with results recorded (Compliance)"
+    - "(c) (b) + keyword output filter (not recommended alone: brittle across target languages)"
+  recommendation: (b).
+  implemented_provisionally: "partly (safeguard sentence in Policy.kt; red-team slice not yet in W04)"
+  if_rejected: "(a): accept higher review risk with no recorded evidence. (c): build and maintain a multilingual filter."
+
+- id: D-027
+  title: Code transparency in iteration-1
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C3, C4]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Architecture]
+  depends_on: [W18]
+  context: >
+    bundletool add-transparency signs DEX + native-lib hashes with a separate key only Hari holds; proves Play did
+    not alter code; does not cover assets (the model) [V-doc] (release-and-signing.md §5). Unknown [B]: interaction
+    with extractNativeLibs=true.
+  options: ["adopt in iteration-1 if W18 shows it works in under half a day", "defer to iteration-2 with reproducible builds"]
+  recommendation: adopt if under half a day in W18; otherwise iteration-2 (Architecture).
+  implemented_provisionally: "no"
+  if_rejected: n/a (deferral costs nothing now; a third key to guard if adopted).
+
+- id: D-028
+  title: n_outputs_max = 1 (compute buffer 309 MiB → 27 MiB)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  evidence_settles: true
+  needs: Hari's rubber stamp (resolved by evidence; no human resolution recorded)
+  raised_by: [Architecture, Engineering]
+  context: >
+    Architecture B1: llama.cpp reserves worst-case logits scratch for n_outputs_max = n_batch (512 × 151,936 vocab
+    × 4 B ≈ 297 MiB) that engine.cpp never uses; CLAUDE.md budgets ~80 MB. Worst case peak ≈ 943 MB > 800 MB
+    target (M3); with the fix ≈ 670 MB (architecture.md memory budget).
+  evidence: >
+    NOTES.md round 2: 309.34 MiB → 26.59 MiB on host, smoke ALL PASSED and greedy output identical; 28.09 MiB on
+    the arm64 emulator. Resident size on a phone still W02's job.
+  options: [n_outputs_max = 1 (implemented), default n_outputs_max]
+  recommendation: keep; update CLAUDE.md memory budget (compute buffers ~28 MiB, KV 119 MiB, weights 373 MiB mapped).
+  implemented_provisionally: "yes (engine.cpp)"
+  if_rejected: revert one line; M3 at risk (≈ 943 MB worst case).
+
+- id: D-029
+  title: Launch country waves
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [GTM]
+  depends_on: [D-014, D-017, D-020]
+  context: >
+    launch-plan.md Phase 3: release by country, not percentage. Layer-2 RAM rule is global and must precede Wave A.
+    Wave B countries ID and BR are also verification-enforced from 2026-09-30 (SG, TH are enforced but not in any wave).
+  options:
+    - "A = NG, GH, KE, UG, ZA, PH first; B = ID, BR gated on D-014, D-017 (non-English eval) and verification; C = PE, CO, TZ and others"
+    - "all target countries at once"
+  recommendation: waves as GTM proposes (reversible in Console at any time).
+  implemented_provisionally: "n/a (Console)"
+  if_rejected: all-at-once exposes Portuguese/Indonesian users to an English UI and unevaluated replies.
+
+- id: D-030
+  title: Tapping an example in the empty state fills the input
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C5, C8]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  context: >
+    design.md: examples are plain text today; "small, but a scope question — D-011's sibling". Note D-017: the
+    first example ("Rewrite this to sound polite: …") is the task the model currently fails.
+  options: [plain text (current), tap fills the input (does not send)]
+  recommendation: tap fills the input (Design); pick examples the W04 eval supports.
+  implemented_provisionally: "no"
+  if_rejected: n/a (current state).
+
+- id: D-031
+  title: British vs American spelling until D-014
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  depends_on: [D-014]
+  context: design.md copy rules use British spelling (summarise, licences, maths); store listing follows it.
+  options: [British (current), American]
+  recommendation: keep British (Design).
+  implemented_provisionally: yes
+  if_rejected: sweep strings.xml, store listing, privacy policy.
+
+- id: D-032
+  title: Reply-limit copy tells users to send "continue"
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C7, C5]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  context: >
+    strings.xml stopped_max_tokens: "This reply reached its length limit. Send “continue” to get more."
+    (Policy.MAX_REPLY_TOKENS = 768). No evidence yet that 0.6B resumes rather than restarts on "continue".
+  options: [keep the instruction, neutral label without an instruction]
+  recommendation: keep, and add one "continue" case to W04 to check it resumes (Decisions Leaf).
+  implemented_provisionally: yes
+  if_rejected: one string change.
+
+- id: D-033
+  title: Truncate whole exchanges, not whole turns
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C7]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  context: >
+    Emulator (NOTES.md): "Now make it shorter." can land just below the context divider without the text it
+    refers to, because PromptBuilder keeps whole turns, not user+reply exchanges. The divider is shown, so C7 is
+    not broken, but the follow-up reply is about nothing.
+  options: [keep whole-turn truncation, drop whole exchanges (user message with its reply), keep the newest exchange's referent pinned]
+  recommendation: drop whole exchanges; work item for Engineering plus Design review of divider placement.
+  implemented_provisionally: "no"
+  if_rejected: n/a (current state).
+
+- id: D-034
+  title: ~46 MB native heap stays after the idle context free (M4 reading)
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C2]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  depends_on: [W08]
+  context: >
+    Emulator dumpsys meminfo, NON-REPRESENTATIVE (NOTES.md): native heap PSS 8,708 kB fresh; 54,988 kB 36 s after
+    a reply (context freed, model loaded); 37,436 kB after trim BACKGROUND frees the model. M4 ("≈ Compose baseline,
+    context freed") holds only once the model is also freed. Not a decision until measured on the phone.
+  options: [accept (M4 means context freed), free the model on idle too (reload is a page-cache hit), find and shrink what holds the 46 MB]
+  recommendation: measure on the phone in W08 first; decide only if it matters there.
+  implemented_provisionally: "n/a"
+  if_rejected: n/a.
+
+- id: D-035
+  title: Source hosting and repository visibility
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C4, C3]
+  adjudication: human
+  status: resolved_human
+  blocks_release: false
+  raised_by: [Hari]
+  decided_at: 2026-09-15
+  decided_by: Hari
+  resolution: >
+    Public repository at github.com/brettleehari/arivu from iteration-1. Serves C4 (forkable) and
+    gives a free GitHub Pages URL for the privacy policy Play requires. Model weights, the
+    llama.cpp checkout and build outputs stay out of the repo; they are fetched by tools/.
+  if_rejected: make the repo private and host the privacy policy elsewhere; GitHub Pages on a private repo needs a paid plan.
+

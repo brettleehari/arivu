@@ -1,0 +1,803 @@
+# Sequencing Leaf — Arivu work items
+# spine_version: 0.1
+# last_sequenced: 2026-09-15 (after Engineering round 2 + emulator functional run; decisions.yml D-001..D-034)
+#
+# status: done | in_progress | todo | blocked
+# done means verified to the level stated in `verified`, never more.
+#   Levels (engineering.md): host · unit · build · emulator (functional only, never performance) · phone · play.
+#   Only "phone" counts for M1–M4. Nothing has run on a physical phone yet.
+#
+# Fields
+#   owner          Leaf name (Engineering, Design, GTM, Compliance, Architecture) or "Hari"
+#   estimate_days  working days of the owner's effort (people-time)
+#   elapsed_days   calendar days that pass after the effort and consume nobody (reviews, 14-day closed test)
+#   guess: true    the estimate (or elapsed time) is a guess, not grounded in a measurement or a documented SLA
+#   deadline       ISO date; flagged overdue / at risk against today by tools/sequence.py
+#   deadline_note  a relative deadline ("before the first upload")
+#   uses           exclusive resources besides the owner: phone (the one 4 GB test phone), Engineering (an agent that can drive adb/build)
+#   deps           hard dependencies (scheduled, on the critical path)
+#   soft_deps      should come first but do not block (dotted in the graph, not scheduled against)
+#   skip_if        scenario tags under which the item is not required (used for what-if calendars)
+#   decisions      IDs in leaves/decisions.yml
+#
+# Rendered by tools/sequence.py → leaves/sequencing/SEQUENCING.md
+
+slices:
+  BENCH: CLAUDE.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
+  MVP:   steps 2–8, verified on the physical phone
+  PLAY:  step 9, store submission and release
+
+milestones:
+  internal: W52     # "deployable" for this round: first signed AAB accepted on the Internal testing track
+  production: W19   # production release, Wave A countries
+
+items:
+  # ------------------------------------------------------------------------------------------------
+  # BENCH / MVP — engine, app, on-phone verification
+  # ------------------------------------------------------------------------------------------------
+  - id: W00
+    title: Toolchain, pinned llama.cpp, fd-window load patch
+    slice: BENCH
+    spine: [C1, C2]
+    owner: Engineering
+    status: done
+    verified: host (macOS arm64) — tools/host/run_smoke.sh ALL PASSED
+    estimate_days: 1
+    deps: []
+
+  - id: W01
+    title: Benchmark harness (JNI + llama.cpp, no UI)
+    slice: BENCH
+    spine: [C2]
+    owner: Engineering
+    status: done
+    verified: build — compiles into the androidTest APK, records computeBufferKib; NOT run on a phone
+    estimate_days: 1
+    deps: [W00]
+
+  - id: W02
+    title: Run benchmark on the physical test phone; record NOTES.md
+    slice: BENCH
+    spine: [C2]
+    owner: Engineering
+    status: todo
+    needs: 4 GB Helio G85 / SD680 phone over adb (W41); tools/bench.sh
+    uses: [phone]
+    decisions: [D-008, D-015]
+    estimate_days: 1
+    deps: [W01, W41]
+
+  - id: W04
+    title: Writing and comprehension eval set (EN + 2 target languages), incl. "continue" case
+    slice: BENCH
+    spine: [C5]
+    owner: Engineering
+    status: todo
+    needs: host run is valid for quality (same GGUF, same engine.cpp, shipped sampling); not for speed
+    decisions: [D-017, D-032, D-030]
+    estimate_days: 2
+    guess: true
+    deps: []
+
+  - id: W03
+    title: Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements
+    slice: BENCH
+    spine: [C2, C6]
+    owner: Hari
+    status: todo
+    needs: Engineering drafts the numbers into NOTES.md; Hari resolves the decisions
+    decisions: [D-004, D-008, D-009, D-015]
+    deadline_note: D-009 before any track wider than Internal testing
+    estimate_days: 0.5
+    deps: [W02]
+
+  - id: W65
+    title: D-017 final — is 0.6B good enough; what the listing may promise
+    slice: BENCH
+    spine: [C5]
+    owner: Hari
+    status: todo
+    needs: W04 results. If the answer is "move to 1.7B", W02/W04/W08/W18/W21 re-run on the new file (not modelled)
+    decisions: [D-017, D-004]
+    deadline_note: final call before production; Wave B also needs the non-English result
+    estimate_days: 0.5
+    deps: [W04]
+
+  - id: W05
+    title: Model loading behind ModelSource; PAD path; embedded stub
+    slice: MVP
+    spine: [C1]
+    owner: Engineering
+    status: done
+    verified: host (loads from bundletool split APK at offset 16384) + emulator (loads from split_modelpack.apk, offset 16384)
+    decisions: [D-005, D-013]
+    estimate_days: 1
+    deps: [W00]
+
+  - id: W06
+    title: Streaming generation, cancel, foreground service
+    slice: MVP
+    spine: [C10]
+    owner: Engineering
+    status: done
+    verified: host (cancel/stream smoke) + emulator API 36 (shortService isForeground, hidden reply completes); NOT on a phone
+    decisions: [D-003]
+    estimate_days: 1
+    deps: [W05]
+
+  - id: W07
+    title: Lifecycle rules (lazy context, 30s idle free, onStop, onTrimMemory)
+    slice: MVP
+    spine: [C2]
+    owner: Engineering
+    status: done
+    verified: emulator (logcat — context freed at 30.02 s idle; model freed on trim BACKGROUND); RSS numbers non-representative
+    decisions: [D-003, D-012]
+    estimate_days: 1
+    deps: [W06]
+
+  - id: W08
+    title: Verify idle RSS returns to baseline with dumpsys meminfo (M4)
+    slice: BENCH
+    spine: [C2]
+    owner: Engineering
+    status: todo
+    needs: tools/verify_lifecycle.sh on the phone
+    uses: [phone]
+    decisions: [D-034]
+    estimate_days: 0.5
+    deps: [W07, W02]
+
+  - id: W61
+    title: Native heap investigation — ~46 MB held after idle context free
+    slice: BENCH
+    spine: [C2]
+    owner: Engineering
+    status: todo
+    needs: only if W08's phone reading shows it matters (emulator number only so far)
+    uses: [phone]
+    decisions: [D-034]
+    estimate_days: 0.5
+    guess: true
+    deps: [W08]
+
+  - id: W09
+    title: Compatibility gate layer 3 (runtime) + incompatible screen
+    slice: MVP
+    spine: [C6]
+    owner: Engineering
+    status: done
+    verified: unit (CompatibilityGateTest) + emulator (debug fakeTotalMem → incompatible screen)
+    estimate_days: 0.5
+    deps: []
+
+  - id: W10
+    title: Gate layer 3 on the phone with fake totalMem; ACTION_DELETE works
+    slice: MVP
+    spine: [C6]
+    owner: Engineering
+    status: todo
+    needs: emulator API 36 already passed (ev-uninstall-dialog.png); phone OEM uninstall flow not yet seen
+    uses: [phone]
+    decisions: [D-006]
+    estimate_days: 0.5
+    deps: [W09, W41]
+
+  - id: W11
+    title: Gate layer 1 — manifest filtering, arm64-only bundle
+    slice: MVP
+    spine: [C6, C3]
+    owner: Engineering
+    status: done
+    verified: build — tools/check_manifest.sh, now run automatically after every bundleRelease/bundleDebug
+    decisions: [D-002]
+    estimate_days: 0.5
+    deps: [W15]
+
+  - id: W12
+    title: Single-screen Compose UI
+    slice: MVP
+    spine: [C7, C8, C10]
+    owner: Engineering
+    status: done
+    verified: emulator (Starting → Reading → streaming → done; Stop; Copy; divider; too-long); NOT on a phone
+    estimate_days: 1.5
+    deps: [W06]
+
+  - id: W13
+    title: JSON persistence
+    slice: MVP
+    spine: [C7]
+    owner: Engineering
+    status: done
+    verified: unit (ChatRepositoryTest incl. reported flag, corrupt-copy pruning) + emulator (partial reply survives process death)
+    estimate_days: 0.5
+    deps: []
+
+  - id: W14
+    title: About, licences, report-output intent
+    slice: MVP
+    spine: [C4, C5, C9]
+    owner: Engineering
+    status: done
+    verified: emulator (About, licences, NOTICE, report → Gmail / share fallback); report address still the D-010 placeholder
+    estimate_days: 0.5
+    deps: [W12]
+
+  - id: W15
+    title: AAB with install-time model pack
+    slice: PLAY
+    spine: [C1]
+    owner: Engineering
+    status: done
+    verified: build (model STORED, 16K-aligned in split and universal APKs) + emulator (bundletool --local-testing install, R8 release runs); NOT Play-generated APKs
+    decisions: [D-013]
+    estimate_days: 1
+    deps: [W05]
+
+  - id: W21
+    title: End-to-end on the phone — install bundle, airplane mode, first reply (M1)
+    slice: MVP
+    spine: [C1, C2, C3]
+    owner: Engineering
+    status: todo
+    needs: tools/install_bundle.sh; emulator E2E (W30) passed, phone not yet
+    uses: [phone]
+    estimate_days: 0.5
+    deps: [W15, W12, W41]
+
+  # ------------------------------------------------------------------------------------------------
+  # Done this round (Engineering round 2 and Leaf deliverables) — recorded so deps are truthful
+  # ------------------------------------------------------------------------------------------------
+  - id: W22
+    title: Per-reply Report sheet (provisional pending D-021)
+    slice: MVP
+    spine: [C9, C3, C8]
+    owner: Engineering
+    status: done
+    verified: emulator (sheet → Reported → ACTION_SEND mailto to Gmail; share fallback) + unit (report intent contract); NOT reviewed by Play
+    decisions: [D-021]
+    estimate_days: 1
+    deps: [W12, W14]
+
+  - id: W23
+    title: In-app privacy policy text (provisional, placeholders)
+    slice: MVP
+    spine: [C3, C9]
+    owner: Engineering
+    status: done
+    verified: emulator (About → Privacy policy expands offline); text has no developer name, retention or repo URL; differs from privacy-policy.html
+    decisions: [D-022, D-023]
+    estimate_days: 0.5
+    deps: [W14]
+
+  - id: W24
+    title: Licence/NOTICE fixes L1–L10 plus LicensesTest
+    slice: MVP
+    spine: [C4]
+    owner: Engineering
+    status: done
+    verified: unit (LicensesTest — every shipped .so maps to a licence entry; in-app NOTICE == root NOTICE) + build (release_check licence assets)
+    decisions: [D-019]
+    estimate_days: 0.5
+    deps: [W14]
+
+  - id: W25
+    title: n_outputs_max = 1 — compute buffer 309 → 27 MiB
+    slice: BENCH
+    spine: [C2]
+    owner: Engineering
+    status: done
+    verified: host (26.59 MiB, smoke identical) + emulator (28.09 MiB); peak RSS on a phone unknown (W02)
+    decisions: [D-028]
+    estimate_days: 0.5
+    deps: [W06]
+
+  - id: W26
+    title: GenerationService onTimeout(int) for API 34
+    slice: MVP
+    spine: [C10]
+    owner: Engineering
+    status: done
+    verified: code only — never fired; test is W45
+    decisions: [D-003]
+    estimate_days: 0.25
+    deps: [W06]
+
+  - id: W27
+    title: Upload signing from outside the repo; tools/make_upload_key.sh; release gate rejects test keys
+    slice: PLAY
+    spine: [C1, C3]
+    owner: Engineering
+    status: done
+    verified: build (in-repo keystore path fails the build; release_check FAILs on CN=THROWAWAY); no real key exists yet (W17)
+    decisions: [D-018]
+    estimate_days: 0.5
+    deps: [W15]
+
+  - id: W28
+    title: Supply-chain pins (bundletool, Gradle wrapper sha256, dependency verification); manifest check in bundle tasks
+    slice: PLAY
+    spine: [C3, C4]
+    owner: Engineering
+    status: done
+    verified: build (tamper test fails the build); Maven hashes are trust-on-first-use, not independently checked
+    estimate_days: 0.5
+    deps: [W11]
+
+  - id: W29
+    title: Hardening — loaded flag, recents screenshot off, IME no-learning; 3 bugs fixed (clipped end, Stop in cold start, text lost on process death)
+    slice: MVP
+    spine: [C3, C7, C10]
+    owner: Engineering
+    status: done
+    verified: emulator (each bug re-run; blank recents thumbnail); IME_FLAG_NO_PERSONALIZED_LEARNING reaching Gboard NOT verified (phone)
+    estimate_days: 1
+    deps: [W12, W13]
+
+  - id: W30
+    title: Emulator functional E2E, all scenarios (install via bundletool → gate → uninstall dialog)
+    slice: MVP
+    spine: [C1, C2, C3, C6, C7, C9, C10]
+    owner: Engineering
+    status: done
+    verified: emulator arm64 API 36, functional only; 29 unit tests, lint 0 errors, host smoke, trace --strict 0 gaps
+    estimate_days: 1
+    deps: [W22, W23, W24, W25, W26, W29, W15, W09]
+
+  - id: W31
+    title: Design — store icon, accessibility commitments, copy
+    slice: PLAY
+    spine: [C5, C8]
+    owner: Design
+    status: done
+    verified: delivered (design.md, store-icon-512.png); accessibility commitments NOT yet checked on a phone (W46)
+    decisions: [D-030, D-031]
+    estimate_days: 1
+    deps: []
+
+  - id: W32
+    title: Compliance — Play policy checklist and licence audit
+    slice: PLAY
+    spine: [C3, C4, C9]
+    owner: Compliance
+    status: done
+    verified: delivered (play-policy-checklist.md, licence-audit.md); checklist partly stale after round 2 (W64)
+    estimate_days: 1
+    deps: []
+
+  - id: W20
+    title: GTM — listing copy, privacy policy draft, feature graphic, 4 screenshots, release notes, launch plan
+    slice: PLAY
+    spine: [C5]
+    owner: GTM
+    status: done
+    verified: delivered; screenshots are emulator captures (dev icon in status bar); nothing uploaded; shot 2 dropped (6/6 failed), shot 4 needs recapture
+    decisions: [D-029]
+    estimate_days: 1
+    deps: [W30, W31]
+
+  # ------------------------------------------------------------------------------------------------
+  # Hari's queue — decisions and human-only actions (order follows decisions-brief.md)
+  # ------------------------------------------------------------------------------------------------
+  - id: W33
+    title: "D-020: choose account type; create/confirm Play developer account; start developer verification"
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    decisions: [D-020]
+    deadline: 2026-09-30
+    deadline_note: verification enforced in BR, ID, SG, TH from 2026-09-30
+    estimate_days: 0.5
+    deps: []
+
+  - id: W34
+    title: Developer verification complete (Google's review)
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: personal = ID check; organisation = D-U-N-S first (lead time unknown, could be weeks)
+    decisions: [D-020]
+    deadline: 2026-09-30
+    estimate_days: 0.25
+    elapsed_days: 3
+    guess: true
+    deps: [W33]
+
+  - id: W35
+    title: "D-001: package name (confirm domain control); record resolution in decisions.yml"
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: done
+    verified: "resolved_human 2026-09-15: io.github.brettleehari.arivu; renamed across the source tree; unit tests + emulator run confirm JNI still binds"
+    decisions: [D-001]
+    deadline_note: before the first upload; irreversible
+    estimate_days: 0.25
+    deps: []
+
+  - id: W36
+    title: "D-010: create the monitored report/contact mailbox; record resolution in decisions.yml"
+    slice: PLAY
+    spine: [C9]
+    owner: Hari
+    status: todo
+    decisions: [D-010]
+    deadline_note: before the first upload (release_check.sh fails on the placeholder)
+    estimate_days: 0.25
+    deps: []
+
+  - id: W37
+    title: "D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions, D-011 if yes); bump version, run propagate.py"
+    slice: PLAY
+    spine: [C9, C3, C8]
+    owner: Hari
+    status: todo
+    decisions: [D-021, D-002, D-011]
+    deadline_note: before the first upload (the build already contains Report)
+    estimate_days: 0.5
+    deps: []
+
+  - id: W38
+    title: "D-022 + D-023: privacy policy host and text owner; retention period; supply developer name and repo URL"
+    slice: PLAY
+    spine: [C3, C9]
+    owner: Hari
+    status: todo
+    decisions: [D-022, D-023]
+    deadline_note: before the first upload (in-app text ships) and before the Data safety form
+    estimate_days: 0.25
+    deps: [W35, W36]
+
+  - id: W39
+    title: "D-024 + D-025: target audience 18+; Data safety answer"
+    slice: PLAY
+    spine: [C9, C3]
+    owner: Hari
+    status: todo
+    decisions: [D-024, D-025]
+    deadline_note: before the Console App content forms
+    estimate_days: 0.25
+    deps: [W38]
+
+  - id: W40
+    title: "D-017 interim: drop or keep \"polite\" in the listing and first example"
+    slice: PLAY
+    spine: [C5]
+    owner: Hari
+    status: todo
+    decisions: [D-017, D-030]
+    deadline_note: before the store listing is uploaded
+    estimate_days: 0.25
+    deps: []
+
+  - id: W17
+    title: Generate the upload key (tools/make_upload_key.sh), two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: never an agent; provisional D-018 option A (Play-generated app signing key) at the first upload
+    decisions: [D-018]
+    deadline_note: before the first upload (release_check.sh fails unsigned)
+    estimate_days: 0.5
+    deps: [W27]
+
+  - id: W41
+    title: Physical 4 GB test phone on adb, USB debugging, its Google account ready to join Internal testing
+    slice: BENCH
+    spine: [C2]
+    owner: Hari
+    status: todo
+    needs: surfaced by Sequencing — every phone item waits on this; assumes Hari already owns the phone (if not, add purchase lead time)
+    estimate_days: 0.25
+    guess: true
+    deps: []
+
+  - id: W42
+    title: Public source repo URL exists (privacy policy, listing, GitHub Pages host)
+    slice: PLAY
+    spine: [C4]
+    owner: Hari
+    status: done
+    verified: "github.com/brettleehari/arivu, public, pushed 2026-09-15 (D-035)"
+    needs: surfaced by Sequencing — [REPO_URL] is unfilled in privacy-policy.html and store-listing.md; GitHub Pages needs the repo
+    decisions: [D-022]
+    estimate_days: 0.25
+    guess: true
+    deps: []
+
+  - id: W66
+    title: Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. D-028, D-033)
+    slice: PLAY
+    spine: [C2, C7]
+    owner: Hari
+    status: todo
+    decisions: [D-003, D-005, D-006, D-007, D-012, D-013, D-016, D-019, D-026, D-027, D-028, D-029, D-031, D-032, D-033]
+    estimate_days: 0.25
+    deps: []
+
+  # ------------------------------------------------------------------------------------------------
+  # PLAY — to the first Internal testing upload
+  # ------------------------------------------------------------------------------------------------
+  - id: W43
+    title: Privacy text — one source (Compliance owns), placeholders filled, retention identical in both copies
+    slice: PLAY
+    spine: [C3, C9]
+    owner: Compliance
+    status: todo
+    decisions: [D-022, D-023]
+    estimate_days: 0.25
+    deps: [W38, W42]
+
+  - id: W16
+    title: Apply D-001 package name, D-010 address and the privacy text into the build; rebuild release AAB
+    slice: PLAY
+    spine: [C1, C9, C3]
+    owner: Engineering
+    status: todo
+    needs: arivu.applicationId + arivu.reportEmail in gradle.properties; strings.xml privacy_* mirrored from W43
+    decisions: [D-001, D-010, D-021, D-022]
+    estimate_days: 0.5
+    deps: [W35, W36, W37, W43]
+
+  - id: W51
+    title: tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-signed AAB (exit criterion before upload)
+    slice: PLAY
+    spine: [C1, C3, C9]
+    owner: Engineering
+    status: todo
+    needs: host smoke, unit tests, lint, bundleRelease signed from outside the repo; D-001/D-010 marked resolved in decisions.yml
+    decisions: [D-001, D-010]
+    estimate_days: 0.25
+    deps: [W16, W17, W28]
+
+  - id: W52
+    title: MILESTONE — first Internal testing upload (create app, internal track, testers, upload signed AAB, keep Play App Signing)
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: "[U] whether a new account must finish verification before creating an app — modelled as required"
+    decisions: [D-018, D-020]
+    estimate_days: 0.25
+    deps: [W51, W34, W33]
+
+  # ------------------------------------------------------------------------------------------------
+  # PLAY — from Internal testing to production
+  # ------------------------------------------------------------------------------------------------
+  - id: W18
+    title: "Internal track: download Play split APKs; model STORED, offset % 16384; install from Play on the phone; M1 airplane mode"
+    slice: PLAY
+    spine: [C1, C2]
+    owner: Engineering
+    status: todo
+    uses: [phone]
+    decisions: [D-013]
+    estimate_days: 0.5
+    deps: [W52, W41]
+
+  - id: W48
+    title: "W18 extension: signed universal APK has the model aligned; apksigner cert == Console cert; install-over both ways; code transparency timebox"
+    slice: PLAY
+    spine: [C1, C3]
+    owner: Architecture
+    status: todo
+    uses: [phone, Engineering]
+    decisions: [D-018, D-013, D-027]
+    estimate_days: 0.5
+    guess: true
+    deps: [W18]
+
+  - id: W49
+    title: "D-018 final: confirm Google-generated key (A) or switch to own key via PEPK (B)"
+    slice: PLAY
+    spine: [C1, R1]
+    owner: Hari
+    status: todo
+    decisions: [D-018]
+    deadline_note: before the first Open testing or Production release (locks then)
+    estimate_days: 0.25
+    deps: [W48]
+
+  - id: W50
+    title: Record Play app-signing cert SHA-256 and release provenance (AAB sha256, versionCode, llama.cpp commit, model sha256)
+    slice: PLAY
+    spine: [C3, C4, R1]
+    owner: Engineering
+    status: todo
+    needs: Hari reads the cert from Console → App integrity
+    decisions: [D-018]
+    estimate_days: 0.25
+    deps: [W52]
+
+  - id: W45
+    title: API 34 service timeout test — onTimeout(int) fires and stops after ~3 min
+    slice: MVP
+    spine: [C10]
+    owner: Engineering
+    status: todo
+    needs: API 34 arm64 emulator image (or phone on Android 14) and a > 3 min reply (debug slow-down hook)
+    decisions: [D-003]
+    estimate_days: 0.5
+    guess: true
+    deps: [W26]
+
+  - id: W46
+    title: Phone accessibility pass — TalkBack, 200% text, RTL (design.md commitments)
+    slice: MVP
+    spine: [C8]
+    owner: Design
+    status: todo
+    uses: [phone, Engineering]
+    estimate_days: 0.5
+    guess: true
+    deps: [W21, W37]
+
+  - id: W59
+    title: Red-team eval slice (CSAE, self-harm, weapons, forged official letters) + safeguards review; record results
+    slice: BENCH
+    spine: [C9, C5]
+    owner: Engineering
+    status: todo
+    needs: host run valid for quality; feeds IARC / AI-content answers and D-024 16+ revisit
+    decisions: [D-026]
+    estimate_days: 1
+    guess: true
+    deps: [W04]
+
+  - id: W60
+    title: Truncate whole exchanges, not single turns (+ Design review of divider placement)
+    slice: MVP
+    spine: [C7]
+    owner: Engineering
+    status: todo
+    decisions: [D-033]
+    estimate_days: 1
+    guess: true
+    deps: [W66]
+
+  - id: W53
+    title: Listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 interim wording, REPO_URL, "install on Wi-Fi"
+    slice: PLAY
+    spine: [C5, C9]
+    owner: GTM
+    status: todo
+    decisions: [D-021, D-017]
+    estimate_days: 0.25
+    deps: [W20, W37, W40, W42]
+
+  - id: W47
+    title: Recapture shot 4 (Stop) and final screenshots on the phone (+ shot 8 Report sheet)
+    slice: PLAY
+    spine: [C5, C9]
+    owner: GTM
+    status: todo
+    needs: optional — the 4 approved emulator shots are enough for the listing; phone removes the dev-options icon
+    uses: [phone, Engineering]
+    decisions: [D-021, D-009]
+    estimate_days: 0.5
+    deps: [W21, W16]
+
+  - id: W44
+    title: Privacy policy hosted at a public, non-geofenced URL (GitHub Pages, no analytics)
+    slice: PLAY
+    spine: [C3, C9]
+    owner: GTM
+    status: todo
+    decisions: [D-022]
+    estimate_days: 0.25
+    deps: [W43, W42]
+
+  - id: W54
+    title: "Console: store listing + App content — privacy URL, Data safety, target audience, IARC, AI content / App access notes, ads, FGS check"
+    slice: PLAY
+    spine: [C1, C3, C9]
+    owner: Hari
+    status: todo
+    needs: answers from play-policy-checklist.md §2, §4, §7, §8, §13, §14
+    decisions: [D-021, D-022, D-024, D-025]
+    estimate_days: 0.5
+    deps: [W52, W39, W44, W53]
+    soft_deps: [W64]
+
+  - id: W55
+    title: "Console: device-catalog RAM exclusion rule (gate layer 2) from D-009"
+    slice: PLAY
+    spine: [C6]
+    owner: Hari
+    status: todo
+    decisions: [D-009]
+    deadline_note: before any track wider than Internal testing
+    estimate_days: 0.25
+    deps: [W03, W52]
+
+  - id: W56
+    title: Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: agents cannot recruit humans; launch-plan.md Phase 2
+    estimate_days: 0.5
+    elapsed_days: 5
+    guess: true
+    deps: []
+
+  - id: W57
+    title: Closed test — 12 testers opted in for 14 continuous days (cannot be compressed)
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: "[V] required for personal accounts created after 2023-11-13; organisation exemption unverified; run it either way (D-020). elapsed = 14 days + ~1 day for opt-ins (guess)"
+    decisions: [D-020]
+    skip_if: [org_account_exempt]
+    estimate_days: 0.25
+    elapsed_days: 15
+    deps: [W52, W18, W21, W54, W55, W56, W34]
+
+  - id: W58
+    title: Apply for production access (form answers from the closed test) and wait for Google
+    slice: PLAY
+    spine: [C1]
+    owner: Hari
+    status: todo
+    decisions: [D-020]
+    skip_if: [org_account_exempt]
+    estimate_days: 0.25
+    elapsed_days: 7
+    guess: true
+    deps: [W57]
+
+  - id: W62
+    title: Production candidate — fixes in, versionCode bumped, release_check.sh PASSED, provenance recorded, uploaded
+    slice: PLAY
+    spine: [C1, C3]
+    owner: Engineering
+    status: todo
+    decisions: [D-009, D-017]
+    estimate_days: 0.5
+    deps: [W51, W03, W65, W45, W46, W59]
+    soft_deps: [W60, W61]
+
+  - id: W19
+    title: MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH)
+    slice: PLAY
+    spine: [C1, C3, C6, C9]
+    owner: Hari
+    status: todo
+    needs: Play review of the production release (elapsed is a guess)
+    decisions: [D-018, D-020, D-029]
+    estimate_days: 0.25
+    elapsed_days: 2
+    guess: true
+    deps: [W58, W62, W49, W50, W08, W10, W54, W55, W34]
+
+  - id: W63
+    title: Wave B (ID, BR) then Wave C, by country
+    slice: PLAY
+    spine: [C1, C5]
+    owner: Hari
+    status: todo
+    needs: after production; D-014 UI language and a non-English D-017 result
+    decisions: [D-029, D-014, D-017]
+    estimate_days: 0.25
+    elapsed_days: 7
+    guess: true
+    deps: [W19, W65, W34]
+
+  # ------------------------------------------------------------------------------------------------
+  # Leaf hygiene (non-blocking)
+  # ------------------------------------------------------------------------------------------------
+  - id: W64
+    title: Compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and §3 describe the built Report sheet and in-app policy
+    slice: PLAY
+    spine: [C9]
+    owner: Compliance
+    status: todo
+    decisions: [D-021, D-026]
+    estimate_days: 0.25
+    deps: []

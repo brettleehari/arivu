@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Arivu Feature Graphic</title>
+<!--
+  GTM Leaf · spine_version: 0.1 · spine: C2, C3, C5
+  Google Play feature graphic: exactly 1024 x 500, exported as 24-bit PNG with no alpha (feature-graphic.png).
+  Rules followed (Play Console Help, preview assets, verified 2026-09-15): no store badges, no rankings,
+  testimonials or "Best/#1/Sale"; not a copy of the app icon (the icon is a paper speech bubble on green —
+  this graphic uses a paper ground and no bubble mark).
+  Only system fonts, so the render is offline and repeatable. The phone shows real in-app strings
+  (strings.xml as of 2026-09-15 16:50: app_name, about, empty_title, empty_body, empty_examples_label, empty_example_1..3) and no model output.
+  Key content sits inside a 60 px safe margin because Play may crop or overlay the edges.
+  Render: tools in leaves/gtm/screenshot-shotlist.md §Feature graphic render.
+-->
+<style>
+  :root{
+    --paper:#F5F1E6; --screen:#FBFAF7; --ink:#1B1C1A; --muted:#4A4843; --green:#1F5C4A;
+    --green-soft:#D3E8DF; --chip:#EDEBE5; --amber:#D98E04; --phone:#15201B; --line:#CAC7BF;
+  }
+  html,body{margin:0;padding:0;background:var(--paper)}
+  .fg{width:1024px;height:500px;position:relative;overflow:hidden;background:var(--paper);color:var(--ink);
+      font-family:"Avenir Next","Helvetica Neue",Arial,sans-serif;box-sizing:border-box}
+  .fg *{box-sizing:border-box}
+  /* quiet texture: ruled lines, like a school exercise book */
+  .rules{position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 39px,rgba(31,92,74,.07) 39px 40px)}
+  .margin{position:absolute;top:0;bottom:0;left:44px;width:2px;background:rgba(217,142,4,.35)}
+  .copy{position:absolute;left:84px;top:70px;width:520px}
+  .name{font-weight:700;font-size:30px;letter-spacing:.02em;color:var(--green);margin:0}
+  h1{font-weight:700;font-size:56px;line-height:1.04;margin:18px 0 0;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--green);box-shadow:inset 0 -14px 0 rgba(217,142,4,.28)}
+  .verbs{margin:26px 0 0;font-size:23px;color:var(--muted);font-weight:500}
+  .facts{position:absolute;left:84px;bottom:62px;display:flex;gap:12px}
+  .fact{font-size:18px;font-weight:600;color:var(--green);border:2px solid var(--green);border-radius:999px;padding:6px 16px;background:var(--screen)}
+  /* phone, cropped by the bottom edge */
+  .phone{position:absolute;right:78px;top:48px;width:300px;height:520px;background:var(--phone);border-radius:40px;padding:12px;transform:rotate(3deg)}
+  .screen{background:var(--screen);border-radius:30px;height:100%;overflow:hidden;font-family:Roboto,"Helvetica Neue",Arial,sans-serif}
+  .sbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 4px;font-size:13px;color:var(--muted);font-weight:500}
+  .plane{display:inline-flex;align-items:center;gap:5px}
+  .abar{display:flex;justify-content:space-between;align-items:center;padding:6px 18px 8px;font-size:21px;font-weight:500}
+  .abar span{font-size:14px;color:var(--green);font-weight:600}
+  .empty{padding:18px 20px 0;text-align:center}
+  .empty p.ex{font-weight:600;color:var(--ink);margin-top:10px}
+  .empty h2{font-size:21px;font-weight:500;margin:0}
+  .empty p{font-size:13px;line-height:1.45;color:var(--muted);margin:10px 0 0}
+  .chips{display:grid;gap:6px;justify-items:center;margin-top:14px}
+  .chips span{font-size:11.5px;white-space:nowrap;background:var(--chip);border-radius:8px;padding:5px 9px}
+</style>
+</head>
+<body>
+<div class="fg" role="img" aria-label="Arivu. Writing help that works with no internet. Rewrite, shorten, explain, summarise, draft. Phone in airplane mode showing the Arivu start screen.">
+  <div class="rules"></div><div class="margin"></div>
+
+  <div class="copy">
+    <p class="name">Arivu</p>
+    <h1>Writing help that works with <em>no internet</em></h1>
+    <p class="verbs">Rewrite, shorten, explain, summarise, draft</p>
+  </div>
+  <div class="facts">
+    <span class="fact">Runs on your phone</span>
+    <span class="fact">No account</span>
+  </div>
+
+  <div class="phone" aria-hidden="true">
+    <div class="screen">
+      <div class="sbar">
+        <span>9:41</span>
+        <span class="plane">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#4A4843"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+          Airplane mode
+        </span>
+      </div>
+      <div class="abar">Arivu <span>About</span></div>
+      <div class="empty">
+        <h2>Works with no internet</h2>
+        <p>Arivu helps with text you give it. It can rewrite, shorten, explain, summarise and draft.</p>
+        <p>It runs only on this phone. It is not good at facts, news or numbers, so check anything important.</p>
+        <p class="ex">For example, you can write:</p>
+        <div class="chips">
+          <span>Rewrite this to sound polite: …</span>
+          <span>Explain this paragraph in simple words: …</span>
+          <span>Write a short letter to parents about …</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

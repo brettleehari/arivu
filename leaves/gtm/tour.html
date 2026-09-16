@@ -1,0 +1,182 @@
+<title>Arivu Tour</title>
+<!-- GTM Leaf · spine_version: 0.1 · every claim maps to a Spine commitment (C#) shown on its step -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#E9EEEA; --panel:#F7F9F7; --ink:#15201B; --muted:#56635C; --line:#C9D3CD;
+  --forest:#1F5C4A; --forest-soft:#D3E8DF; --amber:#B86F00; --phone:#101714; --screen:#FBFAF7;
+  --bubble:#EDEBE5; --userbubble:#D3E8DF; --danger:#A33A2E; --ring:#D98E04;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ground:#0E1412; --panel:#151D1A; --ink:#E2EAE5; --muted:#9AA9A1; --line:#2A3631;
+  --forest:#8FCFB6; --forest-soft:#1F4A3C; --amber:#F0B23E; --phone:#050807; --screen:#141513;
+  --bubble:#2A2B28; --userbubble:#1F4A3C; --danger:#F08A7C; --ring:#F0B23E;
+}}
+:root[data-theme="dark"]{
+  --ground:#0E1412; --panel:#151D1A; --ink:#E2EAE5; --muted:#9AA9A1; --line:#2A3631;
+  --forest:#8FCFB6; --forest-soft:#1F4A3C; --amber:#F0B23E; --phone:#050807; --screen:#141513;
+  --bubble:#2A2B28; --userbubble:#1F4A3C; --danger:#F08A7C; --ring:#F0B23E;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font:15px/1.6 var(--body);padding:0 20px}
+.wrap{max-width:1080px;margin:0 auto;padding-block:28px 56px;display:grid;gap:28px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:16px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.brand{font:700 15px var(--display);letter-spacing:.02em;color:var(--forest)}
+h1{font:700 clamp(30px,5vw,50px)/1.02 var(--display);margin:6px 0 0;text-wrap:balance;max-width:17ch}
+.meter{font:500 13px var(--mono);border:1px dashed var(--line);border-radius:6px;padding:10px 14px;display:grid;gap:2px;min-width:210px;background:var(--panel)}
+.meter b{font:500 28px var(--mono);color:var(--amber);font-variant-numeric:tabular-nums}
+.meter span{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:start}
+@media (max-width:760px){.stage{grid-template-columns:1fr}.phone{justify-self:center}}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:4px;counter-reset:s}
+.steps button{all:unset;cursor:pointer;display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 12px;border-radius:8px;width:100%;box-sizing:border-box}
+.steps button::before{counter-increment:s;content:counter(s);font:500 13px var(--mono);color:var(--muted);padding-top:2px}
+.steps button:hover{background:var(--panel)}
+.steps button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.steps button[aria-current="step"]{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+.steps button[aria-current="step"]::before{color:var(--forest)}
+.st{font:600 16px var(--display)}
+.sd{display:none;color:var(--muted);max-width:60ch}
+.steps button[aria-current="step"] .sd{display:block}
+.tag{font:500 11px var(--mono);color:var(--forest);margin-top:4px}
+.nav{display:flex;gap:10px;margin-top:14px;padding-left:12px}
+.nav button{font:600 14px var(--body);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:6px;cursor:pointer}
+.nav button:focus-visible{outline:2px solid var(--ring)}
+/* phone */
+.phone{width:300px;max-width:100%;background:var(--phone);border-radius:34px;padding:12px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+.screen{background:var(--screen);border-radius:24px;height:560px;overflow:hidden;display:flex;flex-direction:column;font-size:13px;color:var(--ink)}
+.sbar{display:flex;justify-content:space-between;padding:8px 16px 4px;font:500 11px var(--mono);color:var(--muted)}
+.abar{display:flex;justify-content:space-between;align-items:center;padding:6px 14px 10px;font:600 17px var(--display)}
+.abar small{font:600 12px var(--body);color:var(--forest)}
+.body{flex:1;overflow:hidden;padding:4px 12px;display:flex;flex-direction:column;gap:8px}
+.b{padding:8px 10px;border-radius:12px;max-width:86%;white-space:pre-wrap}
+.b.u{background:var(--userbubble);align-self:flex-end}
+.b.a{background:var(--bubble);align-self:flex-start}
+.lbl{display:block;font-size:10.5px;color:var(--muted);margin-top:4px}
+.lbl.err{color:var(--danger)}
+.copy{display:block;text-align:right;font-size:11px;font-weight:600;color:var(--forest);margin-top:2px}
+.divider{border-top:1px solid var(--line);text-align:center;font-size:10px;color:var(--muted);padding-top:4px}
+.input{display:flex;gap:8px;padding:10px 12px 14px;align-items:end}
+.field{flex:1;border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--muted);min-height:36px}
+.btn{background:var(--forest);color:var(--screen);border-radius:18px;padding:8px 14px;font-weight:600}
+.btn.o{background:transparent;color:var(--forest);box-shadow:inset 0 0 0 1px var(--forest)}
+.hl{box-shadow:0 0 0 2px var(--ring);border-radius:10px}
+.center{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:18px;text-align:center}
+.center h3{font:700 18px var(--display);margin:0}
+.chip{background:var(--bubble);border-radius:6px;padding:4px 8px;font-size:11px}
+.sheet{padding:14px;display:grid;gap:10px}
+.sheet h4{font:600 13px var(--display);margin:0}
+.sheet p{margin:0;color:var(--muted);font-size:12px}
+.perm{font:400 12px var(--mono);display:grid;gap:4px}
+.perm s{color:var(--danger);text-decoration-thickness:2px}
+.note{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;max-width:80ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">ARIVU · iteration 1</div>
+      <h1>An AI writing helper that never touches your data bundle.</h1>
+    </div>
+    <div class="meter" aria-live="polite">
+      <span>Mobile data used by Arivu</span>
+      <b id="mb">0.0 MB</b>
+      <span>after install · every step</span>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div>
+      <ol class="steps" id="steps"></ol>
+      <div class="nav">
+        <button id="prev" type="button">← Back</button>
+        <button id="next" type="button">Next →</button>
+      </div>
+    </div>
+    <div class="phone" aria-label="Arivu app preview"><div class="screen" id="screen"></div></div>
+  </section>
+
+  <p class="note">The reply in step 3 is real, unedited output captured from the release build on an emulator. Replies in steps 4 and 5 are illustrative of the interaction, not model output. Rewriting quality is not yet evaluated (D-017); in capture, a polite-rewrite request came back unchanged. Speed and memory figures are
+  targets until the benchmark runs on a 4 GB Helio G85 / Snapdragon 680-class phone (work item W02). Model: Qwen3 0.6B, Q4_K_M, 397 MB, Apache-2.0.</p>
+</div>
+
+<script>
+const S = {
+  status:(air)=>`<div class="sbar"><span>09:41</span><span>${air?'✈ airplane mode':'4G · 212 MB left'}</span></div>`,
+  bar:`<div class="abar">Arivu <small>About</small></div>`,
+  input:(stop,hl)=>`<div class="input"><div class="field">Type or paste your text</div><div class="btn ${stop?'o':''} ${hl?'hl':''}">${stop?'Stop':'Send'}</div></div>`
+};
+const steps = [
+  {t:"Install once, from Google Play", c:"C1", d:"One tap. The language model comes inside the install, so there is no second download, no account and nothing to set up. Install on school Wi-Fi; use it at home for free.",
+   s:()=>`${S.status(false)}<div class="sheet"><h4>Arivu</h4><p>Offline writing assistant · Contains the AI model</p>
+     <div class="btn hl" style="justify-self:start">Install</div>
+     <p>No sign-in. No model download after install. No ads.</p>
+     <p style="font-family:var(--mono)">Download size ≈ 400 MB · Wi-Fi recommended</p></div>`},
+  {t:"Switch the data off. It still works.", c:"C2 · C3", d:"The first screen says what Arivu is for and what it is bad at, before anyone types a word.",
+   s:()=>`${S.status(true)}${S.bar}<div class="center"><h3>Works with no internet</h3>
+     <p style="color:var(--muted)">Arivu helps with text you give it. It can rewrite, shorten, explain, summarise and draft.<br><br>It runs only on this phone. It is not good at facts, news or numbers, so check anything important.</p><b style="font-size:11px">For example, you can write:</b>
+     <span class="chip">Rewrite this to sound polite: …</span><span class="chip">Explain this paragraph in simple words: …</span></div>${S.input(false)}`},
+  {t:"Give it your text, get it in plain words", c:"C5", d:"Amaka pastes a stiff paragraph from a school circular. The reply is written on the phone itself. She copies it and pastes it into WhatsApp for parents. This reply is real output from the shipped model (release build, emulator, 2026-09-15). Arivu is small, so read every reply: in the same test it failed a “make this polite” rewrite (D-017).",
+   s:()=>`${S.status(true)}${S.bar}<div class="body">
+     <div class="b u">Explain this paragraph in simple words: Following the review of the timetable, the commencement of the first period shall be adjusted to 8:15 a.m. with effect from the second term…</div>
+     <div class="b a">Here's a simple explanation: After reviewing the timetable, the first period will start at 8:15 a.m. from the second term. Students should be seated before the start of assembly, and any latecomers will be noted.<span class="copy"><span style="margin-right:14px">Report</span><span class="hl" style="padding:0 4px">Copy</span></span></div>
+     </div>${S.input(false)}`},
+  {t:"Stop means stop", c:"C10", d:"Send turns into Stop while a reply is being written. It stops at the next word, even halfway through reading a long paste, and keeps what was written.",
+   s:()=>`${S.status(true)}${S.bar}<div class="body">
+     <div class="b u">Summarise this circular in three points: The school board has reviewed the proposal to change…</div>
+     <div class="b a">• The start of the school day may move to 8:15.<br>• Two schools will try it for one term…</div>
+     </div>${S.input(true,true)}`},
+  {t:"It shows what it has forgotten", c:"C7", d:"A small model can only hold about 2,000 tokens. When older messages fall out, a line says so. Nothing is dropped silently, and a reply cut short says why.",
+   s:()=>`${S.status(true)}${S.bar}<div class="body">
+     <div class="b u">Draft a letter to the district office about the broken roof.</div>
+     <div class="divider hl">Arivu can no longer see the messages above this line</div>
+     <div class="b u">Now make it shorter.</div>
+     <div class="b a">Dear Sir, the classroom roof at our school leaks when it rains…<span class="lbl err">Cut off: this conversation is now too long for Arivu to hold. Its next reply will leave out the oldest messages.</span></div>
+     </div>${S.input(false)}`},
+  {t:"Honest about its limits", c:"C5 · C9", d:"About puts “Not good at” next to “Good at”. A confident wrong answer is the most damaging thing a small model can do, so the app says so plainly. Every reply has a Report button, and the full privacy policy can be read offline.",
+   s:()=>`${S.status(true)}<div class="abar">About Arivu</div><div class="sheet">
+     <h4>Good at</h4><p>Rewriting, shortening, explaining, summarising and drafting text you give it.</p>
+     <h4 class="hl" style="padding:2px 4px">Not good at</h4><p>Facts, news, dates, numbers, maths, medical or legal answers. It can sound sure and still be wrong.</p>
+     <h4>Privacy policy</h4><p>The full policy, readable with no internet.</p>
+     <h4>Report a harmful reply</h4><p>Tap Report under the reply and choose what is wrong. Your email app opens with that reply and your note. Nothing is sent until you send it.</p></div>`},
+  {t:"Private because it can't go online", c:"C3", d:"Not a privacy promise, a missing permission. Arivu has no internet permission, so your words stay on the phone. Conversations are excluded from cloud backup too. A release check fails if any dependency ever adds network access.",
+   s:()=>`${S.status(true)}<div class="abar">App permissions</div><div class="sheet">
+     <div class="perm hl" style="padding:8px">
+       <s>android.permission.INTERNET</s>
+       <s>ACCESS_NETWORK_STATE</s>
+       <span>FOREGROUND_SERVICE</span>
+       <span>REQUEST_DELETE_PACKAGES</span>
+       <span style="color:var(--muted)">…DYNAMIC_RECEIVER_NOT_EXPORTED (AndroidX, app-internal)</span></div>
+     <p>Data safety: no data collected, no data shared.</p>
+     <p>Licences: Apache-2.0 app and model weights, MIT runtime. Anyone may fork it.</p></div>`},
+  {t:"It won't limp along on a weak phone", c:"C6", d:"Play hides Arivu from low-memory phones. If one slips through, the app explains why it won't work and offers to uninstall. There is no “continue anyway”, because a slow, crashing AI app earns one-star reviews for everyone.",
+   s:()=>`${S.status(false)}<div class="center" style="text-align:left;justify-content:flex-start;padding-top:30px"><h3>Arivu can't run well on this phone</h3>
+     <p>This phone has 2.0 GB of memory. Arivu needs at least 3.5 GB.</p>
+     <p style="color:var(--muted)">Arivu runs a language model on the phone itself. That needs more than this phone has. Rather than run slowly or crash, Arivu will not start.</p>
+     <div class="btn hl" style="align-self:flex-start">Uninstall Arivu</div></div>`},
+];
+const list = document.getElementById('steps'), screen = document.getElementById('screen');
+let i = 0;
+steps.forEach((st, n) => {
+  const li = document.createElement('li');
+  li.innerHTML = `<button type="button" id="step-${n}"><span><div class="st">${st.t}</div><div class="sd">${st.d}<div class="tag">Spine ${st.c}</div></div></span></button>`;
+  li.firstChild.addEventListener('click', () => go(n));
+  list.appendChild(li);
+});
+function go(n){
+  i = Math.max(0, Math.min(steps.length - 1, n));
+  list.querySelectorAll('button').forEach((b, k) => k === i ? b.setAttribute('aria-current','step') : b.removeAttribute('aria-current'));
+  screen.innerHTML = steps[i].s();
+  document.getElementById('prev').disabled = i === 0;
+  document.getElementById('next').textContent = i === steps.length - 1 ? 'Start over' : 'Next →';
+}
+document.getElementById('prev').onclick = () => go(i - 1);
+document.getElementById('next').onclick = () => go(i === steps.length - 1 ? 0 : i + 1);
+document.addEventListener('keydown', e => { if (e.key === 'ArrowRight') go(i + 1); if (e.key === 'ArrowLeft') go(i - 1); });
+go(0);
+</script>

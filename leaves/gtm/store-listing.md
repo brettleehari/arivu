@@ -1,10 +1,40 @@
 ---
-spine_version: 0.1
+spine_version: 0.2
 leaf: gtm
 artifact: Google Play store listing, v0.1.0
+scope: Google Play only. The Apple App Store listing is `appstore-listing.md`; the shared argument is `positioning.md`.
 ---
 
-# Store listing — Arivu v0.1.0
+# Store listing — Arivu v0.1.0 (Google Play)
+
+## Reconciled to Spine 0.2 — what iOS changes here, and what it does not
+
+Spine 0.2 puts iOS in scope (R7 withdrawn, C11: one product, two platforms). **Almost nothing in this
+file changes**, which is the point: the Play listing describes the same product it always did, and the
+platform-specific parts of it are exactly the parts that were always Android-specific.
+
+What changed, and only this:
+
+1. **This listing stays Android-only in its wording, and does not mention the other platform.** Apple's
+   metadata rules forbid naming another platform in the App Store listing (Guideline 2.3.10), and the
+   symmetric silence here costs us nothing — the repo and any website carry both. Proposed decision
+   **D-GTM-E**.
+2. **The privacy claim in this listing stays exactly as strong as it is.** "Arivu has no permission to
+   use the internet" is true on Android, provable by the operating system, and checked by
+   `tools/check_manifest.sh` on every build (M5). It does **not** get softened to match iOS, and it does
+   **not** get copied to iOS. `positioning.md` §7 has the iOS wording and the list of banned sentences.
+3. **Three new must-not-claim items** (13–15 below) cover the two-platform traps.
+4. **Two fields now have an Apple counterpart** that must stay consistent even though they are filled in
+   separately: target audience / content rating (see D-GTM-H in `appstore-listing.md`) and the Data
+   safety form versus Apple's App Privacy card. W-GTM-i5 reads all four privacy artefacts side by side
+   before either submission.
+5. **The download size, the RAM floor and the uninstall offer are Android facts.** The App Store listing
+   must not reuse any of the three. They stay here, unchanged.
+
+Everything else — the name, the short and full descriptions, the claim-by-claim table, the category,
+the D-017 quality risk, the compliance items — is unaffected by iOS and is left as it was.
+
+---
 
 Plain English, short sentences, no idioms: many readers use English as a second language.
 Every claim below points at the code or Spine commitment that makes it true. Character counts are
@@ -82,7 +112,7 @@ Source code: [REPO_URL]
 
 | Claim in the description | Why it is true today | Spine | Depends on |
 |---|---|---|---|
-| Works with no internet; model inside the app | Install-time Play Asset Delivery pack `:modelpack` (`app/build.gradle.kts`); no `INTERNET` permission | C1, C2, C3 | — |
+| Works with no internet; model inside the app | Install-time Play Asset Delivery pack `:modelpack` (`app/build.gradle.kts`); no `INTERNET` permission | C1, C2, C3 | — (on iOS the same claim is true, but the *evidence* differs — `positioning.md` §7) |
 | Does not use your mobile data after install | No network permission in any manifest; `tools/check_manifest.sh` fails on INTERNET, ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE, CHANGE_NETWORK_STATE | C3, M5 | Play Store's own updates are not Arivu (see privacy policy) |
 | Task list ("What you can ask Arivu to do") | Same verbs as `about_good_body` and `empty_body`, framed as tasks, not as quality | C5 | **D-017 quality risk, see below** |
 | "Read every reply… can miss the point, repeat your words back, or change a detail" | Capture log 2026-09-15: polite rewrite echoed the input 6/6 tries; circular summary said "two school terms" for a one-term trial | C5 | Keep until the W04 eval shows otherwise |
@@ -110,7 +140,7 @@ Source code: [REPO_URL]
 | Website | `[REPO_URL]` or the privacy-policy host | Optional field |
 | Privacy policy URL | `[PRIVACY_POLICY_URL]` — see `privacy-policy.html` | Required even for apps that collect nothing (verified) |
 | Ads | "No, my app does not contain ads" | True: no ads SDK |
-| Content rating (IARC) | Answer questionnaire honestly: user-generated/AI-generated text, no user-to-user sharing, no purchases | Compliance owns the answers |
+| Content rating (IARC) | Answer questionnaire honestly: user-generated/AI-generated text, no user-to-user sharing, no purchases | Compliance owns the answers. Apple's age rating is a **separate** questionnaire with different tiers (4+/9+/13+/16+/18+ since 2026); the two must not contradict each other — see D-GTM-H in `appstore-listing.md` |
 | Target audience | `[DECISION — proposed below]` | |
 
 ## What we must NOT claim
@@ -141,6 +171,15 @@ extracts from this Leaf:
 11. **No "zero data" claim about Google Play itself.** Downloading and updating from Play uses data; Arivu
     using none after install is the claim.
 12. **No endorsement by Alibaba/Qwen, Google, or llama.cpp.** Name them only as licensed components.
+13. **No cross-platform copy in either store listing.** This listing does not mention iPhone or the App
+    Store; the App Store listing does not mention this platform (Apple Guideline 2.3.10). Cross-platform
+    availability belongs on the website and in the repo, not in store metadata.
+14. **Never carry this listing's privacy sentence to the App Store.** "Has no permission to use the
+    internet" is an Android fact. The approved iOS wording is in `positioning.md` §7, and the word
+    "cannot" is banned there. The reverse also holds: do not weaken this listing to match iOS.
+15. **No device-profile feature claims on either store.** Never "on newer phones you also get…". A
+    larger device profile (C11) changes how well and how much, never what the user can ask for. The only
+    public sentence about the ceiling is that how much text Arivu can hold depends on the phone.
 
 ## D-017 quality risk (do not hide)
 

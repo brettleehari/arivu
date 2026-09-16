@@ -1,10 +1,24 @@
 ---
-spine_version: 0.1
-leaf: architecture
-status: analysis for decision D-037. SPINE R7 currently refuses iOS.
+spine_version: 0.2
+leaf: architecture/ios-port
+status: superseded in part by architecture.md 0.2. Kept as the port analysis and the D-037 record.
 ---
 
 # What a simultaneous iOS launch would take
+
+> **Read this after `../architecture.md` 0.2, not instead of it.** Spine 0.2 withdrew R7, so the
+> framing below ("R7 currently refuses iOS") is historical. What still stands: the port estimate,
+> the what-ports-for-free / what-must-be-rebuilt tables, the three constraints, and the sequencing
+> argument. What is **superseded**:
+>
+> - The memory numbers. `architecture.md` §3 works the budget against current Apple documentation,
+>   distinguishes RSS from `phys_footprint`, and covers the `increased-memory-limit` entitlement.
+> - "200 MB is the cellular download limit" — still the working figure, but `architecture.md` §4.1
+>   labels it community-reported: no current first-party Apple page states a numeric threshold, and
+>   users have been able to override it since iOS 13.
+> - Packaging. §4 recommends bundling and names the trade-off; ODR is rejected and is now deprecated.
+> - The device gate. §2 replaces "a gate screen only" with the profile mechanism and the rule that
+>   the minimum iOS version is derived from the profile table, not chosen for convenience.
 
 ## The short version
 

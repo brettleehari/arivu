@@ -1,7 +1,7 @@
 ---
-spine_version: 0.1
+spine_version: 0.2
 leaf: gtm
-artifact: Google Play phone screenshots, v0.1.0 (for Engineering to capture, W20)
+artifact: Google Play phone screenshots, v0.1.0 (for Engineering to capture, W20) + the iPhone set (W-GTM-i4)
 ---
 
 # Screenshot shot list — Arivu v0.1.0
@@ -43,6 +43,30 @@ the physical test phone once W21 runs.
 Capture the sheet showing "Report this reply", the four reason chips, the note field and `report_sheet_privacy`
 ("…your email app sends the report. It will include this reply and your note…"). Spine C9, C3. This is the
 most direct evidence for the AI-content reporting policy and for "nothing is sent until you send it".
+
+## The iPhone set (Spine 0.2, C11) — a separate capture, not a re-export
+
+The Android captures cannot be reused for the App Store. Different status bar, different type metrics,
+and one shot is simply wrong on iOS.
+
+**Required today (verified 2026-09-15, App Store Connect Help, "Screenshot specifications"):** one
+**6.9-inch iPhone** set at **1290 × 2796** portrait (1320 × 2868 and 1260 × 2736 also accepted). 1–10
+images, JPEG or PNG, **no alpha channel**. Apple scales that set down for smaller displays, so no other
+size is needed. iPad screenshots are required only if the app runs on iPad — Arivu is iPhone-only.
+Guideline 2.3.3: show the app in use, not a splash screen. Guideline 2.3.8: the images must suit a 4+
+rating whatever the app is rated.
+
+| Play shot | iPhone version |
+|---|---|
+| 1 · empty state in airplane mode | Recapture. Airplane Mode matters *more* here: on iOS it is part of the privacy proof (`positioning.md` §7) |
+| 2 · explain a formal paragraph, Report and Copy visible | Recapture, same input |
+| 3 · context divider | Recapture, same conversation |
+| 4 · About: good at / not good at | Recapture **with the iOS privacy wording**, not the Android sentence |
+| 5 · incompatible device (optional) | **Changed.** There is no "Uninstall Arivu" button: an iPhone app cannot offer to uninstall itself. Either recapture the explain-and-stop screen or drop the shot |
+| 8 · Report sheet (candidate) | Strongest evidence for "nothing is sent unless you send it". Worth capturing on iOS first |
+
+Same rules as below apply to content: real unedited output only, no polite-rewrite shot until D-017,
+no speed or accuracy claims in any caption band.
 
 ## Play rules these must meet (verified 2026-09-15, Play Console Help "preview assets")
 

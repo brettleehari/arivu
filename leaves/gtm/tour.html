@@ -1,5 +1,8 @@
 <title>Arivu Tour</title>
-<!-- GTM Leaf · spine_version: 0.1 · every claim maps to a Spine commitment (C#) shown on its step -->
+<!-- GTM Leaf · spine_version: 0.2 · every claim maps to a Spine commitment (C#) shown on its step
+     0.2: iOS is in scope (R7 withdrawn, C11). The steps below describe one product on two platforms.
+     The iPhone app is being built and has NOT been submitted to the App Store; nothing here says it has.
+     Where a proof differs by platform (step 7) and where a platform cannot do something (step 8), both are stated. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -80,7 +83,7 @@ h1{font:700 clamp(30px,5vw,50px)/1.02 var(--display);margin:6px 0 0;text-wrap:ba
 <div class="wrap">
   <header>
     <div>
-      <div class="brand">ARIVU · iteration 1</div>
+      <div class="brand">ARIVU · iteration 1 · one product, two platforms</div>
       <h1>An AI writing helper that never touches your data bundle.</h1>
     </div>
     <div class="meter" aria-live="polite">
@@ -103,6 +106,7 @@ h1{font:700 clamp(30px,5vw,50px)/1.02 var(--display);margin:6px 0 0;text-wrap:ba
 
   <p class="note">The reply in step 3 is real, unedited output captured from the release build on an emulator. Replies in steps 4 and 5 are illustrative of the interaction, not model output. Rewriting quality is not yet evaluated (D-017); in capture, a polite-rewrite request came back unchanged. Speed and memory figures are
   targets until the benchmark runs on a 4 GB Helio G85 / Snapdragon 680-class phone (work item W02). Model: Qwen3 0.6B, Q4_K_M, 397 MB, Apache-2.0.</p>
+  <p class="note"><b>One product, two platforms (Spine C11).</b> Every step above is the same app on Android and on iPhone: the same core, the same one screen, the same model on a device that can carry it, nothing sent anywhere. What the device can carry may differ; what the user can ask for does not. The screens shown here are captured from the Android build. The iPhone app is in development and has not been submitted for review, so nothing on this page should be read as an App Store release. Download size, device requirements and time to first reply have not been measured on an iPhone and are not stated. See <code>positioning.md</code>.</p>
 </div>
 
 <script>
@@ -112,7 +116,7 @@ const S = {
   input:(stop,hl)=>`<div class="input"><div class="field">Type or paste your text</div><div class="btn ${stop?'o':''} ${hl?'hl':''}">${stop?'Stop':'Send'}</div></div>`
 };
 const steps = [
-  {t:"Install once, from Google Play", c:"C1", d:"One tap. The language model comes inside the install, so there is no second download, no account and nothing to set up. Install on school Wi-Fi; use it at home for free.",
+  {t:"Install once. The model comes with it.", c:"C1 · C11", d:"One tap. The language model comes inside the install, so there is no second download, no account and nothing to set up. Install on school Wi-Fi; use it at home for free. On Google Play today; the iPhone app is being built and is not yet in the App Store.",
    s:()=>`${S.status(false)}<div class="sheet"><h4>Arivu</h4><p>Offline writing assistant · Contains the AI model</p>
      <div class="btn hl" style="justify-self:start">Install</div>
      <p>No sign-in. No model download after install. No ads.</p>
@@ -144,7 +148,7 @@ const steps = [
      <h4 class="hl" style="padding:2px 4px">Not good at</h4><p>Facts, news, dates, numbers, maths, medical or legal answers. It can sound sure and still be wrong.</p>
      <h4>Privacy policy</h4><p>The full policy, readable with no internet.</p>
      <h4>Report a harmful reply</h4><p>Tap Report under the reply and choose what is wrong. Your email app opens with that reply and your note. Nothing is sent until you send it.</p></div>`},
-  {t:"Private because it can't go online", c:"C3", d:"Not a privacy promise, a missing permission. Arivu has no internet permission, so your words stay on the phone. Conversations are excluded from cloud backup too. A release check fails if any dependency ever adds network access.",
+  {t:"Private, and it can show you why", c:"C3 · C11", d:"On Android this is not a promise, it is a missing permission: Arivu never asks for internet access, so the operating system will not let it send anything, and a release check fails if a dependency ever adds it. Conversations are excluded from cloud backup too. On iPhone there is no permission to give up — so the proof is different and we say so: the source code is public and contains no networking code, the App Store privacy card says Data Not Collected, and you can settle it yourself with Airplane Mode. One product, one promise, two kinds of evidence.",
    s:()=>`${S.status(true)}<div class="abar">App permissions</div><div class="sheet">
      <div class="perm hl" style="padding:8px">
        <s>android.permission.INTERNET</s>
@@ -153,8 +157,9 @@ const steps = [
        <span>REQUEST_DELETE_PACKAGES</span>
        <span style="color:var(--muted)">…DYNAMIC_RECEIVER_NOT_EXPORTED (AndroidX, app-internal)</span></div>
      <p>Data safety: no data collected, no data shared.</p>
+     <p style="border-top:1px solid var(--line);padding-top:8px"><b>On iPhone:</b> iOS has no internet permission to withhold. Public source · no networking code · App Privacy “Data Not Collected” · try Airplane Mode.</p>
      <p>Licences: Apache-2.0 app and model weights, MIT runtime. Anyone may fork it.</p></div>`},
-  {t:"It won't limp along on a weak phone", c:"C6", d:"Play hides Arivu from low-memory phones. If one slips through, the app explains why it won't work and offers to uninstall. There is no “continue anyway”, because a slow, crashing AI app earns one-star reviews for everyone.",
+  {t:"It won't limp along on a weak phone", c:"C6 · C11", d:"The rule is about the device, never the platform. On Android, Play hides Arivu from low-memory phones; if one slips through, the app explains why it won't work and offers to uninstall. On iPhone there is no device catalogue to hide it from, so a minimum iOS version does that job, and the app can only explain and stop — an iPhone app cannot offer to uninstall itself. There is no “continue anyway” on either, because a slow, crashing AI app earns one-star reviews for everyone.",
    s:()=>`${S.status(false)}<div class="center" style="text-align:left;justify-content:flex-start;padding-top:30px"><h3>Arivu can't run well on this phone</h3>
      <p>This phone has 2.0 GB of memory. Arivu needs at least 3.5 GB.</p>
      <p style="color:var(--muted)">Arivu runs a language model on the phone itself. That needs more than this phone has. Rather than run slowly or crash, Arivu will not start.</p>

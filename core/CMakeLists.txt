@@ -19,6 +19,6 @@ if(NOT TARGET llama)
     add_subdirectory("${LLAMA_DIR}" llama.cpp)
 endif()
 
-add_library(arivu_core STATIC src/engine.cpp)
+add_library(arivu_core STATIC src/engine.cpp src/arivu_c.cpp)
 target_include_directories(arivu_core PUBLIC include)
 target_link_libraries(arivu_core PUBLIC llama)

@@ -1,5 +1,5 @@
 ---
-spine_version: 0.1
+spine_version: 0.2
 product: Arivu
 ---
 
@@ -11,6 +11,10 @@ product: Arivu
 
 ## Changelog
 
+- **0.2 — 2026-09-15** — iOS enters scope; R7 is withdrawn. One product on two
+  platforms, with a shared C++ core (see `leaves/MULTIPLATFORM.md`). Adds C11:
+  what the app can do is chosen by what the device can carry, never by which
+  platform it is. Propagation run: architecture → engineering/design → GTM/compliance.
 - **0.1 — 2026-09-15** — First Spine, derived from the settled engineering
   brief (now `leaves/BRIEF.md`). Customer quotes below are *design hypotheses*, not
   field evidence; replace them with real interview lines before 0.2.
@@ -65,6 +69,7 @@ Anything that maps to none is scope creep or a missing Spine update.
 | **C8** | Opinionated: no model picker, no parameters, no settings. Every setting is a decision already made. |
 | **C9** | Store-compliant: in-app way to report offensive output without network; precise data-safety form. |
 | **C10** | Stops when told: generation can be stopped at any token, and survives a brief app switch. |
+| **C11** | One product, two platforms. Capability is chosen by what the device can carry — a profile — never by which platform it runs on. An 8GB Android phone and an 8GB iPhone get the same profile. |
 
 ## 5. Success metrics
 
@@ -87,7 +92,8 @@ Iteration-1 will **not** do these. Saying yes to any of them is a Spine change.
 - **R4** RAG, bundled corpora, document import
 - **R5** Settings screens, personas, themes
 - **R6** Voice, images, multimodality
-- **R7** iOS
+- ~~**R7** iOS~~ — **withdrawn in 0.2.** iOS is in scope. The refusal that replaces it:
+  no platform gets a feature the other cannot have on equivalent hardware (C11)
 - **R8** A "continue anyway" path on an incompatible device
 
 ## 7. Traceability anchor

@@ -945,3 +945,36 @@
     amendment (R6 refuses images).
   if_rejected: no code changes; the outline stays a GTM document with no promise attached.
 
+- id: D-037
+  title: iOS — amend refusal R7, and if so, when
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C1, C2, C3]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Hari, Architecture]
+  context: >
+    Hari asked what a simultaneous iOS launch would take. SPINE R7 refuses iOS in iteration-1.
+    Analysis in leaves/architecture/ios-port.md: the native core ports for free (engine.cpp is
+    already built on macOS by the host smoke test) and the fd-window/alignment complexity
+    disappears, because an iOS bundle is a directory. Rebuilt: SwiftUI UI, background rules
+    (~30s, not ~3 min), memory-pressure handling, report hand-off, and the gate, which on iOS
+    cannot offer to uninstall. Two consequences matter more than the code: C3 is provable on
+    Android by a missing permission and is only a promise on iOS, and there is no App Store
+    device-exclusion catalogue, so the RAM floor must be enforced by a higher minimum iOS
+    version plus a runtime gate. Cost 99 USD/year plus a 3-4 GB test iPhone; 2.5-4 weeks to
+    TestFlight. True simultaneity would mean delaying Android, whose production date is fixed
+    by Play's 12-tester, 14-day closed test.
+  options:
+    - hold R7 for iteration-1; revisit after Android production
+    - port during the 14-day closed-test window and launch both together
+    - port now, in parallel with the Android phone work
+  recommendation: >
+    Option 2 if iOS is wanted at all: the closed-test wait is calendar time that costs nothing
+    else, and by then W02/W04 have settled model size, RAM floor and quality, so both platforms
+    inherit one set of answers. Option 3 doubles the surface before a single number exists on a
+    real phone. Decide first what iOS is *for*: the Spine's persona is on Android, so the honest
+    reasons are credibility, press and diaspora reach, and they belong in the Spine if adopted.
+  if_rejected: no code changes; ios-port.md stays an analysis and R7 stands.
+

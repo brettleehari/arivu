@@ -1,11 +1,19 @@
 # iOS job (MULTIPLATFORM.md "CI"): macOS runner, expensive, gated behind path filters so an
 # Android-only commit never triggers an Xcode build.
 #
-# STATUS: NEVER RUN. There is no Xcode on the machine this was written on, so every step below is
-# unverified. It exists so the iOS Leaf inherits a job rather than a blank file: each step turns
-# itself on when the file it looks for appears (ios/CMakeLists.txt, ios/ArivuKit/Package.swift, an
-# .xcodeproj). The iOS Leaf owns making this green — expect the first PR touching ios/ to be the
-# one that debugs it.
+# What this job proves, in the order it gets cheaper to more expensive:
+#   1. /core's logic half builds and passes with no SDK at all (the monorepo rule).
+#   2. ios/ArivuKit builds and its suites pass against the fake core — no Xcode needed.
+#   3. /core cross-compiles for iphoneos AND iphonesimulator, via the same
+#      tools/ios/build_core.sh a human runs. That is the real test of the platform boundary.
+#   4. The generated Xcode project is produced from ios/project.yml, as everyone else produces it.
+#   5. The app target builds, links the REAL core, and runs its test bundle — which is the only
+#      place CoreParityTests stops skipping and Swift's copy of the profile arithmetic is finally
+#      compared against the C it mirrors.
+#
+# Every step below used to be gated on a file that does not exist (`ios/CMakeLists.txt`) or on one
+# that is deliberately gitignored (`*.xcodeproj`), so steps 3, 4 and 5 never ran once. The job was
+# green because it was empty.
 name: ios
 
 on:
@@ -14,13 +22,19 @@ on:
     paths:
       - 'ios/**'
       - 'core/**'
+      - 'tools/**'
       - '.github/workflows/ios.yml'
   pull_request:
     paths:
       - 'ios/**'
       - 'core/**'
+      - 'tools/**'
       - '.github/workflows/ios.yml'
   workflow_dispatch:
+
+# Least privilege: this job reads the repository and publishes nothing.
+permissions:
+  contents: read
 
 concurrency:
   group: ios-${{ github.ref }}
@@ -28,67 +42,119 @@ concurrency:
 
 jobs:
   ios:
-    name: core for iphoneos + app build
+    name: core for iphoneos + ArivuKit + app build
     runs-on: macos-15
     timeout-minutes: 90
+    env:
+      MODEL_PATH: models/Qwen3-0.6B-Q4_K_M.gguf
+      # Matches ios/project.yml, ios/ArivuKit/Package.swift and tools/ios/build_core.sh. It was
+      # 15.0 here and 17.0 in all three of those, which is the kind of drift that only shows up as
+      # a link error inside Xcode.
+      IOS_DEPLOYMENT_TARGET: "17.0"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
-      - name: What is here
-        id: probe
-        run: |
-          xcodeproj=$(find ios -maxdepth 3 -name '*.xcodeproj' -print -quit 2>/dev/null || true)
-          for f in core_cmake:ios/CMakeLists.txt swiftpm:ios/ArivuKit/Package.swift; do
-            name="${f%%:*}"; path="${f#*:}"
-            if [ -f "$path" ]; then echo "$name=true" >> "$GITHUB_OUTPUT"; else echo "$name=false" >> "$GITHUB_OUTPUT"; fi
-          done
-          echo "xcodeproj=$xcodeproj" >> "$GITHUB_OUTPUT"
-          if [ -z "$xcodeproj" ] && [ ! -f ios/ArivuKit/Package.swift ]; then
-            echo "::notice title=iOS app not started::Nothing buildable under ios/. This job is"\
-                 "scaffolding; it will build for real when the iOS Leaf adds a package or project."
-          fi
-
+      # llama.cpp is pinned and patched, never floating. The script is idempotent, so it re-applies
+      # the patches on a cache hit too.
       - name: Cache llama.cpp checkout
-        if: steps.probe.outputs.core_cmake == 'true' || steps.probe.outputs.swiftpm == 'true' || steps.probe.outputs.xcodeproj != ''
         uses: actions/cache@v4
         with:
           path: third_party/llama.cpp
           key: llama-${{ runner.os }}-${{ hashFiles('tools/llama/fetch_llama.sh', 'tools/llama/patches/*.patch') }}
 
       - name: Fetch and patch llama.cpp
-        if: steps.probe.outputs.core_cmake == 'true' || steps.probe.outputs.swiftpm == 'true' || steps.probe.outputs.xcodeproj != ''
         run: tools/llama/fetch_llama.sh
 
-      # The cross-compile is the real test of MULTIPLATFORM.md's boundary: /core must build for
-      # a device SDK it has never seen, with no source change.
-      - name: Build core for iphoneos (arm64)
-        if: steps.probe.outputs.core_cmake == 'true'
-        run: |
-          cmake -S core -B build/ios -G Xcode \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-            -DGGML_METAL=OFF \
-            -DBUILD_SHARED_LIBS=OFF
-          cmake --build build/ios --config Release
-
-      # The core's own logic suite also runs on the mac host, where it needs no SDK at all.
+      # Needs no SDK and runs in seconds, so it goes first and fails fast.
       - name: Core logic tests on the host
         run: tools/core_test.sh --logic-only
 
-      # ios/ArivuKit is a SwiftPM package. Building it on the mac host is the cheapest proof that
-      # the Swift side still compiles against the C API in core/include/arivu/arivu.h.
+      # The cheapest proof that the Swift side still compiles against core/include/arivu/arivu.h.
+      # Against CArivuStub, so the parity suites skip here by design — see the note further down for
+      # where they actually execute.
       - name: Build ArivuKit (SwiftPM)
-        if: steps.probe.outputs.swiftpm == 'true'
         run: swift build --package-path ios/ArivuKit
 
-      - name: Test ArivuKit (SwiftPM)
-        if: steps.probe.outputs.swiftpm == 'true'
+      - name: Test ArivuKit (SwiftPM, fake core)
         run: swift test --package-path ios/ArivuKit
 
-      - name: Build the app
-        if: steps.probe.outputs.xcodeproj != ''
+      - name: Install ninja
+        run: brew install ninja
+
+      # THE boundary test: /core must build for a device SDK it has never seen, with no source
+      # change. Uses the same script a human uses, so the flags have one home (GGML_METAL=OFF is a
+      # memory decision — see the script).
+      - name: Build ArivuCore.xcframework (iphoneos + iphonesimulator)
+        run: tools/ios/build_core.sh
+
+      # NOTE on where parity actually runs: NOT under `swift test`. ArivuEngineTests links
+      # CArivuStub, and adding the real static library beside it would duplicate every arivu_*
+      # symbol. The real core is linked by the app target only, so the parity suite that executes is
+      # ios/App/Tests/CoreParityTests.swift, run by the xcodebuild step at the end of this job.
+
+      # The 400MB model is cached on the sha256 that fetch_model.sh pins. A failed download is not a
+      # reason to fail the job, only a reason to skip the app build, whose pre-build phase copies it.
+      - name: Cache model
+        id: model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: model-${{ hashFiles('tools/fetch_model.sh') }}
+
+      - name: Fetch model
+        if: steps.model.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: tools/fetch_model.sh
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      # The .xcodeproj is generated, never committed, so CI has to generate it like everyone else.
+      # ARIVU_REPORT_EMAIL is deliberately not set: Debug builds do not run check_release.sh, and the
+      # placeholder must keep failing the release gate until D-010 is decided.
+      - name: Generate the Xcode project
+        run: tools/ios/generate_project.sh
+
+      - name: Check whether the model is available
+        id: weights
         run: |
-          xcodebuild -project "${{ steps.probe.outputs.xcodeproj }}" \
+          if [ -f "$MODEL_PATH" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=No model weights::$MODEL_PATH could not be fetched, so the app"\
+                 "build is skipped — its pre-build phase copies the model into the bundle and fails"\
+                 "loudly without it. Everything above still ran."
+          fi
+
+      - name: Build the app (simulator, unsigned)
+        if: steps.weights.outputs.present == 'true'
+        run: |
+          xcodebuild -project ios/Arivu.xcodeproj \
             -scheme Arivu -sdk iphonesimulator -configuration Debug \
             CODE_SIGNING_ALLOWED=NO build
+
+      # The app's test bundle links ArivuCore.xcframework, so this is where CoreParityTests stops
+      # skipping and the Swift copies are finally checked against the C they mirror. Also where
+      # BundleTests confirms the model, privacy manifest and licences actually shipped.
+      - name: Test the app (simulator)
+        if: steps.weights.outputs.present == 'true'
+        run: |
+          xcodebuild test -project ios/Arivu.xcodeproj \
+            -scheme Arivu -sdk iphonesimulator -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Regenerating the project must not leave the tree dirty: project.yml is the source of truth,
+      # and a script that edits a tracked file is a script that will one day commit a real address.
+      - name: The generated project left no tracked file modified
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain -- ios/App/Support/Info.plist)" ]; then
+            echo "::error title=Info.plist was modified::tools/ios/generate_project.sh edited a"\
+                 "tracked file. Move the report address into an xcconfig."
+            git --no-pager diff -- ios/App/Support/Info.plist
+            exit 1
+          fi

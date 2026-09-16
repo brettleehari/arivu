@@ -4,8 +4,10 @@
 # nothing in it is a decision worth reviewing. `tools/ios/generate_project.sh` runs xcodegen if it is
 # installed and tells you how to install it if not.
 #
-# UNVERIFIED: xcodegen is not installed on the machine this was written on, and there is no Xcode, so
-# this spec has never been run. Every value in it is deliberate; none of it is proven.
+# PARTLY VERIFIED: `tools/ios/generate_project.sh` now runs against this spec and produces
+# ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and the two
+# script phases wired up. What is still unproven is everything after generation — the spec has never
+# been *built*, because that needs Xcode. The build settings are deliberate; they are not yet tested.
 #
 # spine: C1, C3, C8
 

@@ -21,6 +21,11 @@ on:
 # on a PR it does not match, so marking these jobs "required" will block unrelated PRs forever.
 # Use a merge queue or a separate always-green aggregator job instead.
 
+# Least privilege: this job reads the repository and publishes nothing. Without an explicit block a
+# workflow inherits the repository default, which on many repositories is still write-all.
+permissions:
+  contents: read
+
 concurrency:
   group: core-${{ github.ref }}
   cancel-in-progress: true
@@ -34,6 +39,8 @@ jobs:
       MODEL_PATH: models/Qwen3-0.6B-Q4_K_M.gguf
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install build tools
         run: |

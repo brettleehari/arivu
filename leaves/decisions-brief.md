@@ -160,7 +160,7 @@ the YAML — "yes to the recommendations" closes them:
 |---|---|---|
 | D-044 | Local notifications on iOS? | No. It would be the first permission prompt in a product that asks for nothing |
 | D-045 | Does the iOS gate screen have a button? | No button, plus one line saying how to remove the app |
-| D-047 | Request the increased-memory-limit entitlement? | **No** — but note the code currently requests it, against both Leaves' advice |
+| D-047 | Request the increased-memory-limit entitlement? | **No** — already removed from the entitlements file; stamp to confirm |
 | D-048 | A headroom margin before a device is accepted? | Yes, keyed on how good the measurement is, not on the platform |
 | D-050 | A 4B profile on iOS later? | Not due now; recorded so it is not discovered at submission |
 | D-051 | Metal on iOS? | Off. GPU buffers are charged memory; it would delete the property the budget rests on |
@@ -185,8 +185,10 @@ allow-list; "enforcement begins"; the asset-pack size correction; the memory bud
 
 ## Loose ends (owners, not decisions)
 
-- `ios/App/Support/Arivu.entitlements` **requests the increased-memory-limit entitlement**, which
-  Architecture and Compliance both recommend against for iteration-1 (D-047). Code and advice disagree.
+- ~~`ios/App/Support/Arivu.entitlements` requests the increased-memory-limit entitlement.~~
+  **Closed 2026-09-16:** the entitlement was removed, so the file now requests nothing and code
+  agrees with both Leaves' advice. D-047 is still yours to stamp, and the file records the
+  measurement that would bring the entitlement back.
 - `ios/App/Resources/licenses/index.txt` ships rows for the Swift runtime and libc++, which
   `licence-audit.md` §7.4 says are deliberately absent on iOS. One of the two is wrong (D-056).
 - `ios/project.yml` already fixes the deployment target at 17.0, before the measurement that is

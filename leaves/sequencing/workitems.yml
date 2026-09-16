@@ -1,43 +1,179 @@
 # Sequencing Leaf — Arivu work items
-# spine_version: 0.1
-# last_sequenced: 2026-09-15 (after Engineering round 2 + emulator functional run; decisions.yml D-001..D-034)
+# spine_version: 0.2
+# last_sequenced: 2026-09-16 (monorepo round: /core + /android + /ios; decisions.yml D-001..D-059)
+#
+# WHAT CHANGED IN 0.2
+#   - iOS is in scope (SPINE 0.2 withdrew R7, added C11). Every item now carries `platform:`.
+#   - There are FOUR milestones, two per store, and the two stores are INDEPENDENT calendars.
+#     Compliance verified Apple imposes no 12-tester / 14-day gate, so the iOS queue is no longer
+#     downstream of the Play closed test. See `milestones:` below.
+#   - `uses:` now names physical resources (phone, iphone, mac-with-xcode). Every resource must be
+#     declared in `resources:` as available or not, so "we have no iPhone" is a scheduling fact and
+#     not a surprise. An unavailable resource with an `acquired_by:` item becomes an implicit
+#     dependency; without one, every item that uses it is unschedulable.
 #
 # status: done | in_progress | todo | blocked
-# done means verified to the level stated in `verified`, never more.
-#   Levels (engineering.md): host · unit · build · emulator (functional only, never performance) · phone · play.
-#   Only "phone" counts for M1–M4. Nothing has run on a physical phone yet.
+# done means verified to the level stated in `verified`, never more. The first word of `verified`
+# must be one of these levels, cheapest first:
+#   type-checked-only  the code compiles (or the file was authored) and has never run
+#   delivered          a document/asset exists; no executable claim
+#   resolved_human     Hari answered; recorded in decisions.yml
+#   core               core/tests — no model, no platform SDK
+#   host               macOS arm64 host build sharing core/src/engine.cpp
+#   unit               JVM tests (Android) — 56 of them
+#   swift-macos        ios/ArivuKit compiled and tested on macOS — 94 tests, no iOS SDK involved
+#   build              Gradle/scripts asserting something about the artifact
+#   emulator           arm64 AVD, FUNCTIONAL ONLY, never performance
+#   simulator          iOS Simulator, FUNCTIONAL ONLY, never performance  (nothing is here yet)
+#   phone              the 4 GB Android test phone        — nothing has reached this level
+#   iphone             the 3-4 GB test iPhone             — nothing has reached this level
+#   play / appstore    the store accepted or reviewed it  — nothing has reached this level
+# Only `phone` counts for M1-M4 on Android; only `iphone` counts for their iOS twins.
 #
 # Fields
-#   owner          Leaf name (Engineering, Design, GTM, Compliance, Architecture) or "Hari"
+#   owner          Leaf name (Engineering, Design, GTM, Compliance, Architecture, Decisions) or "Hari"
+#   platform       android | ios | both — which store's queue this item sits in. `both` means the
+#                  work or the decision serves both; it does NOT mean the item is done twice.
+#   spine          Spine commitment / metric IDs (C1..C11, M1..M6, R1..R8)
 #   estimate_days  working days of the owner's effort (people-time)
-#   elapsed_days   calendar days that pass after the effort and consume nobody (reviews, 14-day closed test)
-#   guess: true    the estimate (or elapsed time) is a guess, not grounded in a measurement or a documented SLA
+#   elapsed_days   calendar days that pass after the effort and consume nobody (reviews, the 14-day
+#                  closed test, a phone in the post)
+#   guess: true    the estimate (or elapsed time) is a guess, not grounded in a measurement or SLA
 #   deadline       ISO date; flagged overdue / at risk against today by tools/sequence.py
 #   deadline_note  a relative deadline ("before the first upload")
-#   uses           exclusive resources besides the owner: phone (the one 4 GB test phone), Engineering (an agent that can drive adb/build)
+#   uses           exclusive resources besides the owner; must be declared in `resources:` below
 #   deps           hard dependencies (scheduled, on the critical path)
 #   soft_deps      should come first but do not block (dotted in the graph, not scheduled against)
 #   skip_if        scenario tags under which the item is not required (used for what-if calendars)
-#   decisions      IDs in leaves/decisions.yml
+#   decisions      IDs in leaves/decisions.yml (D-001..D-059 as renumbered on 2026-09-16)
 #
-# Rendered by tools/sequence.py → leaves/sequencing/SEQUENCING.md
+# Rendered by tools/sequence.py -> leaves/sequencing/SEQUENCING.md
+#
+# ======================================================================================================
+# ID MAP — six Leaves proposed work items this round and all of them numbered from W67 independently.
+# The collisions are resolved here, once, the way decisions.yml resolved D-038+.
+# ======================================================================================================
+# Architecture (§11)   W67 boundary lint      -> W67      W76 arivu_backend_init -> W72
+#                      W68 C-API conformance  -> W68      W77 Android DeviceProbe-> W79
+#                      W69 profile budget CI  -> W69      W78 iOS DeviceProbe    -> W80
+#                      W70 core version       -> W70      W79 three CI workflows -> W74 (+ W75)
+#                      W71 one-sentence check -> W71      W80 tiny GGUF fixture  -> W73
+#                      W72 release-and-signing iOS -> W76 W81 iPhone memory      -> W93 (merged)
+#                      W73 check_ios_binary.sh-> W78      W82 mapped vs footprint-> W82 (DONE)
+#                      W74 iOS at-rest test   -> W98      W83 gate says why      -> W81
+#                      W75 TestFlight thinning-> W120 (folded into the milestone)
+# Design (§13)         W67 iOS string catalog -> W104 (DONE) W71 iPhone a11y pass -> W99
+#                      W68 check_copy.py      -> W77         W72 iOS contrast     -> W100
+#                      W69 low-memory copy    -> W83         W73 iOS screenshots  -> W101 (merged)
+#                      W70 clipboard <=12     -> W84         W74 App Store icon   -> W95
+# iOS Eng (§"proposed")W75 first Xcode build  -> W90      W78 CoreParity on core -> W97
+#                      W76 build_core.sh      -> W88      W79 iOS device walk    -> W94
+#                      W77 iPhone measurement -> W93      W80 check_copy iOS side-> W77 (merged)
+# GTM (positioning §9) W-GTM-i1 check_ios_binary -> W78 (merged)   W-GTM-i4 iOS shots -> W101 (merged)
+#                      W-GTM-i2 iPhone numbers  -> W93 (merged)    W-GTM-i5 4-way read-> W107
+#                      W-GTM-i3 conversation at rest -> W98 (merged) W-GTM-i6 support page -> W106
+# Compliance (§16.3)   PrivacyInfo.xcprivacy -> W102 (DONE)  MinimumOSVersion -> W109
+#                      ITSAppUsesNonExempt   -> W102 (DONE)  App Review notes -> W105
+#                      iOS licences + About  -> W103         Apple enrolment  -> W110
+#                      ios_release_check on a real archive -> W96   make_notice.py -> W117
+#
+# W125-W136 are new IDs for work that LANDED this round and had no item at all (the monorepo move,
+# the core profile/prompt work, Android round 3, the whole iOS port, the CI workflows, the
+# ios_release_check gate, and each Leaf's 0.2 rewrite). They are numbered above the open work because
+# an ID is a label, not a position: renumbering the open items would break every citation in the
+# other Leaves.
+#
+# ======================================================================================================
 
 slices:
-  BENCH: leaves/BRIEF.md build order step 1 — on-phone measurements; nothing after W08 is trusted until this holds on the phone
-  MVP:   steps 2–8, verified on the physical phone
-  PLAY:  step 9, store submission and release
+  BENCH: leaves/BRIEF.md build order step 1 — on-device measurements; nothing after W08/W93 is trusted until it holds on a real handset
+  MVP:   steps 2–8, verified on the physical device (either platform)
+  PLAY:  step 9 on Android — Play submission and release
+  STORE: the App Store twin of PLAY — enrolment, TestFlight, submission, release
+  CORE:  shared /core and /tools work that serves both shells
 
+# ------------------------------------------------------------------------------------------------
+# Physical and account resources. Every `uses:` value must appear here with an explicit `available`.
+# available: false + acquired_by: <item> => that item becomes an implicit dependency of every user.
+# available: false and no acquired_by  => every item that uses it is UNSCHEDULABLE, and says so.
+# ------------------------------------------------------------------------------------------------
+resources:
+  phone:
+    title: The 4 GB Android test phone (Helio G85 / SD680 class) on adb
+    available: false
+    capacity: 1
+    acquired_by: W112
+    note: >
+      W41 has assumed since 0.1 that Hari already owns this handset. No measurement, screenshot or
+      logcat in the repo comes from a physical Android phone, so Sequencing now models it as
+      not-yet-in-hand with an explicit purchase item. If Hari does own one, close W112 in a minute
+      and every date below moves left.
+  iphone:
+    title: A 3-4 GB test iPhone (SE 2020 / iPhone 11 class — the iOS twin of the Helio G85 target)
+    available: false
+    capacity: 1
+    acquired_by: W111
+    note: >
+      Does not exist. Every iOS number in every Leaf is an Android measurement or an estimate
+      (engineering-ios.md "the whole memory story"). Also needs the Apple Developer Program (W110)
+      before an app can be installed on it at all.
+  mac-with-xcode:
+    title: A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen
+    available: false
+    capacity: 1
+    acquired_by: W85
+    note: >
+      The machine this round ran on is macOS with Command Line Tools only — no iOS SDK, no
+      Simulator, no xcodebuild, no cmake, no xcodegen. Everything under ios/App/**, ios/project.yml
+      and tools/ios/*.sh (except verify_macos.sh and sync_licences.sh) has therefore never been
+      compiled or run.
+  mac:
+    title: The development Mac as it is today (Command Line Tools, no Xcode)
+    available: true
+    capacity: 1
+  Engineering:
+    title: An agent that can drive builds, adb and scripts, lent to another Leaf's item
+    available: true
+    capacity: 1
+  ci-runner:
+    title: GitHub-hosted runners (ubuntu-latest and macos-latest)
+    available: true
+    capacity: 1
+    note: >
+      Available in principle — the repo is public (D-035) — but no workflow in .github/workflows has
+      ever been executed. "Available" here means nothing needs buying, not that it has been proven.
+
+# ------------------------------------------------------------------------------------------------
+# Four milestones, two per store. The two stores are INDEPENDENT: no iOS milestone below has an
+# Android item in its ancestry, and no Android milestone has an iOS item in its ancestry. What they
+# share is Hari and the eight both-platform decisions (D-009, D-010, D-017, D-020, D-022..D-025).
+# ------------------------------------------------------------------------------------------------
 milestones:
-  internal: W52     # "deployable" for this round: first signed AAB accepted on the Internal testing track
-  production: W19   # production release, Wave A countries
+  play_internal:
+    item: W52
+    platform: android
+    title: First Play Internal-testing upload (signed AAB accepted on the internal track)
+  play_production:
+    item: W19
+    platform: android
+    title: Play production release, Wave A (NG, GH, KE, UG, ZA, PH)
+  ios_testflight:
+    item: W120
+    platform: ios
+    title: First TestFlight build (internal testers, no Beta App Review)
+  ios_appstore:
+    item: W123
+    platform: ios
+    title: App Store release (submitted with "Manually release this version")
 
 items:
-  # ------------------------------------------------------------------------------------------------
-  # BENCH / MVP — engine, app, on-phone verification
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
+  # BENCH / MVP — engine, Android app, on-phone verification (unchanged from 0.1 except platform)
+  # ================================================================================================
   - id: W00
     title: Toolchain, pinned llama.cpp, fd-window load patch
     slice: BENCH
+    platform: both
     spine: [C1, C2]
     owner: Engineering
     status: done
@@ -48,6 +184,7 @@ items:
   - id: W01
     title: Benchmark harness (JNI + llama.cpp, no UI)
     slice: BENCH
+    platform: android
     spine: [C2]
     owner: Engineering
     status: done
@@ -56,9 +193,10 @@ items:
     deps: [W00]
 
   - id: W02
-    title: Run benchmark on the physical test phone; record leaves/NOTES.md
+    title: Run benchmark on the physical Android test phone; record leaves/NOTES.md
     slice: BENCH
-    spine: [C2]
+    platform: android
+    spine: [C2, M1, M2, M3]
     owner: Engineering
     status: todo
     needs: 4 GB Helio G85 / SD680 phone over adb (W41); tools/bench.sh
@@ -70,10 +208,11 @@ items:
   - id: W04
     title: Writing and comprehension eval set (EN + 2 target languages), incl. "continue" case
     slice: BENCH
+    platform: both
     spine: [C5]
     owner: Engineering
     status: todo
-    needs: host run is valid for quality (same GGUF, same engine.cpp, shipped sampling); not for speed
+    needs: host run is valid for quality (same GGUF, same engine.cpp, shipped sampling); not for speed. Serves both stores — App Store review scrutinises model output more closely than Play does
     decisions: [D-017, D-032, D-030]
     estimate_days: 2
     guess: true
@@ -82,10 +221,11 @@ items:
   - id: W03
     title: Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements
     slice: BENCH
+    platform: both
     spine: [C2, C6]
     owner: Hari
     status: todo
-    needs: Engineering drafts the numbers into leaves/NOTES.md; Hari resolves the decisions
+    needs: Engineering drafts the numbers into leaves/NOTES.md; Hari resolves the decisions. D-009's number now sets the iOS floor too (D-042), so this is a two-store answer taken from one platform's measurement
     decisions: [D-004, D-008, D-009, D-015]
     deadline_note: D-009 before any track wider than Internal testing
     estimate_days: 0.5
@@ -94,18 +234,20 @@ items:
   - id: W65
     title: D-017 final — is 0.6B good enough; what the listing may promise
     slice: BENCH
+    platform: both
     spine: [C5]
     owner: Hari
     status: todo
-    needs: W04 results. If the answer is "move to 1.7B", W02/W04/W08/W18/W21 re-run on the new file (not modelled)
+    needs: W04 results. If the answer is "move to 1.7B", W02/W04/W08/W18/W21 AND the whole iOS chain re-run on the new file (not modelled)
     decisions: [D-017, D-004]
-    deadline_note: final call before production; Wave B also needs the non-English result
+    deadline_note: final call before either production release; Wave B also needs the non-English result
     estimate_days: 0.5
     deps: [W04]
 
   - id: W05
     title: Model loading behind ModelSource; PAD path; embedded stub
     slice: MVP
+    platform: android
     spine: [C1]
     owner: Engineering
     status: done
@@ -117,6 +259,7 @@ items:
   - id: W06
     title: Streaming generation, cancel, foreground service
     slice: MVP
+    platform: android
     spine: [C10]
     owner: Engineering
     status: done
@@ -128,6 +271,7 @@ items:
   - id: W07
     title: Lifecycle rules (lazy context, 30s idle free, onStop, onTrimMemory)
     slice: MVP
+    platform: android
     spine: [C2]
     owner: Engineering
     status: done
@@ -139,7 +283,8 @@ items:
   - id: W08
     title: Verify idle RSS returns to baseline with dumpsys meminfo (M4)
     slice: BENCH
-    spine: [C2]
+    platform: android
+    spine: [C2, M4]
     owner: Engineering
     status: todo
     needs: tools/verify_lifecycle.sh on the phone
@@ -151,7 +296,8 @@ items:
   - id: W61
     title: Native heap investigation — ~46 MB held after idle context free
     slice: BENCH
-    spine: [C2]
+    platform: android
+    spine: [C2, M4]
     owner: Engineering
     status: todo
     needs: only if W08's phone reading shows it matters (emulator number only so far)
@@ -164,6 +310,7 @@ items:
   - id: W09
     title: Compatibility gate layer 3 (runtime) + incompatible screen
     slice: MVP
+    platform: android
     spine: [C6]
     owner: Engineering
     status: done
@@ -174,6 +321,7 @@ items:
   - id: W10
     title: Gate layer 3 on the phone with fake totalMem; ACTION_DELETE works
     slice: MVP
+    platform: android
     spine: [C6]
     owner: Engineering
     status: todo
@@ -186,7 +334,8 @@ items:
   - id: W11
     title: Gate layer 1 — manifest filtering, arm64-only bundle
     slice: MVP
-    spine: [C6, C3]
+    platform: android
+    spine: [C6, C3, M5]
     owner: Engineering
     status: done
     verified: build — tools/check_manifest.sh, now run automatically after every bundleRelease/bundleDebug
@@ -197,6 +346,7 @@ items:
   - id: W12
     title: Single-screen Compose UI
     slice: MVP
+    platform: android
     spine: [C7, C8, C10]
     owner: Engineering
     status: done
@@ -207,6 +357,7 @@ items:
   - id: W13
     title: JSON persistence
     slice: MVP
+    platform: android
     spine: [C7]
     owner: Engineering
     status: done
@@ -217,6 +368,7 @@ items:
   - id: W14
     title: About, licences, report-output intent
     slice: MVP
+    platform: android
     spine: [C4, C5, C9]
     owner: Engineering
     status: done
@@ -227,6 +379,7 @@ items:
   - id: W15
     title: AAB with install-time model pack
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Engineering
     status: done
@@ -236,9 +389,10 @@ items:
     deps: [W05]
 
   - id: W21
-    title: End-to-end on the phone — install bundle, airplane mode, first reply (M1)
+    title: End-to-end on the Android phone — install bundle, airplane mode, first reply (M1)
     slice: MVP
-    spine: [C1, C2, C3]
+    platform: android
+    spine: [C1, C2, C3, M1]
     owner: Engineering
     status: todo
     needs: tools/install_bundle.sh; emulator E2E (W30) passed, phone not yet
@@ -246,12 +400,13 @@ items:
     estimate_days: 0.5
     deps: [W15, W12, W41]
 
-  # ------------------------------------------------------------------------------------------------
-  # Done this round (Engineering round 2 and Leaf deliverables) — recorded so deps are truthful
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
+  # Done in earlier rounds (Android) — recorded so deps are truthful
+  # ================================================================================================
   - id: W22
     title: Per-reply Report sheet (provisional pending D-021)
     slice: MVP
+    platform: android
     spine: [C9, C3, C8]
     owner: Engineering
     status: done
@@ -263,6 +418,7 @@ items:
   - id: W23
     title: In-app privacy policy text (provisional, placeholders)
     slice: MVP
+    platform: android
     spine: [C3, C9]
     owner: Engineering
     status: done
@@ -274,10 +430,11 @@ items:
   - id: W24
     title: Licence/NOTICE fixes L1–L10 plus LicensesTest
     slice: MVP
+    platform: android
     spine: [C4]
     owner: Engineering
     status: done
-    verified: unit (LicensesTest — every shipped .so maps to a licence entry; in-app NOTICE == root NOTICE) + build (release_check licence assets)
+    verified: unit (LicensesTest — every shipped .so maps to a licence entry; in-app NOTICE == root NOTICE)
     decisions: [D-019]
     estimate_days: 0.5
     deps: [W14]
@@ -285,10 +442,11 @@ items:
   - id: W25
     title: n_outputs_max = 1 — compute buffer 309 → 27 MiB
     slice: BENCH
-    spine: [C2]
+    platform: both
+    spine: [C2, M3]
     owner: Engineering
     status: done
-    verified: host (26.59 MiB, smoke identical) + emulator (28.09 MiB); peak RSS on a phone unknown (W02)
+    verified: host (26.59 MiB, smoke identical) + emulator (28.09 MiB); peak RSS on a phone unknown (W02), peak footprint on an iPhone unknown (W93)
     decisions: [D-028]
     estimate_days: 0.5
     deps: [W06]
@@ -296,10 +454,11 @@ items:
   - id: W26
     title: GenerationService onTimeout(int) for API 34
     slice: MVP
+    platform: android
     spine: [C10]
     owner: Engineering
     status: done
-    verified: code only — never fired; test is W45
+    verified: type-checked-only — code compiles, never fired; the test is W45
     decisions: [D-003]
     estimate_days: 0.25
     deps: [W06]
@@ -307,6 +466,7 @@ items:
   - id: W27
     title: Upload signing from outside the repo; tools/make_upload_key.sh; release gate rejects test keys
     slice: PLAY
+    platform: android
     spine: [C1, C3]
     owner: Engineering
     status: done
@@ -318,6 +478,7 @@ items:
   - id: W28
     title: Supply-chain pins (bundletool, Gradle wrapper sha256, dependency verification); manifest check in bundle tasks
     slice: PLAY
+    platform: android
     spine: [C3, C4]
     owner: Engineering
     status: done
@@ -326,8 +487,9 @@ items:
     deps: [W11]
 
   - id: W29
-    title: Hardening — loaded flag, recents screenshot off, IME no-learning; 3 bugs fixed (clipped end, Stop in cold start, text lost on process death)
+    title: Hardening — loaded flag, recents screenshot off, IME no-learning; 3 bugs fixed
     slice: MVP
+    platform: android
     spine: [C3, C7, C10]
     owner: Engineering
     status: done
@@ -338,16 +500,18 @@ items:
   - id: W30
     title: Emulator functional E2E, all scenarios (install via bundletool → gate → uninstall dialog)
     slice: MVP
+    platform: android
     spine: [C1, C2, C3, C6, C7, C9, C10]
     owner: Engineering
     status: done
-    verified: emulator arm64 API 36, functional only; 29 unit tests, lint 0 errors, host smoke, trace --strict 0 gaps
+    verified: emulator arm64 API 36, functional only; lint 0 errors, host smoke, trace --strict 0 gaps
     estimate_days: 1
     deps: [W22, W23, W24, W25, W26, W29, W15, W09]
 
   - id: W31
-    title: Design — store icon, accessibility commitments, copy
+    title: Design — Play store icon, accessibility commitments, copy
     slice: PLAY
+    platform: android
     spine: [C5, C8]
     owner: Design
     status: done
@@ -359,6 +523,7 @@ items:
   - id: W32
     title: Compliance — Play policy checklist and licence audit
     slice: PLAY
+    platform: android
     spine: [C3, C4, C9]
     owner: Compliance
     status: done
@@ -367,8 +532,9 @@ items:
     deps: []
 
   - id: W20
-    title: GTM — listing copy, privacy policy draft, feature graphic, 4 screenshots, release notes, launch plan
+    title: GTM — Play listing copy, privacy policy draft, feature graphic, screenshots, release notes, launch plan
     slice: PLAY
+    platform: android
     spine: [C5]
     owner: GTM
     status: done
@@ -377,15 +543,184 @@ items:
     estimate_days: 1
     deps: [W30, W31]
 
-  # ------------------------------------------------------------------------------------------------
-  # Hari's queue — decisions and human-only actions (order follows decisions-brief.md)
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
+  # Done THIS round (monorepo, core, Android round 3, iOS port, CI, Leaf rewrites)
+  # ================================================================================================
+  - id: W125
+    title: Monorepo restructure — /core, /android, /ios, /tools, /leaves; Android CMake points at ../core
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Engineering
+    status: done
+    verified: host — /core builds with no platform SDK; tools/host/run_smoke.sh ALL PASSED; Android unit tests and release AAB unchanged (MULTIPLATFORM.md contract)
+    estimate_days: 1
+    deps: [W00]
+
+  - id: W126
+    title: "Core: profiles, shared prompt builder, C API extended additively, host logic test suite"
+    slice: CORE
+    platform: both
+    spine: [C11, C7, C2]
+    owner: Engineering
+    status: done
+    verified: core — tools/core_test.sh --logic-only runs in 0.16 s with no llama.cpp; arivu_profile/arivu_device/arivu_fit + selector unit-tested; no shell consumes the profile object yet (architecture.md B16)
+    decisions: [D-038, D-052, D-007]
+    estimate_days: 2
+    deps: [W125]
+
+  - id: W82
+    title: Split the peak estimate into mapped vs footprint bytes; compare the right one per platform (B23)
+    slice: CORE
+    platform: both
+    spine: [C2, C11]
+    owner: Engineering
+    status: done
+    verified: core — the fit check now judges charged memory rather than mapped bytes; the THRESHOLD it judges against is still unmeasured on any iPhone (W93)
+    decisions: [D-048, D-047]
+    estimate_days: 0.5
+    deps: [W126]
+
+  - id: W127
+    title: "Android round 3: profile plumbing (DeviceProbe → Profile), low-memory state, critical-trim behaviour"
+    slice: MVP
+    platform: android
+    spine: [C11, C6, C2]
+    owner: Engineering
+    status: done
+    verified: unit (56 JVM tests incl. MemoryPressureTest ×12 and the cross-tree ProfileParityTest) + emulator (critical-trim and low-memory scenarios, no regressions); lint clean; release AAB builds. Mid-flight low-memory stop NOT verified — the emulator refuses send-trim-memory to a foreground-service process
+    decisions: [D-012, D-034, D-053]
+    estimate_days: 2
+    deps: [W126, W30]
+
+  - id: W128
+    title: "iOS port: ios/ArivuKit (4 targets), ios/App SwiftUI, XcodeGen spec, tools/ios/*, leaves/engineering-ios.md"
+    slice: MVP
+    platform: ios
+    spine: [C11, C1, C3, C5, C7, C9, C10]
+    owner: Engineering
+    status: done
+    verified: swift-macos — 94 tests pass in Swift 6 language mode via tools/ios/verify_macos.sh. EVERYTHING under ios/App/**, ios/project.yml, the asset catalogue and every tools/ios script except verify_macos.sh and sync_licences.sh is UNVERIFIED — never compiled, no Xcode on this machine
+    decisions: [D-038, D-039, D-042, D-043, D-044, D-045, D-051, D-052, D-055]
+    estimate_days: 3
+    deps: [W126]
+
+  - id: W104
+    title: iOS copy catalogue — every string from leaves/design/copy.md by key, none authored in Swift
+    slice: MVP
+    platform: ios
+    spine: [C5, C8, C11]
+    owner: Engineering
+    status: done
+    verified: swift-macos — StringsTests (11) walk every StringKey case, assert no orphans, assert the iOS privacy claim is never Android's, and reject settings/sign-in/download words. The parity CHECK against the Android file does not exist yet (W77)
+    decisions: [D-053, D-039, D-055, D-031]
+    estimate_days: 0.5
+    deps: [W128]
+
+  - id: W102
+    title: iOS privacy manifest, entitlements and Info.plist keys (PrivacyInfo.xcprivacy, ITSAppUsesNonExemptEncryption, no entitlements)
+    slice: STORE
+    platform: ios
+    spine: [C3, C9, C2]
+    owner: Engineering
+    status: done
+    verified: type-checked-only — the files are authored and self-consistent (Arivu.entitlements requests NOTHING, so D-047's recommendation is already followed; ITSAppUsesNonExemptEncryption is present). Never parsed by Xcode or App Store Connect. Apple's required-reason API list grows, so W96 re-checks before submission
+    decisions: [D-047, D-025, D-039]
+    estimate_days: 0.5
+    deps: [W128]
+
+  - id: W129
+    title: CI workflows written — core.yml, android.yml, ios.yml with path filters
+    slice: CORE
+    platform: both
+    spine: [C11, C3]
+    owner: Engineering
+    status: done
+    verified: type-checked-only — three workflow files exist with the path filters architecture.md §5.4 specifies. NEVER RUN ON A RUNNER. The ios job is explicitly marked unverified in its own header comment
+    estimate_days: 1
+    deps: [W125]
+
+  - id: W130
+    title: tools/ios_release_check.sh — the App Store gate, against appstore-policy-checklist.md
+    slice: STORE
+    platform: ios
+    spine: [C3, C4, C9, M5]
+    owner: Compliance
+    status: done
+    verified: host — runs and fails correctly against a SYNTHETIC fixture only; it has never seen a real .app. Step 8 fails on the D-010 placeholder, as designed
+    decisions: [D-010, D-039, D-049]
+    estimate_days: 1
+    deps: []
+
+  - id: W131
+    title: Architecture Leaf re-walked for Spine 0.2 (one core two shells, profiles, iOS memory, packaging, CI, fork test)
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Architecture
+    status: done
+    verified: delivered (architecture.md, architecture/ios-port.md); §3 "nothing in this section has run on an iPhone"; ios-port.md still treats the Play closed test as free budget for the iOS port, which Compliance has now undercut (W136)
+    estimate_days: 2
+    deps: [W125]
+
+  - id: W132
+    title: Design Leaf 0.2 — iOS states, palette, copy catalogue, gate screen, iOS report composer wording
+    slice: MVP
+    platform: both
+    spine: [C5, C8, C11]
+    owner: Design
+    status: done
+    verified: delivered (design.md §§1–14, design/copy.md); no iOS surface has been seen on a screen of any kind
+    decisions: [D-044, D-045, D-053, D-054, D-055]
+    estimate_days: 1.5
+    deps: []
+
+  - id: W133
+    title: Compliance Leaf 0.2 — App Store policy checklist, Apple has no AI policy, no 12-tester gate
+    slice: STORE
+    platform: ios
+    spine: [C9, C3, C4]
+    owner: Compliance
+    status: done
+    verified: delivered (compliance/appstore-policy-checklist.md §§1–16) — the finding that inverts the launch plan is here — Apple imposes no tester count and no test duration
+    decisions: [D-041, D-024, D-025, D-021]
+    estimate_days: 1.5
+    deps: []
+
+  - id: W134
+    title: GTM Leaf 0.2 — iOS positioning, storefronts, launch shape, App Store listing draft
+    slice: STORE
+    platform: ios
+    spine: [C5, C11]
+    owner: GTM
+    status: done
+    verified: delivered (gtm/positioning.md §§7–10, gtm/appstore-listing.md, launch-plan.md iOS track); every iOS number in the listing is a placeholder pending W93
+    decisions: [D-039, D-040, D-041, D-057, D-058, D-059, D-014]
+    estimate_days: 1
+    deps: []
+
+  - id: W135
+    title: Decisions Leaf rewritten for 0.2 — 59 entries, platform and blocks_release_scope on every one
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Decisions
+    status: done
+    verified: delivered (decisions.yml D-001..D-059, decisions-brief.md) — 10 Play-blocking, 6 App-Store-blocking, one ID map from six Leaves' independent numbering
+    estimate_days: 1
+    deps: [W131, W132, W133, W134, W128]
+
+  # ================================================================================================
+  # Hari's queue — Play-blocking decisions (Part A of decisions-brief.md)
+  # ================================================================================================
   - id: W33
     title: "D-020: choose account type; create/confirm Play developer account; start developer verification"
     slice: PLAY
+    platform: both
     spine: [C1]
     owner: Hari
     status: todo
+    needs: the same personal-vs-organisation trade-off decides the Apple enrolment (W110) — decide it once, execute it twice
     decisions: [D-020]
     deadline: 2026-09-30
     deadline_note: verification enforced in BR, ID, SG, TH from 2026-09-30
@@ -395,6 +730,7 @@ items:
   - id: W34
     title: Developer verification complete (Google's review)
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
@@ -409,73 +745,85 @@ items:
   - id: W35
     title: "D-001: package name (confirm domain control); record resolution in decisions.yml"
     slice: PLAY
+    platform: both
     spine: [C1]
     owner: Hari
     status: done
-    verified: "resolved_human 2026-09-15: io.github.brettleehari.arivu; renamed across the source tree; unit tests + emulator run confirm JNI still binds"
+    verified: "resolved_human 2026-09-15: io.github.brettleehari.arivu; renamed across the source tree; unit tests + emulator run confirm JNI still binds. Now also the iOS bundle id in ios/project.yml"
     decisions: [D-001]
-    deadline_note: before the first upload; irreversible
+    deadline_note: before the first upload to either store; irreversible
     estimate_days: 0.25
     deps: []
 
   - id: W36
     title: "D-010: create the monitored report/contact mailbox; record resolution in decisions.yml"
     slice: PLAY
+    platform: both
     spine: [C9]
     owner: Hari
     status: todo
+    needs: one address serves three forms — the Play public contact, the privacy contact, and the iOS Info.plist ARIVUReportEmail key plus the App Store support contact. Both release gates fail on the placeholder today
     decisions: [D-010]
-    deadline_note: before the first upload (release_check.sh fails on the placeholder)
+    deadline_note: before the first upload to EITHER store (release_check.sh step 1 and ios_release_check.sh step 8 both fail on the placeholder)
     estimate_days: 0.25
     deps: []
 
   - id: W37
     title: "D-021: approve per-reply Report; amend SPINE §3 (+ D-002 permissions, D-011 if yes); bump version, run propagate.py"
     slice: PLAY
+    platform: both
     spine: [C9, C3, C8]
     owner: Hari
     status: todo
+    needs: the sheet is built and working on both platforms. Compliance found it PASSES Apple Guideline 1.2 outright while remaining a documented gap against Play's "without needing to exit the app"
     decisions: [D-021, D-002, D-011]
-    deadline_note: before the first upload (the build already contains Report)
+    deadline_note: before the first upload (both builds already contain Report)
     estimate_days: 0.5
     deps: []
 
   - id: W38
     title: "D-022 + D-023: privacy policy host and text owner; retention period; supply developer name and repo URL"
     slice: PLAY
+    platform: both
     spine: [C3, C9]
     owner: Hari
     status: todo
+    needs: the hosted draft and the in-app text still disagree on retention. Apple 5.1.1(i) wants the URL AND in-app text, so the same two artefacts serve both stores
     decisions: [D-022, D-023]
     deadline_note: before the first upload (in-app text ships) and before the Data safety form
     estimate_days: 0.25
     deps: [W35, W36]
 
   - id: W39
-    title: "D-024 + D-025: target audience 18+; Data safety answer"
+    title: "D-024 + D-025: target audience 18+ (Play) and the Apple age-rating override; Data safety = Data Not Collected on both"
     slice: PLAY
+    platform: both
     spine: [C9, C3]
     owner: Hari
     status: todo
+    needs: one position, two mechanisms — Play's target-audience form, then Apple's questionnaire answered honestly (returns ~4+) plus the documented manual override. Letting the two diverge is indefensible to either store
     decisions: [D-024, D-025]
-    deadline_note: before the Console App content forms
+    deadline_note: before the Console App content forms and before the App Store Connect age questionnaire
     estimate_days: 0.25
     deps: [W38]
 
   - id: W40
     title: "D-017 interim: drop or keep \"polite\" in the listing and first example"
     slice: PLAY
+    platform: both
     spine: [C5]
     owner: Hari
     status: todo
+    needs: applies to both listings; the polite rewrite echoed the input unchanged 6/6 on device
     decisions: [D-017, D-030]
-    deadline_note: before the store listing is uploaded
+    deadline_note: before either store listing is uploaded
     estimate_days: 0.25
     deps: []
 
   - id: W17
-    title: Generate the upload key (tools/make_upload_key.sh), two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256
+    title: Generate the Play upload key, two encrypted offline backups, Gradle props outside the repo, record upload cert SHA-256
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
@@ -486,55 +834,59 @@ items:
     deps: [W27]
 
   - id: W41
-    title: Physical 4 GB test phone on adb, USB debugging, its Google account ready to join Internal testing
+    title: Android test phone on adb — USB debugging, its Google account ready to join Internal testing
     slice: BENCH
+    platform: android
     spine: [C2]
     owner: Hari
     status: todo
-    needs: surfaced by Sequencing — every phone item waits on this; assumes Hari already owns the phone (if not, add purchase lead time)
+    needs: setup only; ACQUIRING the handset is W112, which Sequencing has now split out because no evidence in the repo comes from a physical Android phone
     estimate_days: 0.25
     guess: true
-    deps: []
+    deps: [W112]
 
   - id: W42
     title: Public source repo URL exists (privacy policy, listing, GitHub Pages host)
     slice: PLAY
+    platform: both
     spine: [C4]
     owner: Hari
     status: done
-    verified: "github.com/brettleehari/arivu, public, pushed 2026-09-15 (D-035)"
-    needs: surfaced by Sequencing — [REPO_URL] is unfilled in privacy-policy.html and store-listing.md; GitHub Pages needs the repo
-    decisions: [D-022]
+    verified: "delivered — github.com/brettleehari/arivu, public, pushed 2026-09-15 (D-035)"
+    decisions: [D-022, D-035]
     estimate_days: 0.25
-    guess: true
     deps: []
 
   - id: W66
-    title: Stamp the non-blocking decisions (D-002..D-034 non-blocking set, incl. D-028, D-033)
+    title: Stamp the carried-over non-blocking decisions (D-002..D-008, D-011..D-016, D-019, D-026..D-034, D-036)
     slice: PLAY
+    platform: both
     spine: [C2, C7]
     owner: Hari
     status: todo
-    decisions: [D-003, D-005, D-006, D-007, D-012, D-013, D-016, D-019, D-026, D-027, D-028, D-029, D-031, D-032, D-033]
+    decisions: [D-003, D-005, D-006, D-007, D-012, D-013, D-016, D-019, D-026, D-027, D-028, D-029, D-031, D-032, D-033, D-036]
     estimate_days: 0.25
     deps: []
 
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
   # PLAY — to the first Internal testing upload
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
   - id: W43
-    title: Privacy text — one source (Compliance owns), placeholders filled, retention identical in both copies
+    title: Privacy text — one source (Compliance owns), placeholders filled, retention identical in every copy
     slice: PLAY
+    platform: both
     spine: [C3, C9]
     owner: Compliance
     status: todo
+    needs: three copies to keep identical now, not two — Android strings.xml, iOS Localizable.strings, and the hosted page
     decisions: [D-022, D-023]
     estimate_days: 0.25
     deps: [W38, W42]
 
   - id: W16
-    title: Apply D-001 package name, D-010 address and the privacy text into the build; rebuild release AAB
+    title: Apply D-001 package name, D-010 address and the privacy text into the Android build; rebuild release AAB
     slice: PLAY
+    platform: android
     spine: [C1, C9, C3]
     owner: Engineering
     status: todo
@@ -544,19 +896,21 @@ items:
     deps: [W35, W36, W37, W43]
 
   - id: W51
-    title: tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-signed AAB (exit criterion before upload)
+    title: tools/release_check.sh prints RELEASE CHECK PASSED on the upload-key-signed AAB
     slice: PLAY
+    platform: android
     spine: [C1, C3, C9]
     owner: Engineering
     status: todo
-    needs: host smoke, unit tests, lint, bundleRelease signed from outside the repo; D-001/D-010 marked resolved in decisions.yml
+    needs: it fails today on exactly two things — D-010's placeholder mailbox and the unsigned bundle. Everything else already passes
     decisions: [D-001, D-010]
     estimate_days: 0.25
     deps: [W16, W17, W28]
 
   - id: W52
-    title: MILESTONE — first Internal testing upload (create app, internal track, testers, upload signed AAB, keep Play App Signing)
+    title: MILESTONE — first Play Internal-testing upload (create app, internal track, testers, upload signed AAB, keep Play App Signing)
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
@@ -565,13 +919,14 @@ items:
     estimate_days: 0.25
     deps: [W51, W34, W33]
 
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
   # PLAY — from Internal testing to production
-  # ------------------------------------------------------------------------------------------------
+  # ================================================================================================
   - id: W18
     title: "Internal track: download Play split APKs; model STORED, offset % 16384; install from Play on the phone; M1 airplane mode"
     slice: PLAY
-    spine: [C1, C2]
+    platform: android
+    spine: [C1, C2, M1]
     owner: Engineering
     status: todo
     uses: [phone]
@@ -582,6 +937,7 @@ items:
   - id: W48
     title: "W18 extension: signed universal APK has the model aligned; apksigner cert == Console cert; install-over both ways; code transparency timebox"
     slice: PLAY
+    platform: android
     spine: [C1, C3]
     owner: Architecture
     status: todo
@@ -594,9 +950,11 @@ items:
   - id: W49
     title: "D-018 final: confirm Google-generated key (A) or switch to own key via PEPK (B)"
     slice: PLAY
+    platform: android
     spine: [C1, R1]
     owner: Hari
     status: todo
+    needs: Android only. Apple's model is different and is D-046 (W114) — do not answer both from the same instinct
     decisions: [D-018]
     deadline_note: before the first Open testing or Production release (locks then)
     estimate_days: 0.25
@@ -605,6 +963,7 @@ items:
   - id: W50
     title: Record Play app-signing cert SHA-256 and release provenance (AAB sha256, versionCode, llama.cpp commit, model sha256)
     slice: PLAY
+    platform: android
     spine: [C3, C4, R1]
     owner: Engineering
     status: todo
@@ -616,6 +975,7 @@ items:
   - id: W45
     title: API 34 service timeout test — onTimeout(int) fires and stops after ~3 min
     slice: MVP
+    platform: android
     spine: [C10]
     owner: Engineering
     status: todo
@@ -626,8 +986,9 @@ items:
     deps: [W26]
 
   - id: W46
-    title: Phone accessibility pass — TalkBack, 200% text, RTL (design.md commitments)
+    title: Android phone accessibility pass — TalkBack, 200% text, RTL (design.md commitments)
     slice: MVP
+    platform: android
     spine: [C8]
     owner: Design
     status: todo
@@ -639,11 +1000,12 @@ items:
   - id: W59
     title: Red-team eval slice (CSAE, self-harm, weapons, forged official letters) + safeguards review; record results
     slice: BENCH
+    platform: both
     spine: [C9, C5]
     owner: Engineering
     status: todo
-    needs: host run valid for quality; feeds IARC / AI-content answers and D-024 16+ revisit
-    decisions: [D-026]
+    needs: host run valid for quality. One slice covers both stores — it feeds Play's IARC/AI-content answers AND Apple's sensitive-content frequency questionnaire (D-024)
+    decisions: [D-026, D-024]
     estimate_days: 1
     guess: true
     deps: [W04]
@@ -651,31 +1013,36 @@ items:
   - id: W60
     title: Truncate whole exchanges, not single turns (+ Design review of divider placement)
     slice: MVP
+    platform: both
     spine: [C7]
     owner: Engineering
     status: todo
-    decisions: [D-033]
+    needs: lives in /core if D-052 goes to one prompt builder; otherwise it is three edits
+    decisions: [D-033, D-052]
     estimate_days: 1
     guess: true
     deps: [W66]
 
   - id: W53
-    title: Listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 interim wording, REPO_URL, "install on Wi-Fi"
+    title: Play listing copy synced — per-reply Report, Send/Stop/Copy/Report, D-017 interim wording, REPO_URL, "install on Wi-Fi"
     slice: PLAY
+    platform: android
     spine: [C5, C9]
     owner: GTM
     status: todo
+    needs: store-listing.md still says "report it from the About screen" and "Send / Stop / Copy"
     decisions: [D-021, D-017]
     estimate_days: 0.25
     deps: [W20, W37, W40, W42]
 
   - id: W47
-    title: Recapture shot 4 (Stop) and final screenshots on the phone (+ shot 8 Report sheet)
+    title: Recapture shot 4 (Stop) and final Android screenshots on the phone (+ shot 8 Report sheet)
     slice: PLAY
+    platform: android
     spine: [C5, C9]
     owner: GTM
     status: todo
-    needs: optional — the 4 approved emulator shots are enough for the listing; phone removes the dev-options icon
+    needs: optional — the 4 approved emulator shots are enough for the listing; the phone removes the dev-options icon
     uses: [phone, Engineering]
     decisions: [D-021, D-009]
     estimate_days: 0.5
@@ -684,16 +1051,19 @@ items:
   - id: W44
     title: Privacy policy hosted at a public, non-geofenced URL (GitHub Pages, no analytics)
     slice: PLAY
+    platform: both
     spine: [C3, C9]
     owner: GTM
     status: todo
+    needs: one URL serves both stores; Apple additionally wants a support page that reaches a human (W106)
     decisions: [D-022]
     estimate_days: 0.25
     deps: [W43, W42]
 
   - id: W54
-    title: "Console: store listing + App content — privacy URL, Data safety, target audience, IARC, AI content / App access notes, ads, FGS check"
+    title: "Play Console: store listing + App content — privacy URL, Data safety, target audience, IARC, AI content / App access notes, ads, FGS check"
     slice: PLAY
+    platform: android
     spine: [C1, C3, C9]
     owner: Hari
     status: todo
@@ -704,11 +1074,13 @@ items:
     soft_deps: [W64]
 
   - id: W55
-    title: "Console: device-catalog RAM exclusion rule (gate layer 2) from D-009"
+    title: "Play Console: device-catalog RAM exclusion rule (gate layer 2) from D-009"
     slice: PLAY
+    platform: android
     spine: [C6]
     owner: Hari
     status: todo
+    needs: the App Store has no equivalent — on iOS the same number becomes a minimum OS version plus a runtime gate (W109)
     decisions: [D-009]
     deadline_note: before any track wider than Internal testing
     estimate_days: 0.25
@@ -717,10 +1089,11 @@ items:
   - id: W56
     title: Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
-    needs: agents cannot recruit humans; launch-plan.md Phase 2
+    needs: agents cannot recruit humans; launch-plan.md Phase 2. Apple needs none of this (W133)
     estimate_days: 0.5
     elapsed_days: 5
     guess: true
@@ -729,10 +1102,11 @@ items:
   - id: W57
     title: Closed test — 12 testers opted in for 14 continuous days (cannot be compressed)
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
-    needs: "[V] required for personal accounts created after 2023-11-13; organisation exemption unverified; run it either way (D-020). elapsed = 14 days + ~1 day for opt-ins (guess)"
+    needs: "[V] required for personal accounts created after 2023-11-13; organisation exemption unverified; run it either way (D-020). This gate exists on Play and NOT on the App Store — it is the single biggest reason the two calendars now differ"
     decisions: [D-020]
     skip_if: [org_account_exempt]
     estimate_days: 0.25
@@ -742,6 +1116,7 @@ items:
   - id: W58
     title: Apply for production access (form answers from the closed test) and wait for Google
     slice: PLAY
+    platform: android
     spine: [C1]
     owner: Hari
     status: todo
@@ -753,19 +1128,21 @@ items:
     deps: [W57]
 
   - id: W62
-    title: Production candidate — fixes in, versionCode bumped, release_check.sh PASSED, provenance recorded, uploaded
+    title: Play production candidate — fixes in, versionCode bumped, release_check.sh PASSED, provenance recorded, uploaded
     slice: PLAY
+    platform: android
     spine: [C1, C3]
     owner: Engineering
     status: todo
     decisions: [D-009, D-017]
     estimate_days: 0.5
     deps: [W51, W03, W65, W45, W46, W59]
-    soft_deps: [W60, W61]
+    soft_deps: [W60, W61, W74]
 
   - id: W19
-    title: MILESTONE — production release, Wave A (NG, GH, KE, UG, ZA, PH)
+    title: MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, PH)
     slice: PLAY
+    platform: android
     spine: [C1, C3, C6, C9]
     owner: Hari
     status: todo
@@ -779,6 +1156,7 @@ items:
   - id: W63
     title: Wave B (ID, BR) then Wave C, by country
     slice: PLAY
+    platform: android
     spine: [C1, C5]
     owner: Hari
     status: todo
@@ -789,15 +1167,729 @@ items:
     guess: true
     deps: [W19, W65, W34]
 
-  # ------------------------------------------------------------------------------------------------
-  # Leaf hygiene (non-blocking)
-  # ------------------------------------------------------------------------------------------------
   - id: W64
-    title: Compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and §3 describe the built Report sheet and in-app policy
+    title: Play compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and §3 describe the built Report sheet and in-app policy
     slice: PLAY
+    platform: android
     spine: [C9]
     owner: Compliance
     status: todo
     decisions: [D-021, D-026]
+    estimate_days: 0.25
+    deps: []
+
+  # ================================================================================================
+  # CORE / TOOLS — shared work (Architecture §11), platform: both
+  # ================================================================================================
+  - id: W67
+    title: Boundary lint (E3) — grep /core for JNI, Android, Foundation, UIKit, Metal, TARGET_OS_, __ANDROID__
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: catches a leak that happens to compile on the host anyway, because macOS has Foundation
+    estimate_days: 0.5
+    deps: []
+
+  - id: W68
+    title: "C-API conformance (E4): C99 header compile + nm symbol check; move engine_smoke.cpp / apk_window_check.cpp onto arivu.h"
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: the behavioural harness still runs against the C++ surface while both shells use the C one (architecture.md B13)
+    estimate_days: 0.5
+    deps: []
+
+  - id: W69
+    title: Profile-budget check in CI (architecture.md §2.5) — a profile that cannot fit its own budget fails the build
+    slice: CORE
+    platform: both
+    spine: [C2, C11]
+    owner: Engineering
+    status: todo
+    decisions: [D-038, D-048]
+    estimate_days: 0.5
+    deps: [W74]
+
+  - id: W70
+    title: Inject core/vX.Y.Z into arivu_version(); About shows the provenance triple on both platforms
+    slice: CORE
+    platform: both
+    spine: [C4, C5]
+    owner: Engineering
+    status: todo
+    needs: arivu_version() is the literal "0.1.0" today, so a shipped build cannot say which core it contains (B15). The iOS parity tests currently skip on a "stub-" prefix, a convention invented on the Swift side
+    estimate_days: 0.5
+    deps: []
+
+  - id: W71
+    title: release_check.sh asserts the one-sentence description is identical in all five places
+    slice: PLAY
+    platform: both
+    spine: [C5]
+    owner: Engineering
+    status: todo
+    needs: architecture.md §6 — the mechanical version of the fork test; it now has to cover the App Store listing too, which makes it six places
+    estimate_days: 0.5
+    deps: []
+
+  - id: W72
+    title: arivu_backend_init(); move Android's direct ggml/llama calls behind it (B14)
+    slice: CORE
+    platform: android
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: jni_bridge.cpp includes llama.h and ggml-backend.h, which §1.2 forbids a shell to do
+    estimate_days: 1
+    deps: [W68]
+
+  - id: W73
+    title: Tiny GGUF fixture (~5 MB) so CI can run run_smoke.sh without fetching 400 MB
+    slice: CORE
+    platform: both
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: lower priority than it was — core_test.sh --logic-only already needs no model
+    estimate_days: 0.5
+    deps: []
+
+  - id: W74
+    title: Run the core and android CI workflows on a runner for the first time; make them green
+    slice: CORE
+    platform: both
+    spine: [C11, C3]
+    owner: Engineering
+    status: todo
+    needs: the two workflows are written and have never executed. Expect the first run to fail on runner-only things — SDK licences, the llama.cpp cache key, the branch-protection gotcha in core.yml's own header comment
+    uses: [ci-runner]
+    estimate_days: 1
+    guess: true
+    deps: [W67, W68, W129]
+
+  - id: W75
+    title: Run the ios CI workflow on a macOS runner for the first time; make it green
+    slice: CORE
+    platform: ios
+    spine: [C11, C3]
+    owner: Engineering
+    status: todo
+    needs: cannot be green before a project exists that builds (W90). Its own header says "expect the first PR touching ios/ to be the one that debugs it"
+    uses: [ci-runner]
+    estimate_days: 0.5
+    guess: true
+    deps: [W74, W90, W78]
+
+  - id: W76
+    title: iOS section of release-and-signing.md; the research that feeds D-046
+    slice: STORE
+    platform: ios
+    spine: [C1, C3, C4]
+    owner: Architecture
+    status: todo
+    needs: deliberately no recommendation yet — Apple's model is not Play App Signing and the analogy misleads. A lead-time item
+    decisions: [D-046]
+    estimate_days: 1
+    deps: []
+
+  - id: W77
+    title: tools/check_copy.py — one key set across Android strings.xml and iOS Localizable.strings
+    slice: CORE
+    platform: both
+    spine: [C5, C11]
+    owner: Engineering
+    status: todo
+    needs: fails when a key exists on one platform only without an explicit android_only/ios_only marker, or when a shared string's text differs; normalises %1$s → %1$@ / %1$ld. This is what makes D-053 real rather than a promise
+    decisions: [D-053]
+    estimate_days: 0.5
+    deps: [W104]
+
+  - id: W78
+    title: tools/check_ios_binary.sh — M5 on iOS (no CFNetwork, Network.framework, libcurl, URLSession/socket/connect symbols)
+    slice: CORE
+    platform: ios
+    spine: [C3, M5]
+    owner: Engineering
+    status: todo
+    needs: "GTM's requirement is narrower than Architecture's: it must exist AND its exact guarantee must be written down BEFORE any listing or policy sentence describes it. Until then the copy may not say \"our build check fails if any is added\" (D-039)"
+    decisions: [D-039, D-049]
+    estimate_days: 0.5
+    deps: []
+
+  - id: W79
+    title: Android DeviceProbe + ProfileSelector; retire the hardcoded arithmetic in Policy.kt
+    slice: MVP
+    platform: android
+    spine: [C11, C2, C8]
+    owner: Engineering
+    status: todo
+    needs: three copies of the numbers exist (core, Kotlin, Swift) held in step only by a source-text ProfileParityTest. This is the item that lets that test be deleted rather than maintained
+    decisions: [D-038, D-048]
+    estimate_days: 1.5
+    deps: [W126]
+
+  - id: W80
+    title: iOS DeviceProbe (os_proc_available_memory) + ProfileSelector
+    slice: MVP
+    platform: ios
+    spine: [C11, C2, C8]
+    owner: Engineering
+    status: todo
+    needs: DeviceMemory.availableBytes() is inside #if os(iOS) and has never been compiled. The margin it applies comes from W93's measurement, not from taste (D-048)
+    decisions: [D-038, D-048, D-047]
+    estimate_days: 1.5
+    deps: [W90, W93]
+
+  - id: W81
+    title: Gate screen says WHY, from arivu_fit_name() — the same copy on both platforms
+    slice: MVP
+    platform: both
+    spine: [C6, C11, C5]
+    owner: Design
+    status: todo
+    uses: [Engineering]
+    decisions: [D-045, D-053]
+    estimate_days: 0.5
+    deps: [W79, W80]
+
+  - id: W83
+    title: Finish stopped_low_memory and load_failed_low_memory on Android; announce in the live region
+    slice: MVP
+    platform: android
+    spine: [C6, C5, C8]
+    owner: Engineering
+    status: todo
+    needs: partly landed; take design.md §7's wording verbatim and rename low_memory → load_failed_low_memory
+    decisions: [D-053]
+    estimate_days: 0.5
+    deps: [W127]
+
+  - id: W84
+    title: Clipboard confirmation on Android ≤ 12 (design.md §4) so one pattern describes both apps
+    slice: MVP
+    platform: android
+    spine: [C5, C8, C11]
+    owner: Engineering
+    status: todo
+    decisions: [D-054]
+    estimate_days: 0.25
+    deps: []
+
+  - id: W117
+    title: tools/make_notice.py — one source, a generated NOTICE per platform; relax LicensesTest to "covers this binary"
+    slice: CORE
+    platform: both
+    spine: [C4, C11]
+    owner: Engineering
+    status: todo
+    needs: the root NOTICE names kotlinx.coroutines, kotlinx.serialization and ThreeTen-BP, none of which is in an iOS binary
+    decisions: [D-056]
+    estimate_days: 0.5
+    deps: [W103]
+
+  # ================================================================================================
+  # iOS — the twelve ordered first-build steps (engineering-ios.md §"Remaining manual steps")
+  # Steps 1-4 are the first build; 5-9 the first honest numbers; 10-12 release material.
+  # EVERY ONE of these needs a Mac with Xcode, which does not exist yet.
+  # ================================================================================================
+  - id: W85
+    title: "iOS step 1 — install the toolchain: Xcode 16+ (Swift 6), brew install cmake xcodegen; confirm xcrun --sdk iphoneos"
+    slice: MVP
+    platform: ios
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: this item CREATES the mac-with-xcode resource; it is the gate every other iOS engineering item sits behind. Xcode is a ~10 GB download and a slow install
+    uses: [mac]
+    estimate_days: 0.5
+    elapsed_days: 0.5
+    guess: true
+    deps: []
+
+  - id: W86
+    title: "iOS step 2 — fetch the inputs on that Mac: fetch_llama.sh, fetch_model.sh (~400 MB, sha256), then run_smoke.sh"
+    slice: MVP
+    platform: ios
+    spine: [C11, C2]
+    owner: Engineering
+    status: todo
+    needs: if the core is broken, find out before Xcode is involved
+    uses: [mac-with-xcode]
+    estimate_days: 0.25
+    deps: [W85]
+
+  - id: W87
+    title: "iOS step 3 — run the 94 ArivuKit tests the normal way (swift test --no-parallel), not through verify_macos.sh"
+    slice: MVP
+    platform: ios
+    spine: [C11]
+    owner: Engineering
+    status: todo
+    needs: expect the same 94 passes and 2 skips. If the manifest does not load, the Command Line Tools defect described in engineering-ios.md has followed you; a full Xcode install fixes it
+    uses: [mac-with-xcode]
+    estimate_days: 0.25
+    deps: [W85]
+
+  - id: W88
+    title: "iOS step 4 — make tools/ios/build_core.sh actually produce a working ArivuCore.xcframework"
+    slice: MVP
+    platform: ios
+    spine: [C11, C2]
+    owner: Engineering
+    status: todo
+    needs: "never run, and it is not even executable today (mode 644). Two predicted failures: libtool complaining about duplicate members from the ggml backends, and CMake refusing -G Ninja under the iOS toolchain. Exit criterion: plutil -p on the xcframework Info.plist shows both slices"
+    uses: [mac-with-xcode]
+    estimate_days: 1
+    guess: true
+    deps: [W86]
+    soft_deps: [W87]
+
+  - id: W89
+    title: "iOS step 5 — generate and open the Xcode project (ARIVU_REPORT_EMAIL=… generate_project.sh); fix project.yml"
+    slice: MVP
+    platform: ios
+    spine: [C11, C9]
+    owner: Engineering
+    status: todo
+    needs: XcodeGen has never parsed this spec. The framework path, the folder-reference for licenses and the build-phase input/output files are all plausible and unproven. Wants D-010's real address, but the placeholder builds
+    uses: [mac-with-xcode]
+    decisions: [D-010]
+    estimate_days: 0.5
+    guess: true
+    deps: [W88]
+
+  - id: W90
+    title: "iOS step 6 — first Simulator build: meet the compiler with ~1,400 lines of never-compiled SwiftUI"
+    slice: MVP
+    platform: ios
+    spine: [C11, C7, C8, C10]
+    owner: Engineering
+    status: todo
+    needs: "the biggest honest unknown on the iOS side. Named suspects: sheet(item:) plumbing, ScrollViewReader follow behaviour, Form inside a .sheet with detents, @FocusState, @UIApplicationDelegateAdaptor with a @StateObject stored property, and whether applicationDidReceiveMemoryWarning fires for a SwiftUI-lifecycle app. Label every Simulator number non-representative"
+    uses: [mac-with-xcode]
+    decisions: [D-043, D-045]
+    estimate_days: 2
+    guess: true
+    deps: [W89]
+
+  - id: W91
+    title: "iOS step 7 — run ArivuTests on the Simulator (model in the bundle, privacy manifest, licences, catalogue from the real bundle, coreVersion not \"stub\")"
+    slice: MVP
+    platform: ios
+    spine: [C11, C1, C4, C3]
+    owner: Engineering
+    status: todo
+    uses: [mac-with-xcode]
+    estimate_days: 0.5
+    guess: true
+    deps: [W90]
+
+  - id: W92
+    title: "iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 class)"
+    slice: BENCH
+    platform: ios
+    spine: [C1, C2, C11]
+    owner: Engineering
+    status: todo
+    needs: a 99 USD/yr developer account is needed to install on a device at all (W110), and the handset has to exist (W111)
+    uses: [mac-with-xcode, iphone]
+    estimate_days: 0.5
+    guess: true
+    deps: [W91, W110]
+
+  - id: W93
+    title: "iOS step 9 — first iPhone measurement, airplane mode: cold first map, decode tok/s, phys_footprint peak, os_proc_available_memory at three moments, idle footprint (the iOS twin of W02)"
+    slice: BENCH
+    platform: ios
+    spine: [C2, C11, M1, M2, M3, M4]
+    owner: Engineering
+    status: todo
+    needs: "NO iPHONE NUMBER EXISTS anywhere in this repo — every iOS memory figure in every Leaf is an Android measurement or an estimate. This item settles D-042's floor, D-047's entitlement question, D-048's margin, D-051's Metal argument, and Design's request 7 (whether state_starting_first_run ships at all). Record beside the Android rows in leaves/NOTES.md, labelled with the handset"
+    uses: [mac-with-xcode, iphone]
+    decisions: [D-042, D-047, D-048, D-051, D-038]
+    estimate_days: 1
+    guess: true
+    deps: [W92]
+
+  - id: W94
+    title: "iOS step 10 — device walk of design.md §3: every state, the gate screen, the report composer AND its no-mail-account fallback, VoiceOver, AX5, RTL pseudolanguage"
+    slice: MVP
+    platform: ios
+    spine: [C5, C6, C7, C8, C9, C10]
+    owner: Engineering
+    status: todo
+    needs: the iOS twin of the Android emulator functional run, except it happens on real hardware first time
+    uses: [mac-with-xcode, iphone]
+    decisions: [D-045, D-043, D-021]
+    estimate_days: 1
+    guess: true
+    deps: [W92]
+
+  - id: W95
+    title: "iOS step 11 — icon and launch screen under the system corner mask, light and dark; 1024×1024 App Store icon from the same SVG"
+    slice: STORE
+    platform: ios
+    spine: [C5]
+    owner: Design
+    status: todo
+    needs: arivu-1024.png exists but has never been through actool and has never been seen under the mask
+    uses: [mac-with-xcode]
+    estimate_days: 0.25
+    deps: [W90]
+
+  - id: W96
+    title: "iOS step 12 — pre-submission gate: tools/ios_release_check.sh against the first REAL archive; re-check PrivacyInfo.xcprivacy against Apple's current required-reason list; confirm App Privacy \"Data Not Collected\"; assert the iOS privacy sentence is not Android's"
+    slice: STORE
+    platform: ios
+    spine: [C3, C4, C9, M5]
+    owner: Compliance
+    status: todo
+    needs: the script has only ever run against a synthetic fixture. Step 8 fails on D-010's placeholder until W36 lands
+    uses: [mac-with-xcode]
+    decisions: [D-010, D-039, D-025, D-049]
+    estimate_days: 0.5
+    deps: [W119, W36, W78]
+
+  # ================================================================================================
+  # iOS — everything else on the way to the two App Store milestones
+  # ================================================================================================
+  - id: W97
+    title: Run CoreParityTests against the real core (not the stub) and settle D-052
+    slice: CORE
+    platform: ios
+    spine: [C11, C7]
+    owner: Engineering
+    status: todo
+    needs: two tests are skipped by design today because the stub answers them. Also settles the three open questions engineering-ios.md put to the Core Leaf (version format, prompt-builder ownership rule, available_memory_bytes == 0)
+    uses: [mac-with-xcode]
+    decisions: [D-052, D-048]
+    estimate_days: 0.5
+    deps: [W88]
+
+  - id: W98
+    title: "iOS at-rest test: Data Protection class AND isExcludedFromBackupKey asserted as resource values, not reviewed by eye"
+    slice: MVP
+    platform: ios
+    spine: [C3]
+    owner: Engineering
+    status: todo
+    needs: "ChatRepository.protect() is iOS-only and has never been compiled. Without this the conversation reaches iCloud — exactly what the Android side went to trouble to prevent. privacy-policy.html carries a placeholder block until this is answered"
+    uses: [mac-with-xcode]
+    decisions: [D-022]
+    estimate_days: 0.5
+    deps: [W90]
+
+  - id: W99
+    title: iPhone accessibility pass — VoiceOver, AX5 Dynamic Type, RTL pseudolanguage, Reduce Motion/Transparency
+    slice: MVP
+    platform: ios
+    spine: [C8]
+    owner: Design
+    status: todo
+    uses: [mac-with-xcode, iphone, Engineering]
+    estimate_days: 0.5
+    guess: true
+    deps: [W94]
+
+  - id: W100
+    title: Contrast verification of the iOS palette against design.md §10, computed rather than eyeballed
+    slice: MVP
+    platform: ios
+    spine: [C8]
+    owner: Design
+    status: todo
+    estimate_days: 0.25
+    deps: []
+
+  - id: W101
+    title: iOS screenshot set on a real iPhone — the seven Android states at iPhone aspect ratios, plus the gate screen
+    slice: STORE
+    platform: ios
+    spine: [C5, C6]
+    owner: GTM
+    status: todo
+    needs: the Android set cannot be reused, and the gate screen is a first impression on iOS rather than an edge case — there is no device-exclusion catalogue
+    uses: [mac-with-xcode, iphone, Engineering]
+    decisions: [D-045, D-058]
+    estimate_days: 0.5
+    guess: true
+    deps: [W94]
+
+  - id: W103
+    title: Reconcile the iOS licences index with licence-audit.md §7.4 (Swift runtime and libc++ rows)
+    slice: STORE
+    platform: ios
+    spine: [C4]
+    owner: Compliance
+    status: todo
+    needs: "ios/App/Resources/licenses/index.txt ships rows for the Swift standard library and LLVM libc++; licence-audit.md §7.4 says both are deliberately absent on iOS. One of the two is wrong and C4 is \"licences visible in-app\", not \"most licences\""
+    decisions: [D-056, D-019]
+    estimate_days: 0.25
+    deps: []
+
+  - id: W105
+    title: Draft the App Review Information notes (appstore-policy-checklist.md §11)
+    slice: STORE
+    platform: ios
+    spine: [C9, C5]
+    owner: Compliance
+    status: todo
+    needs: four points, mostly a translation of the Play "App access" text. No demo account, no sign-in, offline by design — say so before the reviewer wonders
+    decisions: [D-010, D-021]
+    estimate_days: 0.25
+    deps: [W36]
+
+  - id: W106
+    title: Support page at the privacy-policy host — contact address, the three limits, how to delete your data, how to report a reply
+    slice: STORE
+    platform: ios
+    spine: [C9, C5, C3]
+    owner: GTM
+    status: todo
+    needs: Apple requires a support URL and a repo README is not one for a non-technical reader. Play does not require this, which is why it sits in the iOS queue
+    decisions: [D-010, D-022]
+    estimate_days: 0.5
+    deps: [W44, W36]
+
+  - id: W107
+    title: Four-way privacy consistency read before every submission — listing copy · privacy policy · Data safety (Play) · App Privacy (Apple)
+    slice: STORE
+    platform: both
+    spine: [C3, C5, C9]
+    owner: GTM
+    status: todo
+    uses: [Engineering]
+    decisions: [D-025, D-022, D-039]
+    estimate_days: 0.25
+    deps: [W43, W44, W108]
+    soft_deps: [W53]
+
+  - id: W108
+    title: App Store listing finalised — the approved iOS privacy wording, the minimum iOS version, "install on Wi-Fi", real download size, no cross-platform mention
+    slice: STORE
+    platform: ios
+    spine: [C5, C3, C11]
+    owner: GTM
+    status: todo
+    needs: "every iOS number in appstore-listing.md is a placeholder until W93. Neither listing names the other platform (D-057); a profile difference never appears as a feature, only as a ceiling (D-058)"
+    decisions: [D-039, D-042, D-057, D-058, D-059, D-017]
+    estimate_days: 0.5
+    deps: [W93, W101, W115, W109, W40]
+
+  - id: W109
+    title: Choose the shipping MinimumOSVersion from measurement (D-042) and wire the runtime gate to the same floor
+    slice: STORE
+    platform: ios
+    spine: [C6, C11]
+    owner: Engineering
+    status: todo
+    needs: "the App Store has no device-exclusion catalogue, so the OS floor is the only pre-install filter there is. 17.0 is already fixed in ios/project.yml, BEFORE the measurement that is supposed to derive it. D-009's RAM floor sets the same number on both platforms; the soft edge to W03 records that coupling without letting the Android phone gate the iOS calendar, per D-042's own recommendation to ship 17.0 for the first build"
+    uses: [mac-with-xcode]
+    decisions: [D-042, D-009]
+    estimate_days: 0.25
+    deps: [W93]
+    soft_deps: [W03]
+
+  # ================================================================================================
+  # iOS — Hari's queue: enrolment, hardware, and the six App-Store-blocking decisions (Part B)
+  # ================================================================================================
+  - id: W110
+    title: Apple Developer Program enrolment ($99/yr, 2FA, legal name or D-U-N-S)
+    slice: STORE
+    platform: ios
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: "longest lead time on the iOS side and the same personal-vs-organisation trade-off as D-020 (W33): individual enrolment PUBLISHES HARI'S LEGAL NAME as the seller on every product page; organisation needs a D-U-N-S and a public website on a domain he owns. No tester gate. Nothing can be installed on an iPhone without it"
+    decisions: [D-020, D-046]
+    estimate_days: 0.25
+    elapsed_days: 5
+    guess: true
+    deps: [W33]
+
+  - id: W111
+    title: Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB)
+    slice: BENCH
+    platform: ios
+    spine: [C2, C11]
+    owner: Hari
+    status: todo
+    needs: "launch-plan.md calls this and the enrolment the longest lead time on either platform. Second-hand is fine; the RAM class is the requirement, not the year. This item is what makes the `iphone` resource exist"
+    skip_if: [hardware_in_hand]
+    estimate_days: 0.25
+    elapsed_days: 5
+    guess: true
+    deps: []
+
+  - id: W112
+    title: Buy or borrow the 4 GB Android test phone (Helio G85 / SD680 class)
+    slice: BENCH
+    platform: android
+    spine: [C2]
+    owner: Hari
+    status: todo
+    needs: "0.1 assumed Hari already owned this. Nothing in the repo is evidence that he does, and M1–M4, D-009, D-008 and D-015 all wait on it. If it is already in a drawer, close this item and W41 on the same day"
+    skip_if: [hardware_in_hand]
+    estimate_days: 0.25
+    elapsed_days: 5
+    guess: true
+    deps: []
+
+  - id: W113
+    title: App Store Connect record — bundle id io.github.brettleehari.arivu, agreements, tax and banking, app created
+    slice: STORE
+    platform: ios
+    spine: [C1]
+    owner: Hari
+    status: todo
+    needs: "[U] paid-apps agreements are not needed for a free app, but the Free Apps agreement is. Modelled as part of this item"
+    decisions: [D-001, D-020]
+    estimate_days: 0.25
+    deps: [W110]
+
+  - id: W114
+    title: "D-046: iOS signing and distribution-certificate custody — Xcode-managed or manual, mirroring D-018's discipline"
+    slice: STORE
+    platform: ios
+    spine: [C1, C3, C4]
+    owner: Hari
+    status: todo
+    needs: no recommendation exists yet, deliberately — W76's research has to happen first. Do not answer it from D-018's instinct
+    decisions: [D-046]
+    deadline_note: before the first TestFlight upload
+    estimate_days: 0.25
+    deps: [W76]
+
+  - id: W115
+    title: "D-039 + D-049: the iOS privacy wording, and M5 restated for two platforms (a Spine edit)"
+    slice: STORE
+    platform: ios
+    spine: [C3, C5, C11, M5]
+    owner: Hari
+    status: todo
+    needs: "THE HEADLINE CLAIM. On Android \"no internet\" is proved by a missing permission; on iOS there is no permission to withhold. Design, Compliance, GTM and iOS Engineering all say the Android sentence must not be reused. Until W78 exists the copy may not say \"our build check fails if any is added\""
+    decisions: [D-039, D-049]
+    deadline_note: before any iOS listing copy exists
+    estimate_days: 0.5
+    deps: [W78]
+
+  - id: W116
+    title: "D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the launch shape, and ratifying profiles as the C11 mechanism"
+    slice: STORE
+    platform: ios
+    spine: [C11, C1]
+    owner: Hari
+    status: todo
+    needs: "D-041 is the one that decides this calendar: Apple has no 12-tester gate, so iOS CAN ship first. GTM recommends coupling the ANNOUNCEMENT, not the release — submit with \"Manually release this version\" and release the day Play goes live; if iOS is not approved, Android ships alone, never the reverse. Answering \"ship when ready\" instead moves the App Store date earlier by the whole Play closed test"
+    decisions: [D-040, D-041, D-038]
+    estimate_days: 0.5
+    deps: []
+
+  - id: W118
+    title: "D-043: what happens to a reply when the user backgrounds the app on iOS (C10 on two platforms)"
+    slice: MVP
+    platform: ios
+    spine: [C10, C11]
+    owner: Hari
+    status: todo
+    needs: iOS gives roughly 30 seconds; a full reply takes about 96. Recommended — stop and keep the partial reply, exactly as process death already does on Android. The alternative is a shorter reply cap on iOS, which is a platform-shaped limit and is what C11 forbids
+    decisions: [D-043, D-044]
+    deadline_note: before the first TestFlight build goes to anyone outside the team
+    estimate_days: 0.25
+    deps: []
+
+  - id: W121
+    title: Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-050..D-059)
+    slice: STORE
+    platform: ios
+    spine: [C11]
+    owner: Hari
+    status: todo
+    decisions: [D-044, D-045, D-047, D-048, D-050, D-051, D-052, D-053, D-054, D-055, D-056, D-057, D-058, D-059]
+    estimate_days: 0.25
+    deps: []
+
+  # ================================================================================================
+  # iOS — the two App Store milestones
+  # ================================================================================================
+  - id: W119
+    title: First signed device archive — Release configuration, distribution signing, uploaded to App Store Connect
+    slice: STORE
+    platform: ios
+    spine: [C1, C3]
+    owner: Engineering
+    status: todo
+    needs: "also the moment architecture.md §8's iOS row gets its answer: confirm app thinning and delta updates leave the bundled model intact and still mappable — the iOS analogue of W18"
+    uses: [mac-with-xcode]
+    decisions: [D-046, D-013]
+    estimate_days: 0.5
+    guess: true
+    deps: [W92, W113, W114, W98, W102]
+
+  - id: W120
+    title: MILESTONE — first TestFlight build (internal testers, team only, no Beta App Review)
+    slice: STORE
+    platform: ios
+    spine: [C1, C11]
+    owner: Hari
+    status: todo
+    needs: "Apple imposes no minimum tester count and no minimum duration (verified by Compliance). Internal TestFlight skips Beta App Review entirely, so this milestone is gated by a working build and an enrolment, and by nothing on the Android side at all"
+    decisions: [D-046, D-041]
+    estimate_days: 0.25
+    deps: [W119, W96, W118]
+
+  - id: W122
+    title: Submit to the App Store with "Manually release this version"; wait for review
+    slice: STORE
+    platform: ios
+    spine: [C1, C3, C9, C5]
+    owner: Hari
+    status: todo
+    needs: "90% of submissions are reviewed in under 24 hours on average; two days is the modelled guess. External TestFlight and its Beta App Review are NOT on this path — launch-plan.md wants them, but Apple does not require them and they are modelled as the optional item W124"
+    decisions: [D-041, D-024, D-025, D-039, D-059]
+    estimate_days: 0.5
+    elapsed_days: 2
+    guess: true
+    deps: [W120, W108, W105, W106, W107, W39, W59, W65, W109, W116]
+
+  - id: W123
+    title: MILESTONE — App Store release (release the held build)
+    slice: STORE
+    platform: ios
+    spine: [C1, C3, C5, C6, C11]
+    owner: Hari
+    status: todo
+    needs: "all 175 storefronts from day one if D-040 says iOS is for recommenders (D-059). The release DATE is a choice, not a constraint: D-041 decides whether this fires when approved or waits for the Play production day"
+    decisions: [D-041, D-059, D-029]
+    estimate_days: 0.25
+    deps: [W122]
+
+  - id: W124
+    title: External TestFlight round with Beta App Review and the same tester questions Android uses
+    slice: STORE
+    platform: ios
+    spine: [C1, C5]
+    owner: Hari
+    status: todo
+    needs: "launch-plan.md Phase 7–14 wants this; Apple does not require it and Beta App Review has no published turnaround. Off the critical path deliberately — putting it on the path would re-import a tester gate that Apple does not impose"
+    decisions: [D-041]
+    estimate_days: 0.5
+    elapsed_days: 10
+    guess: true
+    deps: [W120]
+
+  - id: W136
+    title: Correct architecture/ios-port.md — the Play closed test is NOT free budget for the iOS port
+    slice: STORE
+    platform: ios
+    spine: [C11]
+    owner: Architecture
+    status: todo
+    needs: ios-port.md assumed the iOS port would happen inside Play's 14-day closed-test window and that the two would launch together. Compliance's finding (no Apple tester gate) undercuts the assumption in both directions, and this Leaf's calendars now contradict that file
+    decisions: [D-041]
     estimate_days: 0.25
     deps: []

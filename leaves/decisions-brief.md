@@ -1,111 +1,198 @@
 ---
-spine_version: 0.1
+spine_version: 0.2
 leaf: decisions/brief
-source: leaves/decisions.yml (34 entries, all pending, all human-adjudicated)
-prepared: 2026-09-15
+source: leaves/decisions.yml (59 entries — 56 pending, 2 resolved by Hari, 1 superseded by the Spine bump)
+prepared: 2026-09-16
 ---
 
 # Decisions brief for Hari: one sitting
 
-11 decisions block release. They are listed in the order they must be made. Answer each with the letter,
-or "yes" to the recommendation. Evidence and full options are in `leaves/decisions.yml` under the same ID.
-Nothing here has been decided for you. Where code already follows a recommendation, rejecting it means a
-code change, and the YAML lists that change under `if_rejected`.
+Answer each with the letter, or "yes" to the recommendation. Full options, evidence and the Leaf each
+item came from are in `leaves/decisions.yml` under the same ID. Nothing has been decided for you.
+Where code already follows a recommendation, rejecting it means a code change, and the YAML lists
+that change under `if_rejected`.
 
-## Blocking, in order
+**There are now two queues, not one.** Play and the App Store have independent calendars
+(`MULTIPLATFORM.md`: never hold an Android fix for App Store review). **Part A blocks the Play
+release** — that is the one with a date on it. **Part B blocks the first App Store submission** and
+holds up nothing on Android. If you only have time for one sitting, do Part A.
 
-**1. D-020: Developer account type, verified before 2026-09-30?** *Deadline 2026-09-30 (15 days).*
-Recommend: the account you can verify fastest. Start today. Plan the 12-tester, 14-day closed test either way.
+## What changed since the last brief
+
+1. **Spine 0.2 withdrew R7.** iOS is in scope, C11 was added, and every decision now carries a
+   `platform:` tag (`android` / `ios` / `both`) instead of being forked into a second file.
+2. **D-037 ("iOS: amend R7") is closed as superseded, not decided.** The Spine bump removed its
+   subject. Its two live halves survived as new entries: *what is iOS for* (D-040) and *what shape
+   the launch takes* (D-041).
+3. **Apple has no AI-content policy.** Compliance fetched the App Review Guidelines in full: "AI"
+   appears in exactly one guideline, about sharing data with third-party AI. The per-reply Report
+   sheet that is a *documented gap* on Play is a *clean pass* on Apple. Same code, two verdicts.
+4. **Apple has no 12-tester / 14-day gate.** That inverts the old plan. iOS could reach the store
+   *before* Android production, not after. It is now a choice (D-041), not a constraint.
+5. **Six Leaves proposed new decisions at once, all numbering from D-038.** They have been merged and
+   renumbered into one sequence, D-038 to D-059. The map from each Leaf's number to the final one is
+   at the top of `decisions.yml`. Where three Leaves raised the same thing — the iOS privacy wording,
+   the profile mechanism, the memory entitlement — it is now one entry naming all of them.
+6. **Four choices you thought were Android-only are now two-store choices**: the account type, the
+   age rating, the report mailbox and the privacy wording. They are in Part A, marked ★.
+
+---
+
+## Part A — blocks the Play release, in the order they must be made
+
+**1. D-020 ★ — Developer account type, verified before 2026-09-30?** *Deadline: 14 days.*
+Recommend: whichever account you can verify fastest. Start today.
 - Personal: no D-U-N-S. Production opens at least 14 days after 12 testers opt in.
-- Organisation: needs D-U-N-S, lead time unknown. Exemption from the 12-tester test is **not verified**.
+- Organisation: needs D-U-N-S, lead time unknown. The 12-tester exemption is **not verified**.
 - Miss the date: testers and users in BR, ID, SG and TH cannot install on certified phones.
+- **Now also the Apple call.** Apple enrolment is $99/yr with *no* tester gate; individual enrolment
+  publishes your **legal name as the seller** on every product page, organisation needs a D-U-N-S and
+  a public website on your own domain. Same trade-off, both stores — decide it once.
 
-**2. D-001: Package name?** *Before the first upload. Irreversible.*
-Recommend: `io.github.brettleehari.arivu` if you control arivu.org, otherwise the reverse of a domain you own.
-- Once uploaded it is permanent. Iteration-2's APK and developer-verification registration are tied to it.
+**2. D-010 ★ — Which monitored mailbox receives reports?** *Before the first upload.*
+Recommend: one mailbox for reports, the public Play contact and the privacy contact.
+- `tools/release_check.sh` fails today on the placeholder, and so does the iOS check.
+- It is now **also** the iOS report address (an `Info.plist` key) and the App Store support contact.
+  One address, three forms, or you will be answering mail in two places.
 
-**3. D-010: Report mailbox?** *Before the first upload. `release_check.sh` fails until it is set.*
-Recommend: one monitored mailbox for reports, the public Play contact and the privacy contact.
-- With per-reply reports (D-021), reports contain reply text, so this mailbox holds user text (see D-023).
+**3. D-021 — Per-reply Report, and amend SPINE §3 to "Send, Stop, Copy, Report"?** *Before the first upload.*
+Recommend: (b) Report on every reply → in-app sheet → hand off to email. Already built and working.
+- The Play "report without exiting the app" gap is unchanged and remains the review risk it was.
+- **New:** on Apple the same sheet *passes* Guideline 1.2 outright, and the iOS mail composer opens
+  inside the app, which is better evidence of intent than Android's. This half is settled by evidence
+  and needs only your stamp.
 
-**4. D-021: Per-reply Report, and amend SPINE §3 to "Send, Stop, Copy, Report"?** *Before the first upload.*
-Recommend: (b) Report on every reply opens an in-app sheet, then hands off to email. Already built and working on the emulator.
-- (a) Report by email from About only: the most likely to fail Play's "report without exiting the app" rule.
-- (b) Report on each reply: best fit to the rule without a network. A reviewer may still object to the email step (unverified).
-- (c) (b) plus a report log screen: one more screen and no policy gain.
+**4. D-022 — Privacy policy: host and owner?** *Before the first upload and before the Console forms.*
+Recommend: GitHub Pages, no analytics, in-app text kept. One named owner for the text.
+- The hosted draft and the in-app text **still disagree on retention**. Fix before upload.
+- You supply: developer name as shown on the store, repo URL, contact (D-010), retention (D-023).
+- iOS needs the same URL plus a **support page** that reaches a human — a repo README does not count.
 
-**5. D-022: Privacy policy host and owner?** *Before the first upload (the text ships in the app) and before the Data safety form.*
-Recommend: GitHub Pages with no analytics, plus the in-app text. One owner for the text (proposed: Compliance). You supply your developer name and the repo URL.
-- The hosted draft and the in-app text **already disagree** on retention. That has to be fixed before upload.
-- arivu.org also works, but only if D-001 confirms you control that domain.
+**5. D-023 ★ — How long are report emails kept?** *With D-022.*
+Recommend: 12 months, worded identically in both copies, deletion on request. Same answer both stores.
 
-**6. D-023: How long are report emails kept?** *With D-022.*
-Recommend: 12 months, stated the same way in both copies, with deletion on request.
+**6. D-024 ★ — Age: 18+ on Play, and the Apple override?** *Before the Console App content forms.*
+Recommend: 18+ on Play; on Apple answer the questionnaire honestly (it returns about 4+) and then use
+Apple's documented manual override to 18+. **One position, two mechanisms.**
+- If you say 18+ on Play and leave 4+ on Apple, that is a position you cannot defend to either store.
+- The cost is real and GTM wants it on the record: 18+ hides the app from anyone with a Screen Time
+  restriction below 18+ — common on shared family phones in exactly our markets — and maps higher
+  again in some territories. Reversible once the red-team eval (D-026) exists.
 
-**7. D-024: Target audience?** *Before the Console App content forms.*
-Recommend: 18+ only, and "Appeals to children: No".
-- Choosing under-13 brings the full Families policy and a much higher output-safety bar.
+**7. D-025 ★ — "No data collected"?** *Before the Console App content forms.*
+Recommend: yes on Play; "Data Not Collected" on Apple. Apple's definition of "collect" is narrower, so
+the same answer is easier to defend there. Report emails are described in the privacy policy.
 
-**8. D-025: Data safety answer?** *Before the Console App content forms.*
-Recommend: "No data collected". The privacy policy describes the report emails users choose to send.
-- Declaring "Messages collected" instead is the cautious reading, but it gives up the "No data collected" label.
+**8. D-018 — App signing key: Google-generated (A) or your own via PEPK (B)?** *Provisional A at the
+first Internal upload; final after W18; locked at the first Open or Production release.*
+Recommend: A, if W18 shows Play's universal APK carries the model aligned and installs both ways.
+- **Android only.** Apple's model is different and is a separate decision (D-046) — do not answer both
+  from the same instinct.
 
-**9. D-018: App signing key?** *Pick A provisionally at the first Internal upload. Confirm after W18. Locked at the first Open or Production release.*
-Recommend: A, a Google-generated key, if W18 shows Play's universal APK contains the model aligned and installs over the Play copy in both directions.
-- A: Google holds the key. The off-Play APK must be downloaded from Play.
-- B: your own key via PEPK. If it leaks, attackers can ship trusted updates. If it is lost, off-Play updates end.
+**9. D-009 ★ — RAM floor for gate layers 2 and 3?** *Needs W02 phone numbers. Before any track wider
+than Internal testing.*
+Recommend: keep 3.3 GiB if W02 shows headroom; put the same value in the Console rule.
+- **This number now sets the iOS floor too** (D-042). Only the enforcement differs.
 
-**10. D-009: RAM floor (gate layers 2 and 3)?** *Needs W02 phone numbers first. Set before any track wider than Internal.*
-Recommend: keep 3.3 GiB if W02 shows headroom, and put the same value in the Console rule.
-- Raising the floor excludes some "4 GB" phones and changes the store listing line.
+**10. D-017 — Is 0.6B good enough, and what may the listing promise now?** *Interim answer before the
+listing goes up; final after W04.*
+Recommend (interim): drop "polite" from the listing and from the first empty-state example.
+- The polite rewrite echoed the input unchanged 6 of 6 on device. The backup example flipped who was late.
+- iOS raises the stakes: App Store review scrutinises on-device model output more closely, and Apple's
+  age questionnaire asks how chatbot output affects the *frequency* of sensitive content.
 
-**11. D-017: Is 0.6B good enough, and what should the listing promise now?** *Final answer after W04. Interim answer before the listing goes up.*
-Evidence so far: the "polite" rewrite echoed the input unchanged in 6 of 6 emulator tries. The backup example swapped who was late.
-Recommend (interim): remove "polite" from the listing and from the first empty-state example until W04 passes.
-- Keep the wording: the listing makes a claim its own no-accuracy-claims rule would reject.
-- After W04, the choices are to ship 0.6B, narrow the "good at" copy, or move to 1.7B (it now fits within Play's size limits, see D-004).
+---
 
-## Non-blocking
+## Part B — blocks the first App Store submission (nothing on Android waits for these)
 
-| ID | Question | Recommendation | Note |
-|---|---|---|---|
-| D-002 | Amend "Permissions: None" to the enforced allow-list | Yes | Stamp only; code and check already match |
-| D-003 | onStop keeps a reply that is still being written | Yes | Emulator pass |
-| D-004 | 1.7B fallback | Decide at W03 | Size is no longer the blocker (1.5 GB per pack, 4 GB total) |
-| D-005 | Keep both ModelSource classes | Yes | |
-| D-006 | ACTION_DELETE plus permission | Keep | Emulator API 36 pass; phone test in W10 |
-| D-007 | Thinking mode off, fixed sampling | Keep | |
-| D-008 | Thread heuristic | From W02 | |
-| D-011 | "Clear conversation" action | Architecture: add before production | If yes, fold it into the D-021 §3 amendment |
-| D-012 | Idle timer as main trigger + trim handlers | Keep | Emulator pass |
-| D-013 | `.gguf.so` alignment trick | Keep; W18 mandatory | Emulator device split at offset 16384 |
-| D-014 | UI language | English for Wave A | Decide translation before Wave B |
-| D-015 | Weight repacking | Off; decide from W02 | |
-| D-016 | compileSdk 37 | Yes | Settled by evidence |
-| D-019 | Model provenance (Unsloth quantised it) | Document now; self-quantise in iteration-2 | NOTICE already updated |
-| D-026 | Output safeguards | System prompt + red-team slice in W04 | Review risk; prompt barely changes refusals at 0.6B |
-| D-027 | Code transparency | Adopt if W18 shows it takes under half a day | |
-| D-028 | n_outputs_max = 1 | Yes | **Settled by evidence**: 309 → 27 MiB; needs only your stamp |
-| D-029 | Country waves A then B | Yes | B is gated on D-014, D-017 and verification |
-| D-030 | Tapping an example fills the input | Yes | Pick examples that W04 supports |
-| D-031 | British spelling | Keep | |
-| D-032 | "Send continue" at the reply limit | Keep; test in W04 | |
-| D-033 | Truncate whole exchanges, not single turns | Yes; Engineering + Design | |
-| D-034 | ~46 MB native heap after an idle free | Measure on the phone (W08) first | Emulator number only |
+**11. D-040 — What is iOS for, in one sentence in the Spine?** *No deadline; everything below inherits it.*
+GTM's proposed sentence: *"iOS reaches the people who recommend Arivu, and is where the second device
+profile is proven before an 8 GB Android phone inherits it."* This is a Spine edit, so only you make
+it. Leaving it implicit means re-running the same argument inside D-041, D-059 and D-024.
 
-## Proposed Spine and leaves/BRIEF.md amendments (for you to approve, not applied)
+**12. D-039 — The iOS privacy wording.** *Before any iOS listing copy exists.* **The headline claim.**
+On Android "no internet" is proved by a missing permission. On iOS there is no permission to withhold.
+Design, Compliance, GTM and iOS Engineering all say the Android sentence must **not** be reused.
+Recommend: iOS-specific copy saying exactly what is checkable — no networking code, public source,
+"Data Not Collected", and the Airplane Mode test the user can run herself. Until the binary check
+exists, the copy may **not** say "our build check fails if any is added".
 
-Approving any of these starts the propagation discipline: bump the version, add a changelog entry, run `tools/propagate.py`.
+**13. D-042 — Minimum iOS version.** *Before the listing can be finished.*
+It is the App Store's only pre-install filter; there is no device-exclusion catalogue. Recommend:
+keep 17.0 for the first build, derive the shipping number from the same measurement as D-009.
+Too low means charging someone a 400 MB download to reach a wall. Raising it later drops users.
 
-1. **SPINE §3 and leaves/BRIEF.md "Scope of the single screen"**: "Send. Stop. Copy message." becomes "Send, Stop, Copy, Report" (D-021). Add "Clear conversation" here too if D-011 is yes.
-2. **leaves/BRIEF.md "Permissions"**: "None" becomes "No network or runtime-prompted permissions. Allowed: FOREGROUND_SERVICE, REQUEST_DELETE_PACKAGES, and the AndroidX DYNAMIC_RECEIVER_NOT_EXPORTED signature permission" (D-002).
-3. **leaves/BRIEF.md "Distribution"**: verification enforcement "began" becomes "begins" 2026-09-30 (D-002, D-020).
-4. **leaves/BRIEF.md "Build artifact"**: the 1 GB install-time limit becomes 1.5 GB per pack and 4 GB total. The "Fallback model" row is no longer ruled out by size (D-004).
-5. **leaves/BRIEF.md "Memory budget"**: compute buffers ~80 MB become ~28 MiB with n_outputs_max = 1. KV is 119 MiB and the weights map 373 MiB (D-028).
+**14. D-043 — What happens to a reply when the user backgrounds the app on iOS?**
+iOS gives roughly 30 seconds; a full reply takes about 96. Recommend: stop and keep the partial reply,
+exactly as process death already does on Android. The alternative — a shorter reply cap on iOS — is a
+platform-shaped limit, which is what C11 forbids.
 
-## Loose ends found while triaging (owners, not decisions)
+**15. D-046 — iOS signing and certificate custody.** *Before the first TestFlight upload.*
+**No recommendation yet, deliberately.** Apple's model is not Play App Signing and the analogy misleads.
+One day of research (W72) has to happen first. Flagging it now because it is a lead-time item.
 
-- `play-policy-checklist.md` §1 and §1b still cite "D-018" and "D-019" for Report and safeguards. Those are now **D-021 and D-026** (Compliance).
-- `store-listing.md` still says "report it from the About screen" and "Send / Stop / Copy". If D-021 is accepted, update both (GTM).
-- `privacy-policy.html` and `strings.xml privacy_report_body` differ on retention (D-022, D-023).
-- The 14-day closed test is not on Sequencing's critical path (Architecture B12).
+**16. D-049 — M5's wording across two platforms.** *A Spine edit.*
+Recommend: restate M5 as "no network capability in the shipped artifact, by the platform's strongest
+mechanism", with two checkers named. The alternative is a second metric for iOS, which reads as though
+the two platforms have different privacy goals.
+
+**17. D-038 — Ratify profiles as the C11 mechanism.** *Blocks the first iOS build, not Play.*
+Recommend: yes — the arithmetic stays in `/core`, the capability vocabulary stays closed to
+`[chat, longform]`, and adding `tools` is a Spine amendment argued once for both platforms. The
+tripwire to accept with it: the day a second profile is shippable, the candidate list moves out of
+`/core`. Note what is still missing — **no shell calls the profile code yet**, so C11 currently has a
+mechanism and no user.
+
+**18. D-041 — Launch shape.** *Not a blocker, but it decides the calendar.*
+Recommend: couple the **announcement**, not the release — submit iOS with "Manually release this
+version" and release it the day Play goes live; if iOS is not approved, Android ships alone.
+
+---
+
+## The 40 non-blocking decisions still open
+
+Twenty-four carry over unchanged and keep their recommendations (D-002 to D-008, D-011 to D-016,
+D-019, D-026 to D-034, D-036). Sixteen are new this round; two of those, D-040 and D-041, are in
+Part B above because they gate the iOS queue. The other fourteen all have a clear recommendation in
+the YAML — "yes to the recommendations" closes them:
+
+| ID | Question | Recommendation |
+|---|---|---|
+| D-044 | Local notifications on iOS? | No. It would be the first permission prompt in a product that asks for nothing |
+| D-045 | Does the iOS gate screen have a button? | No button, plus one line saying how to remove the app |
+| D-047 | Request the increased-memory-limit entitlement? | **No** — but note the code currently requests it, against both Leaves' advice |
+| D-048 | A headroom margin before a device is accepted? | Yes, keyed on how good the measurement is, not on the platform |
+| D-050 | A 4B profile on iOS later? | Not due now; recorded so it is not discovered at submission |
+| D-051 | Metal on iOS? | Off. GPU buffers are charged memory; it would delete the property the budget rests on |
+| D-052 | One prompt builder or three? | One, in `/core`, once the parity tests run on hardware |
+| D-053 | One copy catalogue owned by Design? | Yes — cheapest now, before the iOS strings are written |
+| D-054 | Clipboard confirmation | Arivu confirms only where the OS does not |
+| D-055 | "Phone", not "iPhone", in shared sentences | Yes |
+| D-056 | One NOTICE or one per platform? | Generated per platform from one source; not urgent |
+| D-057 | Do the two listings mention each other? | No |
+| D-058 | Does a profile difference ever appear in store copy as a feature? | No — only as a ceiling |
+| D-059 | iOS storefronts | All 175 from day one, if D-040 says iOS is for recommenders |
+
+## Spine and BRIEF amendments waiting on you (not applied)
+
+The five from the last brief still stand (SPINE §3 "Send, Stop, Copy, Report"; the permissions
+allow-list; "enforcement begins"; the asset-pack size correction; the memory budget). Three are new:
+
+6. **A sentence in the Spine saying what iOS is for** (D-040).
+7. **M5 restated for two platforms** (D-049).
+8. **C10's promise on iOS**: if D-043 goes to "stop and keep the partial", C10's sentence still holds,
+   but the Spine should record that the mechanism differs and that the difference is forced by the OS.
+
+## Loose ends (owners, not decisions)
+
+- `ios/App/Support/Arivu.entitlements` **requests the increased-memory-limit entitlement**, which
+  Architecture and Compliance both recommend against for iteration-1 (D-047). Code and advice disagree.
+- `ios/App/Resources/licenses/index.txt` ships rows for the Swift runtime and libc++, which
+  `licence-audit.md` §7.4 says are deliberately absent on iOS. One of the two is wrong (D-056).
+- `ios/project.yml` already fixes the deployment target at 17.0, before the measurement that is
+  supposed to derive it exists (D-042).
+- `play-policy-checklist.md` §1 and §1b still cite the old "D-018"/"D-019" for Report and safeguards;
+  they are D-021 and D-026.
+- `store-listing.md` still says "report it from the About screen" and "Send / Stop / Copy".
+- The 14-day closed test **is** on Android's critical path; `ios-port.md` treats it as free budget for
+  the iOS port, which Compliance's finding has now undercut.

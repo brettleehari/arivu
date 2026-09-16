@@ -1,48 +1,105 @@
 # Decisions Leaf — Arivu
-# spine_version: 0.1
-# last_triaged: 2026-09-15 (Decisions Leaf: merged proposals from Architecture, Design, GTM, Compliance, Engineering)
+# spine_version: 0.2
+# last_triaged: 2026-09-16 (Decisions Leaf: reconciled to Spine 0.2 — iOS in scope, R7 withdrawn, C11 added;
+#   merged this round's proposals from Architecture, Design, Compliance, GTM, Core/Android Engineering and iOS Engineering)
 #
 # Every open call lives here, not in chat threads. Each entry names the Spine commitment it touches.
+# ONE decisions.yml, not two (leaves/MULTIPLATFORM.md "Docs"): a decision that is true on both platforms
+# lives once and carries platform: both. Only genuinely platform-specific calls are tagged android or ios.
+#
 # SLA: 2 days from raised_at. Adjudication is HUMAN by default: on SLA expiry the entry is flagged
 # "overdue" in Sequencing, not auto-committed. AI adjudication is opt-in per entry
 # (adjudication: ai_on_expiry), with a 24h human override window. No entry here has opted in.
 #
-# status: pending | resolved_human | resolved_ai | overridden
-# blocks_release: true = Arivu cannot reach Play production (or will likely fail review) until Hari decides.
+# status: pending | resolved_human | resolved_ai | overridden | superseded
+# platform: android | ios | both — which platform the decision governs (MULTIPLATFORM.md).
+# blocks_release: true = Arivu cannot reach a store release (or will likely fail review) until Hari decides.
+#   blocks_release_scope: android | ios | both — WHICH release it blocks. An ios-scoped blocker does not
+#   hold the Play release, and vice versa; the two calendars are independent (MULTIPLATFORM.md "Versioning").
 # implemented_provisionally: code already follows the recommendation, so the build is not blocked;
 #   resolving the other way is the change listed under `if_rejected`.
-# evidence_settles: true = a measurement makes the answer uncontroversial; still needs Hari's rubber stamp.
+# evidence_settles: true = evidence gathered this round makes the answer uncontroversial; STILL PENDING
+#   Hari's rubber stamp. Nothing here is resolved on Hari's behalf.
 # raised_by: D-001..D-017 were raised in the first Engineering pass; D-018+ name the proposing Leaves.
-#
-# ID note: Leaves numbered proposals independently. Architecture's D-018 (signing key) and D-019 (model
-# provenance) keep their numbers because architecture.md, release-and-signing.md, threat-model.md and
-# engineering.md already cite them. Compliance's "D-018" (Report) is now D-021 and its "D-019" (output
-# safeguards) is now D-026; play-policy-checklist.md §1 and §1b still cite the old numbers (owner to fix).
+# merged_from: the ID each Leaf used in its own file, because the six Leaves numbered independently.
 #
 # ======================================================================================================
-# HARI'S DECISION QUEUE — blocking decisions, in the order they must be made (today: 2026-09-15)
+# ID MAP — this round's proposals, in each Leaf's own numbering, to the ID used here.
+# Six Leaves proposed from D-038 (and D-GTM-*) at once; the collisions are resolved as follows.
 # ======================================================================================================
-#  1. D-020  Which Play developer account (personal or organisation), and verify it now?
+# Architecture (architecture.md §11)    D-038 profiles      -> D-038
+#                                       D-039 iOS background-> D-043
+#                                       D-040 iOS signing   -> D-046
+#                                       D-041 standard/4B   -> D-050
+#                                       D-042 M5 wording    -> D-049
+#                                       D-043 fit margin    -> D-048
+# Design (design.md §12)                D-038 iOS privacy   -> D-039
+#                                       D-039 copy catalogue-> D-053
+#                                       D-040 clipboard     -> D-054
+#                                       D-041 no notifs     -> D-044
+#                                       D-042 gate, no button-> D-045
+#                                       D-043 min iOS version-> D-042
+#                                       D-044 "phone"       -> D-055
+# Compliance (appstore §16.2)           D-038 no 12-tester  -> D-041
+#                                       D-039 entitlement   -> D-047
+#                                       D-040 NOTICE        -> D-056  (same as licence-audit.md §7.5 "D-040")
+#                                       D-041 iOS privacy   -> D-039
+# GTM (positioning.md §9)               D-GTM-A tools/profile-> D-038 (merged)
+#                                       D-GTM-B what iOS is for -> D-040
+#                                       D-GTM-C iOS privacy text-> D-039 (merged)
+#                                       D-GTM-D iOS net check-> D-039 (merged) + D-049
+#                                       D-GTM-E listings cross-ref -> D-057
+#                                       D-GTM-F profile as feature -> D-058
+#                                       D-GTM-G English-only -> D-014 (re-opened, not a new entry)
+#                                       D-GTM-H Apple age rating -> D-024 (extended, not a new entry)
+#                                       D-GTM-I storefronts -> D-059
+#                                       D-GTM-J same-day launch -> D-041 (merged)
+# iOS Engineering (engineering-ios.md)  D-045 Metal off     -> D-051
+#                                       D-046 prompt builder-> D-052
+#                                       D-047 deployment 17.0-> D-042 (merged)
+#                                       D-048 licences once -> D-056 (merged)
+#                                       D-049 iOS report addr-> D-010 (extended, not a new entry)
+# Core/Android Engineering              profile convergence -> D-038 (merged)
+# (engineering.md, unnumbered)          three prompt builders-> D-052 (merged)
+#                                       low-memory copy     -> D-053 (copy catalogue)
+#
+# Earlier ID note, still true: Architecture's D-018 (signing key) and D-019 (model provenance) keep
+# their numbers because architecture.md, release-and-signing.md, threat-model.md and engineering.md
+# cite them. Compliance's original "D-018" (Report) is D-021 and its "D-019" (safeguards) is D-026;
+# play-policy-checklist.md §1 and §1b still cite the old numbers (owner to fix).
+#
+# ======================================================================================================
+# HARI'S DECISION QUEUE (today: 2026-09-16). Android release first; the iOS queue is separate and later.
+# ======================================================================================================
+# A. BLOCKS THE PLAY RELEASE — in the order they must be made
+#  1. D-020  Play developer account type, verified now? (and the same call for Apple enrolment)
 #            DEADLINE 2026-09-30: unverified developers' apps stop installing in BR, ID, SG, TH.
-#  2. D-001  Package name: io.github.brettleehari.arivu (only if you control arivu.org) or another domain you own?
-#            DEADLINE: before the first Play upload (irreversible; also what verification registers).
-#  3. D-010  Which monitored mailbox receives reports (also the public Play contact and privacy contact)?
-#            DEADLINE: before the first Play upload (tools/release_check.sh fails on the placeholder).
-#  4. D-021  Accept a per-reply Report button (in-app sheet, then email) and amend SPINE §3 to
-#            "Send, Stop, Copy, Report"?  DEADLINE: before the first upload (the build already carries it).
-#  5. D-022  Privacy policy: host it on GitHub Pages, and who owns the text (developer name, repo URL)?
-#            DEADLINE: before the first upload (in-app text ships in the build) and before Console forms.
-#  6. D-023  How long are report emails kept? (proposed 12 months)  DEADLINE: with D-022.
-#  7. D-024  Target audience 18+ only, "appeals to children: No"?  DEADLINE: before Console App content (W19).
-#  8. D-025  Data safety: answer "No data collected", with report emails described in the policy?
-#            DEADLINE: before Console App content (W19).
-#  9. D-018  App signing key: Google-generated (A) or your own via PEPK (B)?
-#            Provisional A at first Internal upload; FINAL after the W18 universal-APK check;
-#            DEADLINE: before the first Open testing or Production release (irreversible after that).
-# 10. D-009  RAM floor for gate layers 2 and 3.  Needs W02 phone numbers first;
-#            DEADLINE: before any track wider than Internal testing (closed test included).
-# 11. D-017  Is 0.6B good enough, and may the listing promise "polite" rewrites meanwhile?
-#            Needs W04 eval for the final call; interim call on the listing copy before W19/W20.
+#  2. D-001  Package name — RESOLVED 2026-09-15. Now also the iOS bundle id (ios/project.yml). No action.
+#  3. D-010  Which monitored mailbox receives reports? Play contact, privacy contact, AND the iOS
+#            Info.plist key. DEADLINE: before the first Play upload (tools/release_check.sh fails on
+#            the placeholder; tools/ios_release_check.sh step 8 fails on it too).
+#  4. D-021  Per-reply Report + amend SPINE §3 to "Send, Stop, Copy, Report"? DEADLINE: before the first
+#            upload. NEW: Compliance found Apple has no AI policy and the same sheet PASSES Apple 1.2.
+#  5. D-022  Privacy policy host and owner? DEADLINE: before the first upload and before Console forms.
+#  6. D-023  How long are report emails kept? (proposed 12 months) DEADLINE: with D-022. Both stores.
+#  7. D-024  Target audience 18+ on Play AND the Apple age-rating override? DEADLINE: before Console
+#            App content (W19). One call, two mechanisms — do not let the two stores diverge.
+#  8. D-025  Data safety "No data collected" + Apple App Privacy "Data Not Collected"? DEADLINE: W19.
+#  9. D-018  App signing key: Google-generated (A) or your own via PEPK (B)? Android only.
+#            Provisional A at first Internal upload; FINAL after W18; locked at Open/Production.
+# 10. D-009  RAM floor for gate layers 2 and 3. Needs W02 phone numbers. NOW ALSO SETS THE iOS FLOOR
+#            (D-042). DEADLINE: before any track wider than Internal testing.
+# 11. D-017  Is 0.6B good enough, and what may the listing promise meanwhile? Interim call before W19/W20.
+#
+# B. BLOCKS THE FIRST APP STORE SUBMISSION — not the Play release
+# 12. D-040  What is iOS for, in one sentence in the Spine? Everything in section B follows from it.
+# 13. D-039  The iOS privacy wording (the Android sentence may not be reused). Headline claim.
+# 14. D-042  Minimum iOS version — the only pre-install filter the App Store has.
+# 15. D-043  What happens to a reply when the user backgrounds the app on iOS (C10).
+# 16. D-046  iOS signing and distribution-certificate custody. Needs W72 research first.
+# 17. D-049  M5's wording across two platforms (a Spine edit) + the check that makes it true.
+# 18. D-038  Ratify profiles as the C11 mechanism — does not block Play, blocks the first iOS build.
+# 19. D-041  Launch shape: iOS has no 12-tester gate, so it could ship FIRST. Decide the shape.
 # ======================================================================================================
 
 - id: D-001
@@ -50,6 +107,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1]
+  platform: both
   adjudication: human
   status: resolved_human
   decided_at: 2026-09-15
@@ -63,6 +121,7 @@
     Applied in android/gradle.properties and across the source tree; emulator-verified that
     JNI symbols still bind after the rename.
   blocks_release: true
+  blocks_release_scope: both
   deadline: before the first Play upload
   raised_by: [Engineering]
   blocks: [W16, W17, W19]
@@ -79,12 +138,18 @@
   recommendation: io.github.brettleehari.arivu if Hari confirms control of arivu.org; otherwise a reverse domain he owns.
   implemented_provisionally: "io.github.brettleehari.arivu (android/gradle.properties arivu.applicationId)"
   if_rejected: change one property before the first Play upload; nothing else depends on it.
+  cross_platform: >
+    Spine 0.2: the same string is now also the iOS bundle id — ios/project.yml sets
+    PRODUCT_BUNDLE_IDENTIFIER io.github.brettleehari.arivu and bundleIdPrefix io.github.brettleehari
+    [V-local]. Architecture §7 "App identity across channels": one package on Play, one bundle id and
+    one team id on the App Store. Resolved for both; no further action.
 
 - id: D-002
   title: "\"Permissions: None\" vs the permissions the settled design needs (leaves/BRIEF.md correction)"
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C10, C6]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -118,6 +183,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2, C10]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -144,6 +210,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1, C2]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -174,6 +241,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -193,12 +261,18 @@
   recommendation: keep the interface as leaves/BRIEF.md asks; note the convergence; upstream the patch.
   implemented_provisionally: yes
   if_rejected: merge the two classes; no user-visible change.
+  cross_platform: >
+    Android-only as a question (install-time pack vs base-APK assets). iOS adds a third ModelSource
+    reading a plain file from the app bundle, and architecture.md §1.5 / B8 requires it to call
+    arivu_load_model_fd(fd, 0, length) so one loading path ships on both platforms — offset 0, full
+    length. That keeps the fd + offset + length signature MULTIPLATFORM.md asks for.
 
 - id: D-006
   title: ACTION_DELETE may require REQUEST_DELETE_PACKAGES
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C6]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -223,6 +297,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C5, C8, C2]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -237,12 +312,17 @@
     Note: the system prompt now also carries a safeguard sentence (+44 tokens; D-026).
   implemented_provisionally: "Policy.kt"
   if_rejected: change Policy.kt sampling; re-run W02 (thinking multiplies reply length and time).
+  cross_platform: >
+    Both platforms. The system prompt is now byte-identical in Policy.kt and Policy.swift, asserted by
+    ProfileParityTest.theSystemPromptIsByteIdenticalOnBothPlatforms (appstore-policy-checklist.md §1b).
+    Sampling is the profile's, not the platform's (D-038).
 
 - id: D-008
   title: Thread count heuristic
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -263,9 +343,11 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C6, C2]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: before any Play track wider than Internal testing (layer-2 rules do not apply to internal testers)
   raised_by: [Engineering, Architecture, GTM, Compliance]
   depends_on: [W02, W03]
@@ -284,15 +366,23 @@
   recommendation: decide from W02; mirror the same value in Console layer 2 before the closed test.
   implemented_provisionally: "3.3 GiB totalMem (android/gradle.properties arivu.minTotalRamBytes)"
   if_rejected: change one property + the Console rule + store-listing "about 4 GB" line + design.md gate copy.
+  cross_platform: >
+    Spine 0.2: this one number now sets BOTH gates. Compliance §16.1: "the same number sets the Android
+    gate and the iOS one; only the enforcement differs (Play device exclusion vs MinimumOSVersion +
+    runtime gate)". The iOS enforcement half is D-042; the margin applied to it is D-048. Architecture
+    §2.7: the pre-install filter and the runtime gate must agree, and on iOS the gate is reached far
+    more often because there is no device-exclusion catalogue (B9).
 
 - id: D-010
   title: Report-output destination (also Play public contact and privacy contact)
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C9]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: before the first Play upload
   raised_by: [Engineering, GTM, Compliance]
   blocks: [W16, W19]
@@ -307,12 +397,22 @@
   recommendation: one dedicated, monitored mailbox used in all three places.
   implemented_provisionally: "no (placeholder)"
   if_rejected: n/a — any real address unblocks; separate addresses mean two placeholders to fill (listing, policy).
+  merged_from: ["iOS Engineering D-049 (where the report address lives on iOS)"]
+  cross_platform: >
+    Spine 0.2: one mailbox, two gates. On iOS the address is an Info.plist key set from
+    ARIVU_REPORT_EMAIL at project generation and tools/ios/check_release.sh refuses the placeholder
+    (engineering-ios.md D-049); tools/ios_release_check.sh step 8 and tools/release_check.sh step 1
+    both fail on report@example.invalid (Compliance §16.1). Apple Guideline 1.2 also asks for
+    "published contact information" and "timely responses to concerns", and Guideline 2.1 names
+    placeholder text as a rejection reason (appstore-policy-checklist.md §1, §11). The same address is
+    also the App Store support-page contact (gtm/appstore-listing.md, W-GTM-i6).
 
 - id: D-011
   title: One conversation forever?
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C7, C8, C3]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -335,12 +435,17 @@
     fold it into the D-021 SPINE §3 amendment so the Spine changes once.
   implemented_provisionally: "no (keep as is)"
   if_rejected: "n/a (current state)"
+  cross_platform: >
+    Both platforms. On iOS the same file needs a Data Protection class and isExcludedFromBackupKey or
+    the conversation reaches iCloud — the thing allowBackup=false prevents on Android (architecture B18,
+    W74; design.md §14 request 4). Whatever is decided about clearing a conversation applies to both.
 
 - id: D-012
   title: TRIM_MEMORY_COMPLETE is not delivered on Android 14+
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -364,6 +469,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1, C2]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -392,12 +498,17 @@
   recommendation: keep .gguf.so; W18 is mandatory, not optional.
   implemented_provisionally: yes
   if_rejected: carry the ggml patch or accept a second 400 MB copy on disk.
+  cross_platform: >
+    Android only, and it disappears on iOS: an app bundle is a directory, so there is no zip offset to
+    align (architecture B4, play-policy-checklist.md §16.2). What survives the crossing is the
+    fd + offset + length signature itself — iOS passes offset 0 and the full file length (§1.5).
 
 - id: D-014
   title: UI language
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1, C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -413,12 +524,19 @@
   recommendation: English for Wave A; decide translation before Wave B (not a blocker for first release).
   implemented_provisionally: English only
   if_rejected: add values-pt-rBR / values-in strings; privacy text (D-022) must be translated too.
+  reopened_by: >
+    GTM (positioning.md §9, proposed D-GTM-G): the nearest comparable app ships 11 locales. Not a
+    blocker for Wave A; it is a blocker for the claim that Arivu serves these markets better than
+    anyone. Recorded here rather than as a new entry — it is an input to this decision, not a second
+    one. Whatever is decided applies to both catalogues at once (design.md §11), and the iOS String
+    Catalog is a rendering of the same source (D-053).
 
 - id: D-015
   title: Weight repacking and KleidiAI
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -432,12 +550,18 @@
   recommendation: decide from tok/s vs peak RSS in W02.
   implemented_provisionally: "repack off (Policy.REPACK_WEIGHTS)"
   if_rejected: flip Policy.REPACK_WEIGHTS; peak RSS budget grows ~400 MB (M3 at risk).
+  cross_platform: >
+    Both platforms, and the iOS bill is worse (architecture §3.2 point 2): repacking moves ~373 MB of
+    weights from clean file-backed pages, which jetsam does not charge, into anonymous memory, which it
+    does. The answer does not change; whoever revisits it for a speed win on a flagship needs to know
+    the two platforms are not paying the same price.
 
 - id: D-016
   title: compileSdk 37
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -456,9 +580,11 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: final call after W04; interim listing-copy call before W19/W20 uploads the store listing
   raised_by: [Engineering, GTM, Compliance]
   depends_on: [W04]
@@ -493,15 +619,25 @@
 # ------------------------------------------------------------------------------------------------------
 # New entries raised 2026-09-15 by the Leaf agents (merged and de-duplicated)
 # ------------------------------------------------------------------------------------------------------
+  cross_platform: >
+    Both platforms, and iOS raises the stakes twice. (1) MULTIPLATFORM.md: App Store review applies
+    stricter scrutiny to on-device model output than Play; engineering-ios.md says the safeguard probe
+    must be re-read before the first submission. (2) Apple's age-rating questionnaire asks how "AI
+    assistants and chatbot functionality impact the frequency of sensitive content", so the host probe
+    in leaves/NOTES.md (1/3 refusals on a fake-ID request) is an input to D-024's answers, not only to
+    the listing copy (gtm/appstore-listing.md "Age rating"). The App Store listing inherits the same
+    must-not-claim rules (appstore-listing.md).
 
 - id: D-018
   title: App signing key custody — Google-generated key (A) or Hari's own key via PEPK (B)
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1, C3, R1]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: android
   deadline: >
     Provisional choice at the first Internal testing upload (Internal does not lock it); final after the W18
     universal-APK check; hard limit before the first Open testing or Production release — "Signing keys can only
@@ -526,12 +662,18 @@
     testing release.
   implemented_provisionally: "yes (engineering.md release step 6 keeps Play's default; release_check.sh rejects the throwaway test key)"
   if_rejected: generate the app signing key offline, upload via PEPK before Open testing, three encrypted offline copies, rotation plan (release-and-signing.md §3 rule 4).
+  cross_platform: >
+    Android only. Play App Signing and the upload key have no App Store analogue: iOS uses a
+    distribution certificate and provisioning profile and Apple re-signs on delivery
+    (play-policy-checklist.md §15). The iOS custody question is a genuinely separate decision, D-046 —
+    architecture.md is explicit that the analogy misleads.
 
 - id: D-019
   title: Model provenance — Unsloth re-quantisation; document now, self-quantise later?
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C4, C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -548,15 +690,21 @@
   recommendation: document now (done provisionally); self-quantise reproducibly for iteration-2's reproducible-build claim.
   implemented_provisionally: "yes (NOTICE / assets/licenses/NOTICE.txt per licence-audit.md §6)"
   if_rejected: "self-quantise now: new sha256, re-run host smoke, W02 and W04 on the new file."
+  cross_platform: >
+    Both platforms. licence-audit.md §7.4: the iOS licences screen keeps the Unsloth attribution
+    (Apache-2.0 §4(b)) but must drop "renamed to .gguf.so", which is untrue on iOS (gap I4). The
+    NOTICE question that falls out of this is D-056.
 
 - id: D-020
   title: Play developer account type, and developer verification before 2026-09-30
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: 2026-09-30 (verification enforcement in Brazil, Indonesia, Singapore, Thailand)
   raised_by: [Architecture, Compliance, GTM]
   merged: "Architecture 'account type' + Compliance 'developer verification by 2026-09-30'."
@@ -579,15 +727,27 @@
     first upload confirm the package shows as registered. Add the 14-day closed test to Sequencing's critical path.
   implemented_provisionally: "n/a (Console action)"
   if_rejected: "if verification misses 2026-09-30: closed testers and Wave B (ID, BR) cannot install on certified devices until it completes."
+  merged_from: ["Compliance appstore-policy-checklist.md §10 (Apple Developer Program enrolment)"]
+  cross_platform: >
+    Spine 0.2 makes this one call for two stores. Apple [V, appstore-policy-checklist.md §10]:
+    99 USD/year; individual enrolment needs 2FA, legal age of majority and the enrollee's LEGAL NAME,
+    which is then published as the seller on every product page; organisation enrolment needs a D-U-N-S
+    number, a legal entity, a work email on the organisation's domain and a public website on it.
+    Compliance: "worth deciding once, for both stores, alongside D-020 rather than twice", because the
+    personal-vs-organisation trade-off (a published legal name against D-U-N-S lead time) is the same
+    trade-off on both. The 2026-09-30 verification deadline and the 12-tester/14-day gate are Android
+    only — Apple has neither (D-041).
 
 - id: D-021
   title: Per-reply Report (in-app sheet, then email hand-off) and the SPINE §3 scope amendment
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C9, C3, C8]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: android
   deadline: before the first Play upload (the build already contains it) and before the first Play review
   raised_by: [GTM, Compliance, Engineering]
   merged: "GTM R-AI + Compliance 'D-018' (Report) + Engineering 'per-reply Report is Spine scope'."
@@ -616,15 +776,38 @@
     "report it from the About screen" and "Send / Stop / Copy" and must be updated (GTM).
   implemented_provisionally: "yes (ui/ReportOutput.kt ReportSheet, ChatScreen Report/Copy row, Message.reported, privacy_report_body)"
   if_rejected: "(a): remove ReportSheet, Report button and Message.reported; rewrite privacy_report_body; accept higher review risk. (c): add a log screen (another scope change)."
+  evidence_settles: true
+  evidence_settles_scope: >
+    THE iOS HALF ONLY, and it still needs Hari's stamp. Apple's Guideline 1.2 is satisfied by the sheet
+    as built, so nothing about the iOS submission turns on this any more. The Play half is NOT settled:
+    the "without needing to exit the app" gap and the SPINE §3 scope amendment are unchanged.
+  evidence_source: >
+    leaves/compliance/appstore-policy-checklist.md, headline finding and §1 — the App Review Guidelines
+    were fetched in full on 2026-09-15 (Last Updated 2026-06-08, 93 KB) and the string "AI" occurs in
+    exactly one guideline, 5.1.2(i), about sharing personal data with third-party AI. No 3.3.x AI
+    section, no generative-content reporting rule, no AI question in the age-rating questionnaire
+    [V: absent]. Guideline 4.7 is scoped to software "not embedded in the binary".
+  cross_platform: >
+    Compliance fetched the App Review Guidelines in full (Last Updated 2026-06-08, 93 KB) and found
+    APPLE HAS NO AI-CONTENT POLICY: the string "AI" occurs in exactly one guideline, 5.1.2(i), about
+    sharing personal data with third-party AI [V: absent, appstore-policy-checklist.md, headline
+    finding]. Guideline 4.7 (chatbots) is scoped to "software that is not embedded in the binary", so
+    it does not reach a bundled model. What remains is Guideline 1.2, which asks for "a mechanism to
+    report offensive content" with no "without needing to exit the app" clause — so the SAME sheet that
+    is a documented gap on Play is a clean PASS on Apple, and MFMailComposeViewController is more
+    in-app than ACTION_SENDTO because the composer is presented inside Arivu (appstore §1, §16.1).
+    One implementation, two verdicts. If iOS ever downloads the model, re-read 4.7 before shipping [U].
 
 - id: D-022
   title: Privacy policy — where it is hosted, and who owns the one text (in-app strings and hosted page)
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C9]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: before the first Play upload (text ships in the build) and before Console Data safety (URL required)
   raised_by: [GTM, Compliance, Engineering, Architecture]
   merged: "GTM 'privacy policy host + in-app text' + Engineering 'privacy policy content owner'."
@@ -655,15 +838,26 @@
   partly_resolved: >
     2026-09-15, Hari: host is GitHub Pages on the public repo github.com/brettleehari/arivu
     (see D-035). Still open: developer name, retention period (D-023), and who owns the policy text.
+  cross_platform: >
+    Both platforms, one text, one hosted page. Apple 5.1.1(i) requires the URL AND in-app text, exactly
+    as Play does (appstore-policy-checklist.md §5, §16.1), so the single policy serves both stores.
+    Two additions iOS forces: a SUPPORT URL that "leads to actual contact information" — a repo README
+    does not qualify for a non-technical reader — carrying the D-010 mailbox, how to delete your data
+    and how to report a reply (appstore-listing.md, W-GTM-i6); and a paragraph on what the iOS app does
+    with the conversation file, which privacy-policy.html carries as a placeholder until W-GTM-i3
+    answers it. GTM also asks for a four-way consistency read before every submission: listing copy,
+    privacy policy, Play Data safety, Apple App Privacy (W-GTM-i5).
 
 - id: D-023
   title: Report email retention period
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C9]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: with D-022 (the policy must state retention/deletion [V])
   raised_by: [GTM, Engineering]
   context: >
@@ -674,15 +868,20 @@
   recommendation: 12 months, stated identically in both copies; honour earlier deletion on request (both drafts already say this).
   implemented_provisionally: "no (in-app text has no period; HTML has a placeholder)"
   if_rejected: change one sentence in privacy_report_body and privacy-policy.html.
+  cross_platform: >
+    Both platforms, same mailbox, same period. Apple Guideline 1.2 additionally asks for "timely
+    responses to concerns" (appstore-policy-checklist.md §16.1).
 
 - id: D-024
   title: "Target audience 18+ only; appeals to children: No"
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C9, C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: before Console App content forms (W19)
   raised_by: [GTM, Compliance]
   merged: "GTM 'target audience 18+' + Compliance 'target audience 18+, appeals to children: No'."
@@ -697,15 +896,33 @@
   recommendation: "18+ only; appeals to children: No. Revisit 16–17 later with D-026 evidence."
   implemented_provisionally: "yes (privacy_children_body: 'Arivu is not designed for children')"
   if_rejected: "16+: listing/policy wording. Under-13: Families policy in full, listing and icon reviewed for child appeal, output-safety bar becomes a hard requirement."
+  merged_from: ["GTM D-GTM-H (Apple age rating: answer honestly, then override higher?)"]
+  cross_platform: >
+    ONE age position, two mechanisms — this is the decision Compliance says must not be made twice.
+    Apple's questionnaire has no AI question [V: absent] and, answered honestly, returns about 4+:
+    not user-generated content (nothing is distributed), not social media, not "messaging and chat"
+    (Apple defines it as users communicating with one another), no unrestricted web access
+    (appstore-policy-checklist.md §6). The 18+ position is then reached by Apple's documented manual
+    override: "If your app has a policy requiring a higher minimum user age than the rating assigned by
+    Apple, you can set a higher age rating" [V]. GTM's counterweight (positioning.md D-GTM-H,
+    appstore-listing.md): 18+ costs real discoverability, removes the app for anyone with a Screen Time
+    restriction below 18+ — common on shared family phones in these markets [U] — and maps higher again
+    in some territories; and Apple's own instruction is to consider how "AI assistants and chatbot
+    functionality impact the frequency of sensitive content", which our host probe says is not "None".
+    Both Leaves agree the answers are honest ones; they weigh the override differently, and that is the
+    part that is Hari's. If 18+ is chosen on Play and 4+ is left on Apple, Arivu holds a position it
+    cannot defend to either store. Reversible once the D-026 red-team slice exists.
 
 - id: D-025
   title: Data safety form — "No data collected"; user-started report emails treated as not collected by the app
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C9]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: true
+  blocks_release_scope: both
   deadline: before Console App content forms (W19)
   raised_by: [Compliance]
   depends_on: [D-022]
@@ -722,12 +939,21 @@
   recommendation: answer "No"; describe report emails in the policy (D-022, D-023).
   implemented_provisionally: "n/a (Console form); in-app privacy text already describes reports"
   if_rejected: declare the Messages data type; the listing loses the "No data collected" label (C3's cheapest credibility); policy wording changes.
+  cross_platform: >
+    Both forms, same answer, and the iOS one is easier to defend: Apple's App Privacy definition of
+    "collect" is narrower than Play's ("transmitting data off the device in a way that allows you to
+    access it for a period longer than real time"), so "Data Not Collected" follows from the same facts
+    (play-policy-checklist.md §16.1, appstore-policy-checklist.md §4, §16.1). Architecture asks that the
+    report-email treatment get the same answer on both. Separate from the form: iOS additionally
+    requires a PrivacyInfo.xcprivacy manifest, which is a work item, not a decision — it exists at
+    ios/App/Resources/PrivacyInfo.xcprivacy and App Store Connect rejects an upload without it.
 
 - id: D-026
   title: Output safeguards — system-prompt refusal guidance plus a red-team slice in the eval
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C9, C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -750,12 +976,21 @@
   recommendation: (b).
   implemented_provisionally: "partly (safeguard sentence in Policy.kt; red-team slice not yet in W04)"
   if_rejected: "(a): accept higher review risk with no recorded evidence. (c): build and maintain a multilingual filter."
+  cross_platform: >
+    One red-team slice covers both stores (Compliance §16.1). Apple has no AI-content policy [V: absent,
+    appstore-policy-checklist.md headline finding]; the iOS exposure is Guidelines 1.1.1–1.1.7
+    (objectionable content) reached by a reviewer typing something ugly, plus the age rating (D-024).
+    So the fix is identical and the review risk is real on both. The safeguard sentence is byte-identical
+    in Policy.kt and Policy.swift (ProfileParityTest). MULTIPLATFORM.md warns that App Store review
+    applies stricter scrutiny to on-device model output and calls this a pre-submission blocker, not a
+    launch-week task (architecture.md, requests to Compliance).
 
 - id: D-027
   title: Code transparency in iteration-1
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C3, C4]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -775,6 +1010,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -792,12 +1028,18 @@
   recommendation: keep; update leaves/BRIEF.md memory budget (compute buffers ~28 MiB, KV 119 MiB, weights 373 MiB mapped).
   implemented_provisionally: "yes (engine.cpp)"
   if_rejected: revert one line; M3 at risk (≈ 943 MB worst case).
+  cross_platform: >
+    Spine 0.2: the fix now lives in /core, so both shells inherit it — it is a field of the compact
+    profile's memory model (kv_bytes_per_token, compute_buffer_bytes), not a remembered figure
+    (architecture B1, B2). On iOS the same 28 MiB is charged against phys_footprint, where it is one of
+    the few things that IS charged (§3.2), which makes it worth more there than on Android.
 
 - id: D-029
   title: Launch country waves
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C1, C5]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -812,12 +1054,17 @@
   recommendation: waves as GTM proposes (reversible in Console at any time).
   implemented_provisionally: "n/a (Console)"
   if_rejected: all-at-once exposes Portuguese/Indonesian users to an English UI and unevaluated replies.
+  cross_platform: >
+    Android only. GTM's answer for the App Store is different and deliberate — all 175 storefronts from
+    day one, because iOS's audience is recommenders, press and diaspora who live outside the Play waves
+    (D-059). Availability is not capability, so two different answers here are not a C11 divergence.
 
 - id: D-030
   title: Tapping an example in the empty state fills the input
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C5, C8]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -829,12 +1076,15 @@
   recommendation: tap fills the input (Design); pick examples the W04 eval supports.
   implemented_provisionally: "no"
   if_rejected: n/a (current state).
+  cross_platform: >
+    Both platforms, same answer, unchanged by 0.2 (design.md §11).
 
 - id: D-031
   title: British vs American spelling until D-014
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -845,12 +1095,16 @@
   recommendation: keep British (Design).
   implemented_provisionally: yes
   if_rejected: sweep strings.xml, store listing, privacy policy.
+  cross_platform: >
+    Both platforms. If D-053 is accepted the spelling rule is enforced once, in the copy catalogue, and
+    rendered into strings.xml and the iOS String Catalog.
 
 - id: D-032
   title: Reply-limit copy tells users to send "continue"
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C7, C5]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -862,12 +1116,17 @@
   recommendation: keep, and add one "continue" case to W04 to check it resumes (Decisions Leaf).
   implemented_provisionally: yes
   if_rejected: one string change.
+  cross_platform: >
+    Both platforms — the string is shared copy, and the reply cap it describes is a profile field
+    (max_reply_tokens), not a platform constant. D-043 is the one thing that could change it on iOS,
+    and architecture.md rejects doing so precisely because a platform-specific cap brushes against C11.
 
 - id: D-033
   title: Truncate whole exchanges, not whole turns
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C7]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -880,12 +1139,17 @@
   recommendation: drop whole exchanges; work item for Engineering plus Design review of divider placement.
   implemented_provisionally: "no"
   if_rejected: n/a (current state).
+  cross_platform: >
+    Both platforms. Truncation policy is "a product decision, not a platform one"
+    (MULTIPLATFORM.md appendix), and it is currently implemented three times — C, Kotlin and Swift
+    (D-052). Whichever way this resolves, it has to resolve in one place or it will drift.
 
 - id: D-034
   title: ~46 MB native heap stays after the idle context free (M4 reading)
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C2]
+  platform: android
   adjudication: human
   status: pending
   blocks_release: false
@@ -905,6 +1169,7 @@
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C4, C3]
+  platform: both
   adjudication: human
   status: resolved_human
   blocks_release: false
@@ -916,12 +1181,19 @@
     gives a free GitHub Pages URL for the privacy policy Play requires. Model weights, the
     llama.cpp checkout and build outputs stay out of the repo; they are fetched by tools/.
   if_rejected: make the repo private and host the privacy policy elsewhere; GitHub Pages on a private repo needs a paid plan.
+  cross_platform: >
+    Both platforms. The public repo is also the evidence the iOS privacy claim rests on (D-039): with no
+    permission to withhold, "the source is public and contains no networking code" is receipt 2 of 4 in
+    GTM's ordering (positioning.md §7). Note the limit GTM states explicitly: App Store binaries are
+    re-signed and encrypted by Apple, so a user cannot verify the shipped app was built from the
+    published source — the reproducible-build argument does not transfer.
 
 - id: D-036
   title: Scope beyond text-in / text-out — share-target, photo OCR, speech, dictionary
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
   spine: [C5, C8]
+  platform: both
   adjudication: human
   status: pending
   blocks_release: false
@@ -944,14 +1216,34 @@
     first. OCR is the highest-value second step and the first one that needs a real Spine
     amendment (R6 refuses images).
   if_rejected: no code changes; the outline stays a GTM document with no promise attached.
+  cross_platform: >
+    Both platforms. Anything added here must pass BOTH fork tests before it ships: architecture.md §6
+    (device-reachable both ways, gracefully absent, same user, no new trust surface) and
+    positioning.md §5. A share-target exists on both platforms; OCR needs a Spine amendment (R6) and
+    would need it once, for both.
 
 - id: D-037
   title: iOS — amend refusal R7, and if so, when
   raised_at: 2026-09-15
   sla_expires_at: 2026-09-17
-  spine: [C1, C2, C3]
+  spine: [C1, C2, C3, C11]
+  platform: both
   adjudication: human
-  status: pending
+  status: superseded
+  superseded_by: SPINE 0.2 (2026-09-15)
+  closed_at: 2026-09-16
+  closed_by: Decisions Leaf
+  closure_note: >
+    MOOT, NOT DECIDED. This entry asked whether to amend refusal R7. Spine 0.2 withdrew R7 outright —
+    "iOS is in scope. The refusal that replaces it: no platform gets a feature the other cannot have on
+    equivalent hardware (C11)" (SPINE.md §6, changelog 0.2). The question this entry poses therefore no
+    longer has a subject, so it is closed as superseded rather than resolved_human: nobody answered it
+    as written, and the Decisions Leaf does not stamp decisions on Hari's behalf. The "when" half of the
+    question survived the bump and is now D-041 (launch shape — and Compliance's finding that Apple has
+    no 12-tester gate inverts this entry's sequencing assumption). The "what is iOS for" half, which
+    this entry said "belongs in the Spine if adopted", is now D-040 and is still unanswered. The
+    analysis itself is kept at leaves/architecture/ios-port.md, re-stamped 0.2 and partly superseded by
+    architecture.md §§2-4.
   blocks_release: false
   raised_by: [Hari, Architecture]
   context: >
@@ -976,5 +1268,858 @@
     inherit one set of answers. Option 3 doubles the surface before a single number exists on a
     real phone. Decide first what iOS is *for*: the Spine's persona is on Android, so the honest
     reasons are credibility, press and diaspora reach, and they belong in the Spine if adopted.
-  if_rejected: no code changes; ios-port.md stays an analysis and R7 stands.
+  if_rejected: "n/a — the Spine bump removed the question; see closure_note."
+  historical_if_rejected: no code changes; ios-port.md stays an analysis and R7 stands.
 
+
+# ======================================================================================================
+# New entries raised 2026-09-16, reconciling Spine 0.2. Six Leaves proposed in overlapping number
+# ranges; the ID map at the top of this file records what each Leaf called each one.
+# ======================================================================================================
+
+- id: D-038
+  title: Profiles are the C11 mechanism — where the candidate list lives, and what the capability vocabulary is
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C2, C8, R2, R3]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before the first iOS build ships anything; does not hold the Play release
+  raised_by: [Architecture, Core/Android Engineering, GTM]
+  merged_from:
+    - "Architecture D-038 (profiles as the C11 mechanism, architecture.md §2, §11)"
+    - "GTM D-GTM-A (is `tools` a profile capability or a product boundary? positioning.md §4, §9)"
+    - "Core/Android Engineering, unnumbered (engineering.md 'Profiles — what the device gets a say in' and its open item on convergence with core/)"
+  depends_on: [W77, W78]
+  context: >
+    C11 says an 8 GB Android phone and an 8 GB iPhone get the same profile. Architecture §2.1 names the
+    failure mode it forbids, and it is convenience rather than malice: someone measures a 4B model on an
+    iPhone, it works, longform ships "on iOS", and six weeks later Android flagship users get a shrug.
+    The fix is to make "which platform" unavailable as an input to any feature decision. During this
+    round the Core/Tools Leaf landed exactly that in /core — arivu_profile, arivu_device, arivu_fit,
+    arivu_profile_valid, arivu_profile_fits, arivu_profile_select, arivu_profile_context_params, with
+    unit tests [V-local, core/include/arivu/arivu.h, core/src/profile.cpp]. Architecture reviewed it and
+    says it is a better answer than the shared-YAML design it was going to propose, because selection
+    arithmetic written once has zero drift while arithmetic written twice against a fixture has merely
+    detectable drift (§2.2). Two things are unfinished and one is a tripwire.
+    (1) NO SHELL CALLS IT YET (architecture B16). Policy.kt remains a hardcoded tier, there is no
+    DeviceProbe on either platform, and nothing fills in arivu_device — so C11 has a mechanism and no
+    user. Engineering's own open item says the same and calls three copies of the numbers (core, Kotlin,
+    Swift, held in step only by the source-text ProfileParityTest) "deliberate for one pass and a
+    liability for two".
+    (2) arivu_default_profile() lives in the core and IS product policy below the boundary. Architecture
+    endorses that while exactly one profile is shippable, and records the tripwire: the moment a second
+    profile is shippable, the candidate list must be constructed above the boundary, or /core quietly
+    becomes where product decisions live and nobody can say why the app behaves as it does without
+    reading C++.
+    (3) GTM's limb of the same question (positioning.md §4): what may enter the capability vocabulary at
+    all. GTM's answer is that longform is a profile and `tools` is a product boundary — more context is
+    the same verbs on a longer document, while tool calling makes the app go and do things, which is R2,
+    a different audience, and on whichever platform shipped it first an unanswerable question about why
+    the other app is "worse". Architecture's fork test (§6) reaches the same verdict independently:
+    tool calling fails three of its four tests. ARIVU_CAP_TOOLS exists in the bitmask and is marked
+    reserved; both Leaves treat it as a tripwire, not a roadmap.
+  options:
+    - "(a) Ratify the landed design — arithmetic and arivu_default_profile() in /core — and accept the §2.2 tripwire, with the capability vocabulary closed to [chat, longform] and any addition a Spine amendment argued once for both platforms"
+    - "(b) Move the candidate list above the boundary now, into each shell"
+    - "(c) Leave Policy.kt per platform and revisit when iOS forces it"
+  recommendation: >
+    (a), which is Architecture's recommendation with GTM's constraint attached. The mechanism is built
+    and tested; one implementation means zero drift; (b) is cost with no benefit while there is one
+    shippable profile; (c) is the two-Policy-files future whose cost is paid later and by someone else.
+    Accepting (a) carries two consequences worth stating in the same breath: the shells must actually
+    consume it (W77 Android, W78 iOS) and the Kotlin arithmetic should be deleted rather than kept in
+    step by a parity test; and the tripwire needs an owner, because a tripwire nobody watches is a
+    comment. The first real test of C11 is not compact vs standard — it is the day an 8 GB Android phone
+    and an 8 GB iPhone run the same candidate list and get the same index.
+  implemented_provisionally: >
+    partly — the core object, selector and tests exist [V-local]; ProfileSelector.select (Kotlin) and a
+    Swift copy re-implement the same rule; ProfileParityTest keeps the three sets of numbers in step by
+    source text. No shell fills in arivu_device (architecture B16).
+  if_rejected: >
+    (b) means writing and maintaining a candidate list in Kotlin and Swift now, for one profile.
+    (c) means two Policy files and a C11 that is a sentence in the Spine with nothing enforcing it; the
+    fork arrives quietly, as a #if os(iOS) around a feature rather than a decision anyone made.
+
+- id: D-039
+  title: The iOS privacy claim — the wording, and the check that is allowed to back it
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C3, C5, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before any iOS listing, privacy text or screenshot is written; before the first App Store submission
+  raised_by: [Design, Compliance, GTM, iOS Engineering]
+  merged_from:
+    - "Design D-038 (the iOS privacy claim, design.md §12)"
+    - "Compliance D-041 (how the iOS listing words the privacy claim, appstore-policy-checklist.md §16.2)"
+    - "GTM D-GTM-C (does the iOS privacy wording get its own approved text?) and D-GTM-D (does a release check exist that fails on networking code?), positioning.md §7, §9"
+    - "iOS Engineering, engineering-ios.md 'Remaining manual steps' 12 ('settle D-038 — the iOS app must not ship Android's no-permission sentence')"
+  depends_on: [W73]
+  context: >
+    This is the product's headline claim and the one place where two platforms cannot say the same true
+    thing. On Android, C3 is proved by absence — no INTERNET permission, enforced by the OS and asserted
+    on every build by tools/check_manifest.sh [V-local]. iOS has no permission to withhold. Three Leaves
+    raised it independently and all three reject reusing the Android sentence: Design ("it is not
+    true"), Compliance ("this is a genuine weakening, and it changes the listing copy, not the form"),
+    GTM (which lists the exact phrases that must never cross: "cannot go online", "no permission to use
+    the internet", "Android does not let it send anything anywhere", "a missing permission, not a
+    promise"). GTM ranks the iOS receipts by actual strength: the shipped binary links nothing that can
+    reach the network; the source is public (D-035); the user's own Airplane Mode test, which needs no
+    trust and no expertise and is the one the listing should lead with; and App Privacy "Data Not
+    Collected" last, because it is a self-declaration Apple does not verify. GTM also states the limit
+    so nobody overshoots it: App Store binaries are re-signed and encrypted by Apple, so a user cannot
+    verify the shipped app was built from the published source — the reproducible-build argument does
+    not transfer. We claim no networking capability in the binary and no networking code in the source.
+    We do not claim this binary is that source.
+    The check that would make the strongest sentence true does not exist yet. Architecture §5.5 and B20
+    propose tools/check_ios_binary.sh (otool -L, nm -u, failing on CFNetwork, Network, libcurl and the
+    URLSession/socket/connect/getaddrinfo symbol set) as W73; Compliance's tools/ios_release_check.sh
+    already asserts no networking framework, symbol, entitlement or Info.plist key, but has only ever
+    run against a synthetic fixture bundle. GTM's D-GTM-D is the discipline that follows: until the
+    check ships and its exact guarantee is written down, the listing says "no networking code" (true,
+    checkable in source) and NOT "our build check fails if any is added". Architecture is honest about
+    the residual gap either way: a linked framework is capability, not use, so the check proves the
+    capability is absent, not that intent was good.
+  options:
+    - "(a) Reuse the Android sentence on iOS — rejected by Design, Compliance and GTM; it is a false claim"
+    - "(b) iOS-specific copy that says exactly what is checkable and who checks it, in GTM's receipt order, with the build-check sentence bracketed until W73 ships"
+    - "(c) Say nothing about the network on iOS and lead on 'works offline'"
+    - "(d) Hold iOS until a stronger proof exists"
+  recommendation: >
+    (b). All four Leaves land there. Compliance owns the final text, GTM owns the listing rendering,
+    Design's requirement is only that the iOS sentence be DIFFERENT from the Android one and just as
+    plain — a weaker true sentence is fine, the same sentence in both apps is not. Compliance's draft:
+    "Arivu has no networking code. The build is open source and the release check refuses a build that
+    links one" — with the second clause held back until W73 exists. C5 is the commitment to being honest
+    about what Arivu is, and this is the first place where honesty costs a good sentence.
+  implemented_provisionally: >
+    partly — design.md §9 gives privacy_internet_body an iOS variant that describes the absence of
+    networking code rather than enumerating permissions, and engineering-ios.md reports a test in
+    ArivuKit that already fails if the Android sentence ships. The hosted policy, the App Store listing
+    and the tour still carry Android-shaped sentences.
+  if_rejected: >
+    (a) GTM reuses the Android copy and the weakening is recorded in leaves/NOTES.md so nobody
+    rediscovers it — but the claim is then false on iOS, which is the one thing C5 forbids.
+    (c) costs the strongest thing Arivu has to say in the one market where it matters most.
+    (d) is coherent and means no App Store submission this iteration.
+
+- id: D-040
+  title: What is iOS for, in one sentence in the Spine?
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C5]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [GTM, Architecture, Hari]
+  merged_from:
+    - "GTM D-GTM-B (positioning.md §9)"
+    - "the unanswered half of D-037 ('Decide first what iOS is for'), which survived the Spine 0.2 bump"
+    - "Architecture 'Needs Hari' 5 and architecture/ios-port.md 'The question worth asking first'"
+  blocks: [D-041]
+  context: >
+    Spine 0.2 withdrew R7 and put iOS in scope, but it did not say what iOS is for. Every other iOS
+    question inherits the answer: whether shipping iOS first undercuts the story (D-041), how wide the
+    storefront availability should be (D-059), how much an 18+ rating's discoverability cost matters
+    (D-024), and whether a gate screen seen by many iOS users is acceptable (D-042, D-045). The Spine's
+    persona is a teacher in Enugu on a 4 GB Android phone rationing prepaid data; in those markets iOS
+    is a small minority and iOS users are the least likely to be blocked by data costs. ios-port.md put
+    it plainly: an iOS build mostly buys credibility, press and diaspora reach — real things, but not
+    the Spine's problem statement — and if that is the reason it should be written into the Spine rather
+    than left implicit.
+  options:
+    - "GTM's sentence: 'iOS reaches the people who recommend Arivu, and is where the second device profile is proven before an 8 GB Android phone inherits it.' Placed in SPINE §2 or beside C11"
+    - "A different sentence Hari writes"
+    - "Leave it implicit and decide each downstream question on its own merits"
+  recommendation: >
+    GTM's sentence, or Hari's own — but written down. This is a Spine amendment, so only Hari makes it,
+    and the Decisions Leaf's only contribution is that leaving it implicit is the expensive option: the
+    same argument then gets re-run, differently, in four other entries. The second limb of GTM's
+    sentence is worth keeping whatever the first says, because it is the only stated reason iOS helps
+    Android rather than competing with it for attention.
+  implemented_provisionally: "n/a (a Spine edit)"
+  if_rejected: >
+    No code changes. D-041, D-059 and the D-024 weighing each get decided without a shared premise, and
+    the README problem MULTIPLATFORM.md warns about — a product that cannot say what it is — arrives by
+    a different road.
+
+- id: D-041
+  title: Launch shape — iOS has no 12-tester gate, so it could ship first
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C1, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  evidence_settles: true
+  evidence_settles_scope: >
+    THE FACTUAL PREMISE ONLY, and it still needs Hari's stamp. That Apple imposes no tester gate is
+    settled; which launch shape to adopt is a judgement that depends on D-040 and remains Hari's.
+  evidence_source: >
+    appstore-policy-checklist.md §10 — Apple's enrolment page was fetched and contains no testing
+    requirement of any kind, and TestFlight imposes no minimum tester count or duration [V: absent].
+    Compliance flags the one caveat honestly: a universal negative cannot be proved from vendor docs,
+    so confirm it once the account exists, which costs nothing.
+  raised_by: [Compliance, GTM, Architecture]
+  merged_from:
+    - "Compliance D-038 (iOS has no 12-tester/14-day gate — does that change the launch shape? appstore-policy-checklist.md §16.2)"
+    - "GTM D-GTM-J (do the two launches have to be the same day? positioning.md §9)"
+    - "Architecture B12 (architecture.md §10)"
+  depends_on: [D-040]
+  context: >
+    THE EVIDENCE INVERTS THE OLD PLAN. architecture/ios-port.md assumed the shape "Android's 14-day
+    closed test is dead time, so the iOS port happens inside that window and the two launch together".
+    Compliance checked and Apple has no equivalent gate at all: enrolment (99 USD/yr, 2FA, legal name or
+    a D-U-N-S) and then App Store review, typically days. Play's rule stands — personal accounts created
+    after 2023-11-13 need 12 testers opted in continuously for 14 days before applying for production
+    [V, answer/14151465]. So iOS could reach the store BEFORE Android production, not after. Architecture
+    B12 records the same inversion and calls it a sequencing question, not an architecture one. GTM adds
+    the mechanical asymmetry that decides the shape: Play cannot hold a first release, Apple can — an
+    iOS build submitted with "Manually release this version" waits for a date of our choosing.
+    MULTIPLATFORM.md's standing rule is that an Android fix is never held for App Store review.
+  options:
+    - "Hold iOS until Android production, purely for narrative coherence"
+    - "Ship iOS whenever it is ready, and accept that the offline-Android app debuts on iPhone"
+    - "Couple the announcement, not the release — submit iOS with manual release and release it on the day Play goes live; if iOS is not approved, Android ships alone (GTM)"
+  recommendation: >
+    GTM's third option, contingent on D-040. If iOS exists for credibility and press, shipping it first
+    undercuts the story the product tells about 2-dollar phones and prepaid data (Compliance); if it
+    exists to be used, waiting costs users nothing and buys nothing. Coupling the announcement rather
+    than the release is the only option that survives either answer, and it keeps MULTIPLATFORM.md's
+    rule intact. Sequencing should also correct ios-port.md's assumption and take the 14-day closed test
+    off the "free budget" framing — it is still Android's critical path (Architecture B12 noted it was
+    not on it; it is).
+  implemented_provisionally: "n/a (Console and calendar)"
+  if_rejected: >
+    No code changes. Shipping iOS first is defensible if D-040 says iOS is for being used; it is hard to
+    defend if D-040 says iOS is for credibility.
+
+- id: D-042
+  title: The minimum iOS version — the only pre-install filter the App Store has
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C6, C2, C11]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before the App Store listing can be finished (it is a listing placeholder) and before the first submission
+  raised_by: [iOS Engineering, Design, Compliance, Architecture, GTM]
+  merged_from:
+    - "iOS Engineering D-047 (iOS deployment target 17.0, engineering-ios.md)"
+    - "Design D-043 (iOS exclusion is a higher minimum iOS version, not a catalogue, design.md §12)"
+    - "Compliance appstore-policy-checklist.md §12 (the device floor)"
+    - "Architecture §2.7 and 'Needs Hari' 3"
+    - "GTM appstore-listing.md placeholders [MIN_IOS], [DEVICE_FLOOR]"
+  depends_on: [D-009, W02, W81]
+  context: >
+    There is no App Store device-exclusion catalogue. Play has three gate layers; iOS has one and a
+    half — MinimumOSVersion plus the runtime gate (Compliance §12). So the OS floor is a proxy for
+    silicon and roughly for a RAM class, and it is the only thing standing between a user and a ~400 MB
+    download that ends at a wall. Architecture states the rule: the pre-install filter and the runtime
+    gate must agree — the minimum iOS version is the lowest version whose slowest supported device still
+    passes arivu_profile_fits for compact; anything looser meets C6 in letter and breaks it in spirit.
+    Architecture also says plainly that this is a product decision, not a build setting. Design's input
+    is that the higher the floor, the fewer people meet the gate screen at all, and the gate on iOS is a
+    first impression rather than an edge case. GTM cannot finish the listing without the number.
+    NOTE THE TENSION, because it is the reason this is on the queue: ios/project.yml already sets
+    deploymentTarget iOS 17.0 and IPHONEOS_DEPLOYMENT_TARGET 17.0 [V-local], and iOS Engineering
+    recommends 17.0 as implying A12 or newer — but that number was chosen before W02 (the Android phone
+    benchmark) and W81 (the first physical-iPhone memory characterisation) exist. It is a reasonable
+    provisional value, not a derived one.
+  options:
+    - "17.0 — as landed; implies A12 or newer (iOS Engineering)"
+    - "16.0 — more reach, more gate screens, more 'it's slow' reviews per thousand installs"
+    - "18.0 — fewer gate screens, materially smaller installed base"
+    - "Defer the final number until W81 and W02, keeping 17.0 as the provisional build setting"
+  recommendation: >
+    The fourth option, with 17.0 as the interim: ratify 17.0 for the first TestFlight build, and derive
+    the shipping number from the same measurement that sets D-009's RAM floor, as Compliance and
+    Architecture both ask. Record both floors side by side in leaves/NOTES.md so the two platforms'
+    gates are visibly one decision. Raising the floor later drops users, so the cost of being too low is
+    paid by users and the cost of being too high is paid once, by us.
+  implemented_provisionally: "yes, provisionally — ios/project.yml deploymentTarget iOS 17.0 [V-local]"
+  if_rejected: >
+    A different number in ios/project.yml before the first archive, plus the [MIN_IOS] and
+    [DEVICE_FLOOR] lines in appstore-listing.md. Raising it after release drops installed users.
+
+- id: D-043
+  title: What happens to a reply when the user backgrounds the app on iOS (C10)
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C10, C2, C11]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before the first TestFlight build behaves one way or the other in front of a tester
+  raised_by: [Architecture]
+  merged_from: ["Architecture D-039 / boundary review B17 (architecture.md §10, §11)"]
+  context: >
+    C10 promises generation "survives a brief app switch". Android delivers it with a shortService
+    foreground service, roughly three minutes, verified on the emulator (D-003). iOS offers
+    beginBackgroundTask, conventionally about 30 seconds [B — Architecture flags that the documented
+    figure needs checking and that iOS has historically granted less than folklore says]. A 768-token
+    reply at 8 tok/s is about 96 seconds and will NOT finish backgrounded on iOS. This is a genuine
+    mismatch with a Spine commitment, not an implementation detail, which is why it is here rather than
+    in a work item.
+  options:
+    - "(a) Stop and keep the partial reply when backgrounded, exactly as process death already does on Android (throttled 2 s save, 'Stopped' label, Copy and Report still on the reply)"
+    - "(b) A shorter max_reply_tokens on iOS profiles"
+    - "(c) Weaken C10's wording"
+  recommendation: >
+    (a), Architecture's recommendation. It reuses behaviour that already exists and was already user-
+    tested on the Android side, it is honest, and it needs no platform-specific limit — (b) would be one,
+    and a reply cap that differs by platform is precisely what C11 forbids, since max_reply_tokens is a
+    profile field and a profile is supposed to follow the device. Design's adjacent requirement
+    (design.md §14 request 2) is that the background-expiration handler route into the SAME cancel path
+    as the Stop button, so the partial reply is saved by the same throttled save and labelled
+    stopped_backgrounded. If (a) is accepted, C10's sentence is still true on both platforms; the
+    mechanism differs and the difference is forced by the OS, which is the template §2.7 sets for every
+    divergence.
+  implemented_provisionally: "no — no iOS build has run"
+  if_rejected: >
+    (b) puts a platform-shaped number in a profile and needs a C11 argument in writing.
+    (c) is a Spine edit and only Hari makes those.
+
+- id: D-044
+  title: No local notifications on iOS
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C3, C8, C10]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  merged_from: ["Design D-041 (design.md §12)"]
+  related: [D-043]
+  context: >
+    A background reply that runs out of time (D-043) has to be surfaced somehow. The alternative to
+    silence is a local notification, and a local notification needs a permission prompt — which would be
+    the first permission prompt in a product whose entire pitch is that it asks for nothing. Design's
+    position: the reply is reported when the user returns, not pushed. engineering-ios.md makes the same
+    point from the other side — the app that asks for nothing does not open with a permission dialog.
+  options:
+    - "No notifications; the partial reply and its label are simply there when the user comes back (recommended)"
+    - "Ask for notification permission at the first background generation"
+  recommendation: >
+    No notifications. Design's reasoning holds on its own, and it also protects the D-039 privacy claim
+    from having to explain why a no-network app wants to send the user alerts.
+  implemented_provisionally: "yes, by construction — no notification code and no UNUserNotificationCenter usage in ios/App [V-local]"
+  if_rejected: "add the permission request and the notification; the 'asks for nothing' line in the listing and the tour changes."
+
+- id: D-045
+  title: The iOS gate screen has no button
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C6, R8, C11]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design, Architecture, iOS Engineering]
+  merged_from:
+    - "Design D-042 (design.md §12)"
+    - "Architecture §2.7 (a device that qualifies for no profile)"
+    - "iOS Engineering (engineering-ios.md — 'instructions instead of a dead button')"
+  related: [D-042]
+  context: >
+    On Android the Incompatible screen offers ACTION_DELETE and the system uninstall dialog (D-006,
+    verified on an API 36 emulator). iOS apps cannot offer to uninstall themselves. Architecture's table
+    also records what makes this sharper than it looks: with no device-exclusion catalogue the iOS gate
+    is reached OFTEN rather than rarely, and the user reaching it has already paid for a ~400 MB
+    download she cannot un-pay. Design's note: it is the first screen some iOS users will ever see.
+    Same screen, same words, no button, plus one line saying how to remove the app.
+  options:
+    - "No button, plus one line of removal instructions (recommended)"
+    - "A button that opens Settings"
+    - "A 'Close Arivu' button"
+  recommendation: >
+    No button plus the removal line. A Settings button cannot reach the uninstall flow and a "Close"
+    button is a dead end wearing a hat. Two things should travel with this decision: the gate should say
+    WHY, from arivu_fit_name() — not enough memory, not enough free storage, wrong architecture — with
+    the same copy on both platforms (Architecture's W83, arivu_fit is described as "a product gift
+    nobody asked for"); and D-042 is the lever that decides how many people ever see the screen.
+  implemented_provisionally: "partly — ios/App/Sources/IncompatibleView.swift exists and carries the no-button shape; the per-reason wording (W83) does not exist on either platform"
+  if_rejected: "add the button; Design and Compliance both need the App Review note updated, since a reviewer on a current iPhone will never see this screen."
+
+- id: D-046
+  title: iOS signing and distribution-certificate custody
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C1, C3, C4]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before the first TestFlight upload
+  raised_by: [Architecture]
+  merged_from: ["Architecture D-040 (architecture.md §11; boundary review B7)"]
+  depends_on: [W72]
+  context: >
+    iOS signing and provisioning are entirely undesigned (Architecture B7 — "Gap, now on two
+    platforms"). The tempting move is to reason by analogy from D-018, and Architecture says explicitly
+    that the analogy misleads: Apple's model is not Play App Signing. There is no upload-key/app-signing-
+    key split, Apple re-signs on delivery, and the custody question is a different question with
+    different failure modes. leaves/architecture/release-and-signing.md is still stamped 0.1 and has no
+    iOS section; W72 (1 day, Architecture) is the research that must precede a recommendation.
+  options:
+    - "(a) Xcode-managed signing"
+    - "(b) Manual certificate custody, mirroring D-018's discipline"
+  recommendation: >
+    NONE YET, deliberately. Architecture declines to recommend before W72, and the Decisions Leaf is not
+    going to invent one. What can be said now: this blocks the first TestFlight upload, W72 is a day of
+    work, and it should happen before a Mac is in front of anyone rather than during the first archive.
+  implemented_provisionally: "no"
+  if_rejected: "n/a until W72 produces the options in detail."
+
+- id: D-047
+  title: The increased-memory-limit entitlement — not in iteration-1, and a profile requirement rather than a platform flag
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C2, C11, C8, C3]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Compliance, Architecture]
+  merged_from:
+    - "Compliance D-039 (appstore-policy-checklist.md §8, §16.2)"
+    - "Architecture §3.3 / §3.4 (the entitlement, and what is shippable)"
+  contradiction_flag: >
+    THE CODE CURRENTLY DOES THE OPPOSITE OF BOTH RECOMMENDATIONS. ios/App/Support/Arivu.entitlements
+    requests com.apple.developer.kernel.increased-memory-limit and is commented as doing so deliberately
+    ("insurance against a transient spike during the first map, not a load-bearing part of the plan")
+    [V-local]. Compliance and Architecture both recommend not requesting it in iteration-1. This entry
+    is the place that disagreement gets settled; tools/ios_release_check.sh does not fail on its
+    presence, it only NOTEs it.
+  context: >
+    com.apple.developer.kernel.increased-memory-limit is a Boolean, iOS 15.0+ [V-doc]. Apple's own text:
+    it indicates "core features of your app may perform better with a higher memory limit on supported
+    devices"; "if you use this entitlement, make sure your app still behaves correctly if additional
+    memory isn't available"; and "an increased memory limit is only available on some device models"
+    with no list published [V-doc]. Architecture draws out three consequences: it grants nothing
+    specific, Apple REQUIRES the app to work without it (so it can never be a precondition for a
+    profile, only a raise to the number the probe reads), and how you enable it is genuinely unsettled —
+    an Apple DTS engineer said it appears only in Certificates, Identifiers & Profiles and not in
+    Xcode's Signing & Capabilities editor [V-fwd], while a 2026 community write-up says Xcode now offers
+    it [C]. Whether App Review questions it is UNVERIFIED in both directions. Compliance's own reasoning
+    for leaving it out: an unused entitlement means an extra App ID capability, an entitlement that is
+    silently stripped if it is missing from the distribution profile, and a line in the binary inviting
+    a question Arivu has no reason to answer. Architecture adds a fourth: the first submission already
+    carries one question (on-device model output, D-017/D-026) and this would add a second.
+    Both Leaves also agree on the shape of the answer if it is ever adopted, and that part is the C11
+    content of this entry: it must be an INPUT TO THE PROBE, not a platform switch. On a device where it
+    is granted and effective, os_proc_available_memory() returns a bigger number, arivu_profile_select
+    picks a richer profile over the same candidate list, and no code names iOS. An entitled iPhone and
+    an 8 GB Android phone arrive at the same profile by the same arithmetic.
+    Neither Leaf has measured anything on an iPhone. The relevant figures are estimates: compact peaks
+    around 670 MB RSS and, if clean mapped pages are not charged, around 300 MB of phys_footprint,
+    against a jetsam budget reported at roughly 1.3-2 GB on a 4 GB device [C — Apple publishes no
+    numeric limits anywhere]. W81 settles it in an afternoon.
+  options:
+    - "Do not request it in iteration-1; record it as a precondition of any larger profile, and remove it from ios/App/Support/Arivu.entitlements (Compliance and Architecture)"
+    - "Keep it as insurance, as the landed entitlements file does, and note the justification in App Review Information"
+  recommendation: >
+    The first option, because both Leaves that studied the documentation reached it independently and
+    the file that disagrees was written before §3 existed. Two caveats worth carrying: the entitlement
+    is cheap to add later and expensive to explain now (Architecture), and MULTIPLATFORM.md's caution 1
+    is right that any future 3B/4B profile depends on it — so the removal must be recorded as "not
+    needed by compact", not as "rejected", or the next person re-litigates it from scratch. If Hari
+    prefers the insurance, W81 should confirm it is actually granted and effective on the test iPhone,
+    because "we assumed it worked" is how a larger-model plan dies at submission.
+  implemented_provisionally: "yes, CONTRARY to the recommendation — the entitlement is requested in ios/App/Support/Arivu.entitlements [V-local]"
+  if_rejected: "keep the entitlement and the App ID capability; add a line to App Review Information explaining why a 400 MB model app asks for a higher memory limit."
+
+- id: D-048
+  title: The headroom margin in arivu_profile_fits
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C2, C6, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Architecture]
+  merged_from: ["Architecture D-043 / boundary review B24 / request R-b (architecture.md §2.3, §10, §11)"]
+  depends_on: [W81, W82]
+  context: >
+    arivu_profile_fits accepts when available_memory_bytes >= estimated_peak_bytes, exactly, with no
+    margin [V-local]. Apple documents os_proc_available_memory() as advisory, not to be cached and not
+    to be consumed up to, and jetsam then kills with no callback [V-doc]. Accepting at 1.00x accepts a
+    device that fits until the user opens the camera. Architecture's related correction (B23, W82) is
+    that the two sides of that inequality are in different currencies on iOS: the estimate adds
+    model_bytes, but jetsam charges phys_footprint, which excludes the clean file-backed pages the
+    weights live in — so as written the check will REFUSE iPhones that would have worked. Both need
+    settling together, and W81 (peak RSS and peak phys_footprint on a physical iPhone) is the
+    measurement that turns both into arithmetic instead of taste.
+  options:
+    - "(a) No margin — today's behaviour"
+    - "(b) A single multiplier carried in the profile"
+    - "(c) A per-platform margin supplied by the shell alongside the device measurement, keyed on the QUALITY of the measurement rather than on the platform"
+  recommendation: >
+    (c), Architecture's recommendation, with its C11 defence recorded because it will be challenged:
+    the margin belongs to the quality of the measurement, not to the platform. Android infers headroom
+    from totalMem and cannot probe it (available_memory_bytes == 0 means "not measured"); iOS probes an
+    advisory number that moves. A field that says "Android measured this and iOS could not" is fine; a
+    field that says "on iOS, do less" is not. Architecture's interim values: 1.25 where the number is
+    inferred, 1.4 where it is probed — from W81, not from taste. This also wants Architecture's request
+    R-c: a provenance flag on arivu_device saying whether available_memory_bytes was probed or inferred.
+  implemented_provisionally: "no — arivu_profile_fits has no margin today [V-local]"
+  if_rejected: "(a) leaves the first iOS gate screen untrustworthy in the generous direction and B23 untrustworthy in the mean direction; (b) is simpler but cannot express the asymmetry that actually exists."
+
+- id: D-049
+  title: M5's wording across two platforms, and the check that makes it true on iOS
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C3, M5, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: true
+  blocks_release_scope: ios
+  deadline: before the first App Store submission; the Spine edit itself can be made at any time
+  raised_by: [Architecture, GTM]
+  merged_from:
+    - "Architecture D-042 / boundary review B20 / §5.5 (architecture.md)"
+    - "GTM D-GTM-D's mechanism half (positioning.md §9) — the wording half is in D-039"
+  depends_on: [W73]
+  context: >
+    M5 reads "Network capability in shipped artifact — zero INTERNET permission in merged manifest —
+    tools/check_manifest.sh in every build" (SPINE §5). That metric names an Android mechanism, so on
+    iOS it has no referent at all: Compliance lists it among the statements that were written when
+    Android was the only platform and read as universal (play-policy-checklist.md §16.2). Architecture
+    B20 is blunt about the consequence — without tools/check_ios_binary.sh, C3 on iOS is a promise in a
+    listing. This is a Spine edit, so it is Hari's; Architecture put it first in its own "Needs Hari"
+    list.
+  options:
+    - "(a) Restate M5 as 'no network capability in the shipped artifact, by the platform's strongest available mechanism', with two checkers named — tools/check_manifest.sh on Android, tools/check_ios_binary.sh on iOS"
+    - "(b) Add a separate M7 for iOS and leave M5 as an Android metric"
+  recommendation: >
+    (a), Architecture's recommendation: one metric, honest that the mechanisms differ in strength. (b)
+    invites the reading that the two platforms have different privacy goals, which is the one thing C11
+    exists to prevent. Whichever is chosen, the metric is only true on iOS once W73 exists, and until
+    then D-039 keeps the listing sentence bracketed. Compliance's tools/ios_release_check.sh already
+    implements much of the check but has never run against a real bundle.
+  implemented_provisionally: "no — tools/ios_release_check.sh exists and has only run against a synthetic fixture; tools/check_ios_binary.sh (W73) does not exist"
+  if_rejected: "(b) means two metrics and two traceability rows; SPINE §5 and tools/trace.py both change either way."
+
+- id: D-050
+  title: If a standard (4B) profile is ever adopted on iOS — packaging and the privacy sentence
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C1, C3, C11]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Architecture]
+  merged_from: ["Architecture D-041 (architecture.md §4.4 consequence 2, §11)"]
+  context: >
+    Recorded now so it is decided rather than discovered at submission. For iteration-1 the packaging
+    question is settled by evidence and by §4.4: bundle the model in the IPA and accept a ~400 MB
+    install. The limits are verified — 4 GB maximum uncompressed app size, and the 80 MB executable cap
+    governs compiled __TEXT so it does not apply to a GGUF resource [V-doc]; On-Demand Resources is
+    DEPRECATED, announced for iOS 27 [C]; and a first-run download would collapse the privacy claim from
+    "Arivu never uses the network" to "Arivu uses the network once", in a product whose whole
+    proposition is the first sentence. Compliance §9 and §13 agree and add that Guideline 4.7 (chatbots)
+    is scoped to software "not embedded in the binary", so bundling also keeps Arivu out of 4.7
+    entirely — a reason to re-read 4.7 before ever downloading a model [U].
+    A 2.5 GB standard profile is where that stops being comfortable. It is legal under the 4 GB limit
+    but it is a very different download, and it pushes toward the option that forks the privacy claim.
+  options:
+    - "(a) Never ship standard on iOS"
+    - "(b) Ship it and accept a first-run download and the weaker privacy claim"
+    - "(c) Ship it bundled at ~2.5 GB"
+  recommendation: >
+    Not due now, and Architecture deliberately does not recommend. The Decisions Leaf's only addition:
+    whoever answers it should answer D-039 first, because (b) changes the sentence D-039 approves, and
+    Architecture's fork test (§6) should be run on the result — a 4B model is a profile and passes, but
+    a 4B model that arrives over the network is a different trust surface and fails test 4.
+  implemented_provisionally: "n/a — one profile is shippable (architecture §2.8); the iteration-1 answer is 'bundled', which §4.4 already recommends"
+  if_rejected: "n/a — nothing changes until a second profile is shippable."
+
+- id: D-051
+  title: Metal stays off on iOS
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C2, C8, C11]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [iOS Engineering, Architecture]
+  merged_from:
+    - "iOS Engineering D-045 (engineering-ios.md)"
+    - "Architecture §3.5 (Metal, and why it is not a free win)"
+  context: >
+    GGML_METAL=OFF and n_gpu_layers = 0 [V-local: tools/ios/build_core.sh, core/src/engine.cpp:26].
+    Both Leaves reach the same conclusion by the same route, and it is a memory argument rather than a
+    speed one: on iOS's unified memory there is no separate GPU pool, so Metal buffers are DIRTY memory.
+    Offloading the weights would convert about 373 MB of uncharged, evictable, clean file-backed pages
+    into charged memory — which does not optimise the memory model, it deletes the property the whole
+    memory model rests on, the one thing that makes a 400 MB model fit a phone that cannot spare 400 MB.
+    Architecture adds two supporting points: MTLDevice.recommendedMaxWorkingSetSize is a performance
+    hint, not the kill threshold, so exceeding it and exceeding the footprint limit are two separate
+    additive risks [V-doc]; and a Metal-only speed-up fails fork test 1 today, because no Android GPU
+    path exists, making it a capability reachable on one platform's hardware only. iOS Engineering adds
+    the practical one: one code path means a tok/s figure means the same thing on both platforms.
+  options:
+    - "Off (recommended), with ARIVU_METAL=1 keeping the experiment one flag away"
+    - "On, behind a measurement on a 4 GB iPhone showing phys_footprint still under budget"
+  recommendation: >
+    Off, and keep the comment in engine.cpp that says why — Architecture asks specifically that the zero
+    be documented as load-bearing rather than unfinished. Revisit only if a Vulkan or OpenCL path lands
+    on Android, which would change the fork-test answer as well as the memory one.
+  implemented_provisionally: "yes (tools/ios/build_core.sh GGML_METAL=OFF; core/src/engine.cpp n_gpu_layers = 0) [V-local]"
+  if_rejected: "flip one build flag and one engine line; the iOS memory budget must then be re-derived from W81, and licence-audit.md §7.4 entry 3 must name the Metal backend shaders because default.metallib would ship (gap I3)."
+
+- id: D-052
+  title: One prompt builder, or three?
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C7, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [iOS Engineering, Core/Android Engineering, Architecture]
+  merged_from:
+    - "iOS Engineering D-046 (engineering-ios.md)"
+    - "Core/Android Engineering open item (engineering.md — two selectors, three copies of the numbers)"
+    - "Architecture B13 (the behavioural harness still runs against the C++ surface)"
+  depends_on: [W78]
+  related: [D-033, D-038]
+  context: >
+    ChatML formatting and whole-turn truncation now exist three times: in C (core), in Kotlin (Android)
+    and in Swift (iOS). The Swift copy is authoritative on iOS today only because it is the one that can
+    be tested with no native library on a machine with no Xcode. MULTIPLATFORM.md lists "prompt and chat
+    template handling" and "token budgeting and truncation policy" among the things that are shared,
+    and calls the truncation rule "a product decision, not a platform one". The cost of the wrong answer
+    is not a crash; it is a silent divergence in what the user's model can see, which is a C7 problem
+    that shows up as bad replies. D-033 (truncate whole exchanges rather than whole turns) is currently
+    a change that would have to be made in three places.
+  options:
+    - "(a) Both shells adopt arivu_prompt_builder_* once CoreParityTests has run green on hardware; the Swift and Kotlin copies become test references"
+    - "(b) Three implementations with a parity harness, maintained"
+    - "(c) Status quo — which is (b) without the harness"
+  recommendation: >
+    (a), iOS Engineering's recommendation, and it is the same shape as D-038's answer for profiles: move
+    the arithmetic below the boundary and keep the other copies only as test oracles. W78 is the gate.
+    iOS Engineering also asks Core to confirm the ownership rule for
+    arivu_prompt_builder_create_for_engine (the header says the engine must outlive the builder, and
+    Swift will happily arrange the opposite) before the binding is written.
+  implemented_provisionally: "no — three implementations today, held in step by ProfileParityTest and CoreParityTests (the latter not yet run against the real core)"
+  if_rejected: "(b) means owning a parity harness forever; (c) means owning the divergence without noticing it."
+
+- id: D-053
+  title: One copy catalogue, owned by Design
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C5, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design, iOS Engineering, Android Engineering]
+  merged_from:
+    - "Design D-039 (design.md §12; leaves/design/copy.md)"
+    - "iOS Engineering (engineering-ios.md W80 — check_copy.py must also read the iOS strings)"
+    - "Android Engineering (design.md §14 — the low-memory strings the two files currently disagree about)"
+  related: [D-014, D-031, D-055]
+  context: >
+    leaves/design/copy.md becomes the source; strings.xml and the iOS String Catalog become renderings,
+    checked for parity in CI by tools/check_copy.py (Design's W68), which fails a build when a key
+    exists in one platform file and not the other without an explicit android_only / ios_only marker, or
+    when a shared string's text differs. Design's own note is that this is what makes the catalogue real
+    rather than a promise. The alternative is already visible in this round: Design and Android
+    Engineering wrote two different versions of the low-memory sentences, and design.md §14 asks Android
+    to take the catalogue's text "rather than have the two files disagree". The iOS work item adds
+    placeholder normalisation (%1$s to %1$@ or %1$ld). Every other copy decision — D-014's language,
+    D-031's spelling, D-055's platform nouns — becomes enforceable exactly once this exists.
+  options:
+    - "One catalogue with explicit per-platform overrides (recommended)"
+    - "Two independent files kept in step by review"
+  recommendation: >
+    One catalogue. Not urgent and not blocking, but the cost of the wrong answer compounds with every
+    string, and the iOS String Catalog is about to be written from scratch — which is the cheapest
+    moment this decision will ever have.
+  implemented_provisionally: "partly — leaves/design/copy.md exists and marks android_only / ios_only strings; tools/check_copy.py does not exist and strings.xml is still authored directly"
+  if_rejected: "two files and a review discipline; expect the first divergence at the first string either platform adds alone."
+
+- id: D-054
+  title: Clipboard confirmation is Arivu's own where the OS gives none
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C5]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  merged_from: ["Design D-040 (design.md §12; W70)"]
+  context: >
+    Android 13+ shows a system clipboard confirmation; Android 12 and below and iOS show nothing. The
+    proposal is that the Copy button becomes "Copied" for two seconds where the OS is silent, and Arivu
+    adds nothing where the OS already speaks. That is a C11-shaped answer — the behaviour is keyed on
+    what the platform does for the user, not on which platform it is — and it makes one pattern describe
+    both apps.
+  options:
+    - "Arivu confirms only where the OS does not (recommended)"
+    - "A toast on Android and nothing on iOS (today's behaviour)"
+    - "Arivu confirms everywhere, doubling up on Android 13+"
+  recommendation: "As Design states it. W70 is the Android half; the iOS half is written once when ChatView is finished."
+  implemented_provisionally: "no — today Android 13+ relies on the system overlay (verified on the emulator, ev-copy.png) and older versions show nothing"
+  if_rejected: "one branch in the Copy handler on each platform."
+
+- id: D-055
+  title: '"Phone", not "iPhone", in shared sentences'
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C5, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Design]
+  merged_from: ["Design D-044 (design.md §12; design/copy.md rule 8)"]
+  related: [D-053]
+  context: >
+    The platform noun appears only where the user must do something platform-shaped — Home Screen, Mail,
+    App Store, Settings. Everywhere else the sentence says "phone", so one catalogue entry serves both
+    apps and the two products read as one product. Small, but it is the rule that decides how many
+    strings can be shared at all, which is why Design raised it alongside the catalogue.
+  options:
+    - "'Phone' in shared sentences; the platform noun only where the action is platform-shaped (recommended)"
+    - "Platform-correct nouns everywhere, and two catalogues in practice"
+  recommendation: "As Design states it."
+  implemented_provisionally: "partly — leaves/design/copy.md follows the rule; strings.xml predates it"
+  if_rejected: "a sweep of the catalogue and both string files; it also weakens D-053, since far fewer strings would be shareable."
+
+- id: D-056
+  title: One NOTICE, or a generated NOTICE per platform?
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C4, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Compliance, iOS Engineering]
+  merged_from:
+    - "Compliance D-040 (appstore-policy-checklist.md §16.2; licence-audit.md §7.5, gap I2)"
+    - "iOS Engineering D-048 (the licence texts and NOTICE should live once, not twice)"
+  related: [D-019]
+  context: >
+    The root NOTICE names kotlinx.coroutines, kotlinx.serialization and ThreeTen-BP. None of that code
+    is in an iOS binary (licence-audit.md §7.1), so shipping it verbatim there asserts obligations for
+    code that is not present: harmless, but untrue — and Compliance's stated value is that its
+    statements are true. MULTIPLATFORM.md already lists NOTICE generation among the shared things, so
+    the answer follows: one source, two generated outputs. A tools/make_notice.py would emit the root
+    NOTICE (the superset) plus a per-platform NOTICE.txt asset, and would let
+    LicensesTest.noticeShippedInAppMatchesRootNotice relax from equality to "the shipped NOTICE covers
+    everything in THIS binary", which is the assertion that is actually true.
+    tools/ios_release_check.sh already implements that rule for iOS: byte-identical passes, a subset
+    passes if it still carries the ggml, YaRN, ggllm.cpp, Unicode and Unsloth lines, anything less fails.
+    iOS Engineering reports tools/ios/sync_licences.sh generating the second NOTICE by hand today.
+  options:
+    - "Ship the root NOTICE verbatim on both platforms — over-attribution breaches nothing (licence-audit.md §7.5 calls this safe)"
+    - "Generate per-platform NOTICE.txt from one source (tools/make_notice.py), with a shared /licenses directory"
+  recommendation: >
+    The second, but not urgently — Compliance's own framing. Until it is built, shipping the root NOTICE
+    on iOS is safe. One loose end for whoever implements it: licence-audit.md §7.4 lists libc++ and the
+    Swift runtime as deliberately ABSENT from the iOS licences screen, while the landed
+    ios/App/Resources/licenses/index.txt carries rows for both [V-local]. One of the two is wrong and
+    the generator is the natural place to settle it.
+  implemented_provisionally: "partly — ios/App/Resources/licenses/ exists with its own NOTICE.txt and index.txt, generated by hand via tools/ios/sync_licences.sh"
+  if_rejected: "ship the root NOTICE on iOS and keep LicensesTest as an equality assertion; the iOS screen then over-attributes."
+
+- id: D-057
+  title: Do the two store listings mention each other?
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C5]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [GTM]
+  merged_from: ["GTM D-GTM-E (positioning.md §9)"]
+  context: >
+    Apple's metadata rules forbid naming other platforms in App Store copy, and Play gains nothing from
+    it. GTM's answer is that neither listing names the other platform, while the website and the repo
+    carry both. Recorded because it is the kind of line that gets added by reflex during a launch week.
+  options:
+    - "Neither listing names the other platform; the website and repo carry both (recommended)"
+    - "Cross-reference where each store allows it"
+  recommendation: "As GTM states it."
+  implemented_provisionally: "yes, by construction — neither leaves/gtm/store-listing.md nor leaves/gtm/appstore-listing.md names the other platform"
+  if_rejected: "one line in the Play listing; the App Store listing cannot carry it in any case."
+
+- id: D-058
+  title: Does a device-profile difference ever appear in store copy as a feature?
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C6, C5]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [GTM]
+  merged_from: ["GTM D-GTM-F (positioning.md §9)"]
+  related: [D-038]
+  context: >
+    GTM's answer is no — never "on newer phones you also get...". The only honest listing sentence about
+    profile variation is a ceiling rather than a bonus: "How much text Arivu can hold at once depends on
+    your phone." This is the marketing-side twin of D-038: the profile mechanism keeps capability off
+    the platform axis in code, and this keeps it off the platform axis in the story, which is where
+    Architecture's §2.1 failure mode actually gets noticed by users.
+  options:
+    - "Never as a feature; only as a ceiling, in one sentence (recommended)"
+    - "Describe richer profiles as a benefit where they exist"
+  recommendation: "As GTM states it. It also keeps the two listings comparable, which is what makes C11 checkable by a reader rather than only by us."
+  implemented_provisionally: "yes, by construction — no listing carries a profile-differentiated claim today"
+  if_rejected: "the first time an 8 GB phone gets a richer profile, the listing has to explain why some buyers get less, in copy neither store will let us qualify properly."
+
+- id: D-059
+  title: iOS storefront availability
+  raised_at: 2026-09-16
+  sla_expires_at: 2026-09-18
+  spine: [C11, C1]
+  platform: ios
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [GTM]
+  merged_from: ["GTM D-GTM-I (positioning.md §9)"]
+  related: [D-029, D-040]
+  context: >
+    Play ships in waves by country (D-029) because the UI is English-only, the eval has not covered
+    Portuguese or Indonesian, and developer verification gates four countries. GTM's position is that
+    none of that reasoning transfers to iOS: its audience is recommenders, press and diaspora, who live
+    outside the Play waves, so all 175 storefronts from day one. Availability is not capability, so two
+    different answers here are not a C11 divergence — and it is narrowable later without a new version.
+    The premise is D-040's answer about what iOS is for.
+  options:
+    - "All 175 storefronts from day one (recommended)"
+    - "Mirror the Play waves"
+  recommendation: >
+    GTM's, contingent on D-040. If iOS turns out to be for being used rather than for being recommended,
+    mirroring the waves becomes the coherent answer instead. One caution from Compliance §6: an 18+ age
+    rating attaches extra obligations or age verification in some territories [U], so a 175-storefront
+    launch and the D-024 override should be checked against each other before submission.
+  implemented_provisionally: "n/a (App Store Connect)"
+  if_rejected: "a Console setting; no code, no copy change."

@@ -64,6 +64,7 @@ The verified-to table at the bottom says exactly which is which, line by line.
 
 ```sh
 tools/ios/verify_macos.sh          # compiles every ArivuKit target and runs 94 tests. ~25 s.
+ARIVU_REAL_CORE=1 tools/ios/verify_macos.sh   # same, linked against the real core (parity suite)
 ```
 
 ### On a Mac with Xcode
@@ -76,7 +77,7 @@ tools/ios/sync_licences.sh         # licence texts + the iOS index → ios/App/R
 ARIVU_REPORT_EMAIL=you@example.com tools/ios/generate_project.sh
 open ios/Arivu.xcodeproj
 
-cd ios/ArivuKit && swift test --no-parallel   # the same 94 tests, the normal way
+cd ios/ArivuKit && swift test --no-parallel --build-system native   # the same 94 tests, the normal way
 ```
 
 `--no-parallel` is not optional: the fake core has process-wide knobs (script, delays, forced
@@ -84,28 +85,41 @@ failures), so two suites running at once set each other's.
 
 ---
 
-## Why `swift test` could not be used here
+## `swift test`, and why the custom runner still exists
 
-SwiftPM on this machine cannot load **any** package manifest, including an empty one:
+**Resolved 2026-09-16.** SwiftPM here could not load *any* package manifest, including an empty one:
+the Command Line Tools ship `PackageDescription.swiftmodule` (May 2025) beside
+`libPackageDescription.dylib` (December 2024), and the manifest fails to link with
+`type metadata accessor for PackageDescription.SwiftVersion`. A second CLT defect made **any**
+`import Foundation` fail, because `usr/include/swift` defines `SwiftBridging` twice.
 
+The fix was a Swift 6.4 toolchain from swift.org, which needs no Apple ID and installs into the home
+directory without sudo:
+
+```sh
+curl -LO https://download.swift.org/swift-6.4.0-release/xcode/swift-6.4.0-RELEASE/swift-6.4.0-RELEASE-osx.pkg
+installer -pkg swift-6.4.0-RELEASE-osx.pkg -target CurrentUserHomeDirectory
+export TOOLCHAINS=swift-6.4.0-RELEASE
+cd ios/ArivuKit && swift test --no-parallel --build-system native   # 94 tests pass
 ```
-$ swift build                       # in a two-line Package.swift with one empty target
-Undefined symbols for architecture arm64:
-  "type metadata accessor for PackageDescription.SwiftVersion"
+
+`--build-system native` is required: the default build system fails on a duplicate toolchain
+registration from the `swift-latest` symlink the installer creates.
+
+`tools/ios/verify_macos.sh` is kept for two reasons, not one. It still works on a machine with only
+the Command Line Tools, and it is the only way to run the tests against a **real core** rather than
+the C stub:
+
+```sh
+tools/ios/build_core_macos.sh                 # /core + llama.cpp as static libs for this Mac
+ARIVU_REAL_CORE=1 tools/ios/verify_macos.sh   # links them; runs the parity suite for real
 ```
 
-The Command Line Tools ship `PackageDescription.swiftmodule` (May 2025) beside
-`libPackageDescription.dylib` (December 2024). The newer interface declares an overload the older
-dylib does not export, and the manifest fails to link. It is a broken toolchain install, not a
-problem with this package.
-
-A second, unrelated CLT defect: `usr/include/swift` contains both `module.modulemap` and
-`bridging.modulemap`, each defining `SwiftBridging`, so **any** `import Foundation` fails with
-"redefinition of module". `tools/ios/verify_macos.sh` blanks the stale one with a VFS overlay.
-
-So `verify_macos.sh` drives `swiftc` directly over exactly the sources and tests `Package.swift`
-declares, and runs the suites through swift-testing's own entry point. Both workarounds are no-ops on
-a healthy toolchain; on Hari's Mac, `swift test --no-parallel` is the command.
+The behaviour tests drive the stub through knobs the real core does not have, so the two cannot link
+together; the real-core mode supplies those knobs as no-ops and filters to `CoreParityTests`. That
+turns the two tests which used to skip into two that pass: **the shipped profile matches the core's
+field for field, and Swift and C agree on which devices fit.** A macOS result is not evidence about
+an iPhone — it is evidence that Swift and C agree, which is the thing that would otherwise drift.
 
 ---
 
@@ -331,6 +345,9 @@ Be suspicious of anything not in the first block.
 | Claim | How | Result |
 |---|---|---|
 | Every `ArivuKit` target compiles, Swift 6 language mode, macOS | `tools/ios/verify_macos.sh` | 4 targets, 0 errors |
+| The same suites through SwiftPM, the normal way | `swift test --no-parallel --build-system native`, Swift 6.4 toolchain | 94 tests pass (2 skip against the stub) |
+| Swift and C agree on the profile and the fit rule | `ARIVU_REAL_CORE=1 tools/ios/verify_macos.sh` | 5 parity tests pass against the real core |
+| `ios/Arivu.xcodeproj` generates from `project.yml` | `tools/ios/generate_project.sh`, XcodeGen 2.46 | project written, never opened in Xcode |
 | The C fake core compiles with `-Wall -Wextra -Werror` against the real `arivu.h` by relative path | same | clean |
 | Truncation arithmetic matches `PromptBuilderTest.kt` case for case | `PromptBuilderTests` | pass |
 | Conversation JSON round-trips, keeps `stop: null` / `reported: false` / `version`, sets damaged files aside, keeps only the newest damaged copy | `ConversationTests` (9 tests) | pass |

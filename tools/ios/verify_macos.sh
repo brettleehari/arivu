@@ -13,6 +13,11 @@
 # bridging.modulemap defining SwiftBridging, so `import Foundation` fails with "redefinition of
 # module". A VFS overlay blanks the stale one. Both workarounds are no-ops on a healthy toolchain.
 #
+# ARIVU_REAL_CORE=1 links the real /core built for macOS instead of the C stub, so the CoreParity
+# tests (which skip against the stub) actually execute. Build the core first:
+#   cmake -S core -B build/core-macos -DCMAKE_BUILD_TYPE=Release ... ; cmake --build build/core-macos
+# tools/ios/build_core_macos.sh does exactly that.
+#
 # On a Mac with Xcode, prefer:   cd ios/ArivuKit && swift test
 set -euo pipefail
 
@@ -54,6 +59,39 @@ COMMON=("${OVERLAY[@]}" -swift-version "$SWIFT_VERSION" -I "$BUILD" -enable-test
 say() { printf '\n== %s\n' "$1"; }
 
 # --- the fake core (C) -------------------------------------------------------------------------
+REAL_CORE="${ARIVU_REAL_CORE:-0}"
+CORE_LIBS_DIR="${CORE_LIBS_DIR:-$ROOT/build/core-macos}"
+
+# Which core the tests link against. The stub keeps this runnable with nothing built; the real core
+# is what makes the CoreParity suites execute instead of skipping.
+CORE_OBJECTS=()
+if [[ "$REAL_CORE" == "1" ]]; then
+  # bash 3.2 on macOS has no mapfile
+  while IFS= read -r lib; do CORE_OBJECTS+=("$lib"); done < <(find "$CORE_LIBS_DIR" -name "*.a" 2>/dev/null)
+  if [[ ${#CORE_OBJECTS[@]} -eq 0 ]]; then
+    echo "ARIVU_REAL_CORE=1 but no static libs under $CORE_LIBS_DIR — run tools/ios/build_core_macos.sh" >&2
+    exit 1
+  fi
+  # The behaviour tests drive the stub through knobs the real core does not have, so linking both
+  # would be a duplicate-symbol error. Supply the knobs as no-ops and run only the parity suite:
+  # against the real core those tests stop skipping, which is the entire point of this mode.
+  cat > "$BUILD/stub_knobs_noop.c" <<'KNOBS'
+#include <stddef.h>
+void arivu_stub_set_script(const char * utf8) { (void) utf8; }
+void arivu_stub_set_piece_delay_us(int micros) { (void) micros; }
+void arivu_stub_fail_next_load(const char * message) { (void) message; }
+void arivu_stub_fail_next_context(const char * message) { (void) message; }
+void arivu_stub_next_stop_context_full(void) { }
+int  arivu_stub_live_engines(void) { return 0; }
+void arivu_stub_reset(void) { }
+KNOBS
+  clang -c "$BUILD/stub_knobs_noop.c" -o "$BUILD/stub_knobs_noop.o"
+  CORE_OBJECTS+=("$BUILD/stub_knobs_noop.o" -lc++ -framework Accelerate -framework Foundation)
+  echo "linking the REAL core: ${#CORE_OBJECTS[@]} inputs from $CORE_LIBS_DIR"
+else
+  CORE_OBJECTS=("$BUILD/arivu_stub.o")
+fi
+
 say "CArivuStub (C)"
 clang -c -O0 -g -std=c11 -Wall -Wextra -Werror \
       -I "$PKG/Sources/CArivuStub" \
@@ -100,7 +138,7 @@ swiftc "${COMMON[@]}" \
   -F "$TESTING_FRAMEWORKS" -framework Testing \
   -Xlinker -rpath -Xlinker "$TESTING_FRAMEWORKS" \
   -L "$BUILD" -lArivuCore -lArivuEngine -lArivuChat \
-  "$BUILD/arivu_stub.o" \
+  "${CORE_OBJECTS[@]}" \
   "$PKG"/Tests/ArivuCoreTests/*.swift \
   "$PKG"/Tests/ArivuEngineTests/*.swift \
   "$PKG"/Tests/ArivuChatTests/*.swift \
@@ -114,7 +152,11 @@ export ARIVU_STRINGS_DIR="$PKG/Sources/ArivuCore/Resources"
 set +e
 # --no-parallel: the fake core has process-wide knobs (script, delays, forced failures), so two
 # suites running at once would set each other's. `swift test --no-parallel` for the same reason.
-"$BUILD/ArivuKitTests" --no-parallel 2>&1 | tee "$BUILD/test-output.txt"
+FILTER=()
+if [[ "$REAL_CORE" == "1" ]]; then
+  FILTER=(--filter "CoreParityTests")
+fi
+"$BUILD/ArivuKitTests" --no-parallel "${FILTER[@]}" 2>&1 | tee "$BUILD/test-output.txt"
 set -e
 if grep -q "Test run with .* passed" "$BUILD/test-output.txt"; then
   echo

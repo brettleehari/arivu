@@ -1,0 +1,28 @@
+# Records what this tree already does, so an editor cannot quietly disagree with it.
+#
+# Nothing here is a new rule. Every value was read off the committed files: no tabs anywhere, a
+# trailing newline on every text file, 4-space indents in Kotlin, Swift, C, C++ and Python, 2 in
+# shell and YAML. A formatting diff that is nobody's decision is the cheapest kind of noise to
+# remove from a review, which is the same reason ios/Arivu.xcodeproj is generated and not committed.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.sh]
+indent_size = 2
+
+# Markdown: two trailing spaces are a hard line break, so they are not whitespace to trim.
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab

@@ -1,0 +1,35 @@
+# Line endings and diff behaviour, so a checkout on another OS is the same checkout.
+#
+# The tree is LF-only today and has no tabs. `text=auto eol=lf` keeps it that way whoever clones it:
+# without this, a Windows clone rewrites every shell script to CRLF and `tools/*.sh` stops running
+# under bash with a "bad interpreter" that takes an hour to recognise.
+
+* text=auto eol=lf
+
+# Scripts and manifests that a CRLF would break outright, named explicitly rather than left to the
+# auto-detection.
+*.sh        text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.cmake     text eol=lf
+CMakeLists.txt text eol=lf
+gradlew     text eol=lf
+*.bat       text eol=crlf
+
+# Binary: never normalised, never shown as a diff.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gguf      binary
+*.so        binary
+*.a         binary
+*.jar       binary
+*.aab       binary
+*.apk       binary
+*.ipa       binary
+
+# Generated or vendored, so GitHub's language statistics describe what was written here rather than
+# what was downloaded or produced by a generator.
+third_party/**          linguist-vendored
+*.pbxproj               linguist-generated

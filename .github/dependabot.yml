@@ -1,0 +1,18 @@
+# GitHub Actions only.
+#
+# Deliberately not gradle, not SwiftPM, not the NDK: llama.cpp is pinned and patched by
+# tools/llama/fetch_llama.sh, the model is pinned by sha256, and the NDK version is load-bearing for
+# the 16 KB alignment the Spine depends on. An automated bump to any of those is a change to what
+# ships, and that is a decision, not a chore.
+#
+# Action versions are the opposite: they are CI plumbing, they carry the security fixes for the
+# runner, and a bump that breaks a workflow fails visibly in the pull request that proposes it.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(ci)"

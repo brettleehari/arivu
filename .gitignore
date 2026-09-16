@@ -1,0 +1,19 @@
+# Fetched or generated, never committed
+build/
+third_party/
+models/
+tools/bin/
+.gradle/
+.cxx/
+.kotlin/
+local.properties
+
+# Signing material must never enter the repository (tools/make_upload_key.sh refuses paths inside it)
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+keystore.properties
+
+.DS_Store

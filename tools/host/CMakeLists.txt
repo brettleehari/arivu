@@ -22,3 +22,9 @@ target_link_libraries(engine_smoke PRIVATE arivu_core)
 
 add_executable(apk_window_check apk_window_check.cpp)
 target_link_libraries(apk_window_check PRIVATE arivu_core)
+
+# W04 — the writing and comprehension eval (tools/eval/run_eval.sh). It lives beside the smoke test
+# because it needs exactly the same thing: the real engine and the real core, built for the host
+# with no platform SDK. It is a QUALITY harness; nothing it prints is a speed measurement.
+add_executable(arivu_eval ../eval/eval.cpp)
+target_link_libraries(arivu_eval PRIVATE arivu_core)

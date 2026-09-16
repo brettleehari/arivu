@@ -1,0 +1,1 @@
+-keepclassmembers @kotlinx.serialization.Serializable class ** { *; }

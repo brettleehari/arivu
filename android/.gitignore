@@ -1,0 +1,9 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.cxx/
+.kotlin/
+# model is fetched by tools/fetch_model.sh and staged by :modelpack:stageModel
+modelpack/src/main/assets/model/

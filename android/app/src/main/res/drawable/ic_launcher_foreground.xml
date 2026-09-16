@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- spine: C5 — Arivu mark: a speech bubble holding lines of the user's own text, with a spark for
+     the help it gives. Says "works on your words", not "knows everything". Geometry sits inside the
+     66dp adaptive-icon safe circle (centre 54,54, r 33). Source of truth: leaves/design/store-icon.svg. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:name="bubble" android:fillColor="@color/brand_paper" android:pathData="M41,33H67A10,10 0,0 1,77,43V60A10,10 0,0 1,67,70H51L39,79.5L40,70A9,9 0,0 1,31,61V43A10,10 0,0 1,41,33Z" />
+    <path android:name="line1" android:fillColor="@color/brand_green" android:pathData="M41.25,41.5H66.75A2.25,2.25 0,0 1,66.75,46H41.25A2.25,2.25 0,0 1,41.25,41.5Z" />
+    <path android:name="line2" android:fillColor="@color/brand_green" android:pathData="M41.25,50H57.75A2.25,2.25 0,0 1,57.75,54.5H41.25A2.25,2.25 0,0 1,41.25,50Z" />
+    <path android:name="line3" android:fillColor="@color/brand_green" android:pathData="M41.25,58.5H49.75A2.25,2.25 0,0 1,49.75,63H41.25A2.25,2.25 0,0 1,41.25,58.5Z" />
+    <path android:name="spark" android:fillColor="@color/brand_amber" android:pathData="M63,53.5Q64.1,59.4 70,60.5Q64.1,61.6 63,67.5Q61.9,61.6 56,60.5Q61.9,59.4 63,53.5Z" />
+</vector>

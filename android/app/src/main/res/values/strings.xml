@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy rules (leaves/design.md §Copy):
+  - Plain words, short sentences. Many readers use English as a second language.
+  - One idea per string. Never build a sentence by joining strings in code; use %1$s / %1$d placeholders.
+  - Name what the user can do next. No jargon ("tokens", "context", "model" only where unavoidable).
+  - British spelling, kept consistent. Translation is decision D-014.
+  - a11y_* strings are read by screen readers only.
+-->
+<resources>
+    <string name="app_name" translatable="false">Arivu</string>
+
+    <!-- Chat (leaves/design.md §Chat screen states) -->
+    <string name="input_hint">Type or paste your text</string>
+    <string name="send">Send</string>
+    <string name="stop">Stop</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
+    <string name="ok">OK</string>
+    <string name="back">Back</string>
+    <string name="about">About</string>
+    <string name="cancel">Cancel</string>
+    <string name="report">Report</string>
+    <string name="reported">Reported</string>
+    <string name="empty_title">Works with no internet</string>
+    <string name="empty_body">Arivu helps with text you give it. It can rewrite, shorten, explain, summarise and draft.\n\nIt runs only on this phone. It is not good at facts, news or numbers, so check anything important.</string>
+    <string name="empty_examples_label">For example, you can write:</string>
+    <string name="empty_example_1">Rewrite this to sound polite: …</string>
+    <string name="empty_example_2">Explain this paragraph in simple words: …</string>
+    <string name="empty_example_3">Write a short letter to parents about …</string>
+    <string name="state_starting">Starting Arivu. This can take a few seconds…</string>
+    <string name="state_reading">Reading…</string>
+    <string name="context_divider">Arivu can no longer see the messages above this line</string>
+    <string name="stopped_by_user">Stopped</string>
+    <string name="stopped_context_full">Cut off: this conversation is now too long for Arivu to hold. Its next reply will leave out the oldest messages.</string>
+    <string name="stopped_max_tokens">This reply reached its length limit. Send “continue” to get more.</string>
+    <string name="stopped_error">Something went wrong while writing this reply. Try sending again.</string>
+    <!-- %1$d = how long a shorter part should be, as a percentage of this message (1–99). -->
+    <string name="message_too_long">This message is too long for Arivu to read at once. Try sending a part about %1$d%% as long.</string>
+    <string name="load_failed">Arivu could not start on this phone. Close Arivu fully, then open it again.</string>
+    <string name="notification_channel">Writing replies</string>
+    <string name="notification_writing">Arivu is writing a reply</string>
+
+    <!-- Screen reader only -->
+    <!-- %1$s = the message text the user wrote -->
+    <string name="a11y_from_user">You wrote: %1$s</string>
+    <!-- %1$s = the reply text Arivu wrote -->
+    <string name="a11y_from_arivu">Arivu wrote: %1$s</string>
+    <string name="a11y_writing">Arivu is writing</string>
+    <string name="a11y_reply_done">Reply finished</string>
+    <string name="a11y_copy_message">Copy this message</string>
+    <string name="a11y_report_reply">Report this reply</string>
+    <string name="a11y_stop">Stop writing the reply</string>
+    <string name="a11y_expanded">Open</string>
+    <string name="a11y_collapsed">Closed</string>
+
+    <!-- About -->
+    <string name="about_title">About Arivu</string>
+    <string name="about_what_title">What Arivu is</string>
+    <string name="about_what_body">A helper for writing and understanding text, with no internet. A small language model (Qwen3 0.6B) runs fully on this phone.</string>
+    <string name="about_good_title">Good at</string>
+    <string name="about_good_body">Rewriting, shortening, explaining, summarising and drafting text you give it.</string>
+    <string name="about_bad_title">Not good at</string>
+    <string name="about_bad_body">Facts, news, dates, numbers, maths, and medical or legal answers. It can sound sure and still be wrong.</string>
+    <string name="about_private_title">Private by design</string>
+    <string name="about_private_body">Arivu has no permission to use the internet. Your messages stay only on this phone and are not backed up.</string>
+    <string name="about_report_title">Report a harmful reply</string>
+    <string name="about_report_body">If Arivu wrote something offensive or harmful, tap Report under that reply. You can also send a general report here. Both open your email or messaging app. Nothing is sent until you send it.</string>
+    <string name="about_report_button">Report a reply</string>
+    <string name="about_report_subject">Arivu: report of harmful output</string>
+    <string name="about_report_template">Paste the reply here:\n\n\nWhat was wrong with it:\n\n\nApp version: %1$s</string>
+    <!-- %1$s = app version, %2$s = reason, %3$s = the user's note, %4$s = the reply text -->
+    <string name="report_reply_template">Reason: %2$s\n\nMy note: %3$s\n\nThe reply Arivu wrote:\n%4$s\n\nApp version: %1$s</string>
+    <string name="report_no_note">(none)</string>
+    <!-- Share-sheet fallback when there is no email app. %1$s = report address, %2$s = report text -->
+    <string name="report_share_prefix">To: %1$s\n\n%2$s</string>
+
+    <!-- Report sheet (leaves/design.md §Report a reply) -->
+    <string name="report_sheet_title">Report this reply</string>
+    <string name="report_sheet_body">Tell us what is wrong with this reply. It helps us make Arivu safer.</string>
+    <string name="report_reason_label">What is wrong?</string>
+    <string name="report_reason_offensive">Offensive</string>
+    <string name="report_reason_harmful">Harmful</string>
+    <string name="report_reason_wrong_dangerous">Wrong in a dangerous way</string>
+    <string name="report_reason_other">Something else</string>
+    <string name="report_note_label">Anything to add? (optional)</string>
+    <string name="report_sheet_privacy">Arivu cannot use the internet, so your email app sends the report. It will include this reply and your note. Nothing is sent until you press send there.</string>
+    <string name="report_send">Open email</string>
+
+    <!-- Privacy policy, readable offline. Derived from leaves/gtm/privacy-policy.html; keep both in step. -->
+    <string name="about_privacy_policy">Privacy policy</string>
+    <!-- %1$s = app version -->
+    <string name="privacy_intro">Privacy policy for Arivu on Android, version %1$s.</string>
+    <string name="privacy_short_title">The short version</string>
+    <string name="privacy_short_body">Arivu has no permission to use the internet. Android does not let it send anything anywhere.\n\nWhat you type and what Arivu writes is stored only on your phone, in the app’s private storage. It is not included in phone backups or phone-to-phone transfers.\n\nWe do not collect, receive, sell or share your messages. There is no account, no advertising, no analytics and no crash-reporting software in the app.\n\nIf you choose to report a reply, Arivu prepares an email with that reply and your note. You check it, and your own email app sends it. We receive only what you send.</string>
+    <string name="privacy_internet_title">Arivu cannot connect to the internet</string>
+    <string name="privacy_internet_body">Arivu does not ask Android for the internet permission or for permission to see your network. It asks only for permissions that show no pop-up and give no access to the internet or your personal data: to keep writing a reply for a short time if you switch apps, to open Android’s uninstall screen for Arivu itself on a phone that cannot run it, and one that Google’s AndroidX library adds so other apps cannot send Arivu internal messages.</string>
+    <string name="privacy_stored_title">What is stored on your phone</string>
+    <string name="privacy_stored_body">Your conversation: the messages you send, the replies, when each was created, why a reply stopped, and whether you reported it. It is one file in Arivu’s private storage, kept until you uninstall Arivu or clear its storage. If that file is ever damaged, Arivu keeps only the newest damaged copy there and starts a new conversation.\n\nA note that your phone passed Arivu’s compatibility check, so the check does not run on every launch.\n\nBackup and phone-to-phone transfer are turned off for all of Arivu’s storage. The file is not encrypted by Arivu itself; it is protected by Android’s app sandbox and your phone’s own encryption and screen lock. Anyone who can unlock your phone and open Arivu can read the conversation.</string>
+    <string name="privacy_collect_title">What we collect</string>
+    <string name="privacy_collect_body">Nothing, through the app. Arivu contains no analytics, advertising, tracking, crash-reporting or payment software, and it cannot send data. We never see your messages, and they are not used to train any AI model.</string>
+    <string name="privacy_report_title">Reporting a reply</string>
+    <string name="privacy_report_body">Under each reply there is a Report button, and there is a general Report button on this screen. Report opens your own email app (or, if you have none, Android’s share menu) with our address, a subject and the app version. A report from under a reply also adds the reason you chose, your note and the text of that reply — only that reply, not the rest of the conversation. The general report on this screen is a blank form. Nothing is sent until you press send, and that app, not Arivu, sends it. Arivu marks the reply as reported on your phone.\n\nIf you send a report, we receive what is in it and whatever your email service adds, such as your email address. We use reports only to understand harmful replies, make Arivu safer and reply to you if needed. We do not sell or share them, and we delete them when we no longer need them. You can ask us to delete your report sooner.</string>
+    <string name="privacy_copy_title">Copying text and your keyboard</string>
+    <string name="privacy_copy_body">Copy puts text on your phone’s clipboard, like any copied text. Arivu asks your keyboard app not to learn from what you type here, but Arivu cannot see or control what your keyboard app does. Other apps work under their own privacy policies.</string>
+    <string name="privacy_play_title">Google Play</string>
+    <string name="privacy_play_body">You install and update Arivu through Google Play, which has its own privacy policy. Google gives developers summary statistics, such as installs by country and device model, and crash statistics from people who chose to share them with Google. Installing uses data. Once installed, Arivu itself uses none.</string>
+    <string name="privacy_children_title">Children</string>
+    <string name="privacy_children_body">Arivu is not designed for children. The app collects nothing from anyone. If a child has sent us a report, write to us and we will delete it.</string>
+    <string name="privacy_choices_title">Your choices</string>
+    <string name="privacy_choices_body">To delete your conversation, uninstall Arivu, or open Android Settings, then Apps, Arivu, Storage, Clear storage. Arivu is open source, so anyone can check these claims. Depending on where you live, you may have further rights over a report you sent us, and you can complain to your data protection authority.</string>
+    <string name="privacy_changes_title">Changes</string>
+    <string name="privacy_changes_body">If a future version changes what Arivu stores or sends, this policy changes before that version is released. A version that needed the internet would be a different app, and we would say so plainly.</string>
+    <string name="privacy_contact_title">Contact</string>
+    <!-- %1$s = privacy and report contact address -->
+    <string name="privacy_contact_body">%1$s</string>
+
+    <string name="about_licenses_title">Open-source licences</string>
+    <!-- %1$s = component name, %2$s = licence id such as MIT -->
+    <string name="about_license_entry" translatable="false">%1$s · %2$s</string>
+    <string name="about_version">Version %1$s</string>
+
+    <!-- Incompatible device (gate layer 3) -->
+    <string name="incompatible_title">Arivu can’t run well on this phone</string>
+    <string name="incompatible_body">Arivu runs a language model on the phone itself. That needs more than this phone has. Rather than run slowly or crash, Arivu will not start.</string>
+    <string name="incompatible_uninstall">Uninstall Arivu</string>
+    <string name="gate_abi">This phone’s processor is not a 64-bit ARM processor (arm64-v8a).</string>
+    <string name="gate_low_ram">This phone is set up as a low-memory device.</string>
+    <!-- %1$s = this phone's memory, %2$s = memory Arivu needs; both formatted like "3.3 GB" -->
+    <string name="gate_total_ram">This phone has %1$s of memory. Arivu needs at least %2$s.</string>
+    <!-- %1$s = free storage now, %2$s = storage Arivu needs; both formatted like "256 MB" -->
+    <string name="gate_storage">This phone has %1$s of free storage. Arivu needs at least %2$s.</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand. Compose palette lives in ui/Theme.kt; these are for resources the system draws
+         before Compose runs (icon, splash, window background). Keep the two in step. -->
+    <color name="brand_green">#1F5C4A</color>
+    <color name="brand_paper">#F5F1E6</color>
+    <color name="brand_amber">#D98E04</color>
+    <color name="window_background">#FBFAF7</color>
+</resources>

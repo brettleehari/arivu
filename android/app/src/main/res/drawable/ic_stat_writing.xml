@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for the "writing a reply" foreground notification (spine: C10).
+     White on transparent; the system tints it. Same bubble as the launcher mark, spark omitted
+     because it does not survive 24dp. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <group android:scaleX="0.4444" android:scaleY="0.4444"
+        android:translateX="-12" android:translateY="-12">
+        <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd"
+            android:pathData="M41,33H67A10,10 0,0 1,77,43V60A10,10 0,0 1,67,70H51L39,79.5L40,70A9,9 0,0 1,31,61V43A10,10 0,0 1,41,33Z M41.25,41.5H66.75A2.25,2.25 0,0 1,66.75,46H41.25A2.25,2.25 0,0 1,41.25,41.5Z M41.25,50H63.75A2.25,2.25 0,0 1,63.75,54.5H41.25A2.25,2.25 0,0 1,41.25,50Z M41.25,58.5H49.75A2.25,2.25 0,0 1,49.75,63H41.25A2.25,2.25 0,0 1,41.25,58.5Z" />
+    </group>
+</vector>

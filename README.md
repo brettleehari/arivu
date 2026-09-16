@@ -11,7 +11,8 @@ The model ships inside the app. It has no internet permission.
 
 ```sh
 tools/llama/fetch_llama.sh && tools/fetch_model.sh
-tools/host/run_smoke.sh
+tools/core_test.sh        # core unit tests — no model, no platform SDK, seconds
+tools/host/run_smoke.sh   # the engine against the real model
 cd android && ./gradlew :app:testDebugUnitTest :app:bundleRelease && cd .. && tools/check_manifest.sh
 ```
 

@@ -1,0 +1,101 @@
+# The highest-value job in the repo (MULTIPLATFORM.md "CI"): it catches engine regressions before
+# any device build, and it is the mechanised form of the rule that makes the monorepo work —
+# /core builds and its tests pass with no Android or Apple SDK present. This runner has neither.
+name: core
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'tools/**'
+      - '.github/workflows/core.yml'
+  pull_request:
+    paths:
+      - 'core/**'
+      - 'tools/**'
+      - '.github/workflows/core.yml'
+  workflow_dispatch:
+
+# NOTE for whoever configures branch protection: a path-filtered workflow reports no status at all
+# on a PR it does not match, so marking these jobs "required" will block unrelated PRs forever.
+# Use a merge queue or a separate always-green aggregator job instead.
+
+concurrency:
+  group: core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: host build + core tests + smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      MODEL_PATH: models/Qwen3-0.6B-Q4_K_M.gguf
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build ccache
+
+      # llama.cpp is pinned and patched, never floating (tools/llama/fetch_llama.sh). Cache the
+      # checkout; the script is idempotent, so it re-applies the patches on a cache hit too.
+      - name: Cache llama.cpp checkout
+        uses: actions/cache@v4
+        with:
+          path: third_party/llama.cpp
+          key: llama-${{ runner.os }}-${{ hashFiles('tools/llama/fetch_llama.sh', 'tools/llama/patches/*.patch') }}
+
+      - name: Fetch and patch llama.cpp
+        run: tools/llama/fetch_llama.sh
+
+      - name: Cache compiler objects
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-core-${{ runner.os }}-${{ hashFiles('tools/llama/fetch_llama.sh') }}-${{ github.sha }}
+          restore-keys: |
+            ccache-core-${{ runner.os }}-${{ hashFiles('tools/llama/fetch_llama.sh') }}-
+            ccache-core-${{ runner.os }}-
+
+      # The logic suite needs nothing and runs in a second; the engine suite links llama.cpp but
+      # loads no model, so both run whether or not the 400MB download below succeeds.
+      - name: Core tests
+        env:
+          CC: ccache gcc
+          CXX: ccache g++
+        run: tools/core_test.sh --with-engine
+
+      # The model is 400MB from a public Hugging Face repo — no secret, but not free either. Cache
+      # it on the sha256 that fetch_model.sh pins; a miss downloads, and a failed download is not a
+      # reason to fail the job, only a reason to skip the part that needs weights.
+      - name: Cache model
+        id: model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: model-${{ hashFiles('tools/fetch_model.sh') }}
+
+      - name: Fetch model
+        if: steps.model.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: tools/fetch_model.sh
+
+      - name: Host smoke test
+        env:
+          CC: ccache gcc
+          CXX: ccache g++
+        run: |
+          if [ -f "$MODEL_PATH" ]; then
+            tools/host/run_smoke.sh
+          else
+            echo "::notice title=Smoke test skipped::$MODEL_PATH is not present and could not be"\
+                 "downloaded from Hugging Face. The core unit tests above still ran. Re-run this"\
+                 "job to retry the download, or prime the cache with tools/fetch_model.sh locally."
+          fi
+
+      - name: ccache stats
+        if: always()
+        run: ccache --show-stats || true

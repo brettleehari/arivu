@@ -1,0 +1,94 @@
+# iOS job (MULTIPLATFORM.md "CI"): macOS runner, expensive, gated behind path filters so an
+# Android-only commit never triggers an Xcode build.
+#
+# STATUS: NEVER RUN. There is no Xcode on the machine this was written on, so every step below is
+# unverified. It exists so the iOS Leaf inherits a job rather than a blank file: each step turns
+# itself on when the file it looks for appears (ios/CMakeLists.txt, ios/ArivuKit/Package.swift, an
+# .xcodeproj). The iOS Leaf owns making this green — expect the first PR touching ios/ to be the
+# one that debugs it.
+name: ios
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'core/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'core/**'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios:
+    name: core for iphoneos + app build
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: What is here
+        id: probe
+        run: |
+          xcodeproj=$(find ios -maxdepth 3 -name '*.xcodeproj' -print -quit 2>/dev/null || true)
+          for f in core_cmake:ios/CMakeLists.txt swiftpm:ios/ArivuKit/Package.swift; do
+            name="${f%%:*}"; path="${f#*:}"
+            if [ -f "$path" ]; then echo "$name=true" >> "$GITHUB_OUTPUT"; else echo "$name=false" >> "$GITHUB_OUTPUT"; fi
+          done
+          echo "xcodeproj=$xcodeproj" >> "$GITHUB_OUTPUT"
+          if [ -z "$xcodeproj" ] && [ ! -f ios/ArivuKit/Package.swift ]; then
+            echo "::notice title=iOS app not started::Nothing buildable under ios/. This job is"\
+                 "scaffolding; it will build for real when the iOS Leaf adds a package or project."
+          fi
+
+      - name: Cache llama.cpp checkout
+        if: steps.probe.outputs.core_cmake == 'true' || steps.probe.outputs.swiftpm == 'true' || steps.probe.outputs.xcodeproj != ''
+        uses: actions/cache@v4
+        with:
+          path: third_party/llama.cpp
+          key: llama-${{ runner.os }}-${{ hashFiles('tools/llama/fetch_llama.sh', 'tools/llama/patches/*.patch') }}
+
+      - name: Fetch and patch llama.cpp
+        if: steps.probe.outputs.core_cmake == 'true' || steps.probe.outputs.swiftpm == 'true' || steps.probe.outputs.xcodeproj != ''
+        run: tools/llama/fetch_llama.sh
+
+      # The cross-compile is the real test of MULTIPLATFORM.md's boundary: /core must build for
+      # a device SDK it has never seen, with no source change.
+      - name: Build core for iphoneos (arm64)
+        if: steps.probe.outputs.core_cmake == 'true'
+        run: |
+          cmake -S core -B build/ios -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
+            -DGGML_METAL=OFF \
+            -DBUILD_SHARED_LIBS=OFF
+          cmake --build build/ios --config Release
+
+      # The core's own logic suite also runs on the mac host, where it needs no SDK at all.
+      - name: Core logic tests on the host
+        run: tools/core_test.sh --logic-only
+
+      # ios/ArivuKit is a SwiftPM package. Building it on the mac host is the cheapest proof that
+      # the Swift side still compiles against the C API in core/include/arivu/arivu.h.
+      - name: Build ArivuKit (SwiftPM)
+        if: steps.probe.outputs.swiftpm == 'true'
+        run: swift build --package-path ios/ArivuKit
+
+      - name: Test ArivuKit (SwiftPM)
+        if: steps.probe.outputs.swiftpm == 'true'
+        run: swift test --package-path ios/ArivuKit
+
+      - name: Build the app
+        if: steps.probe.outputs.xcodeproj != ''
+        run: |
+          xcodebuild -project "${{ steps.probe.outputs.xcodeproj }}" \
+            -scheme Arivu -sdk iphonesimulator -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO build

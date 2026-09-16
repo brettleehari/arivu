@@ -13,6 +13,13 @@
 #   9. tools/trace.py --strict (no commitment without implementation and test)
 # Console-only items (privacy policy URL, Data safety, content rating, target audience, AI reporting
 # review) cannot be checked from here: see leaves/compliance/play-policy-checklist.md.
+#
+# PLATFORM: this gate is Google Play only. Since Spine 0.2 the App Store sibling is
+# tools/ios_release_check.sh (checklist: leaves/compliance/appstore-policy-checklist.md). The two
+# scripts share step 9 (tools/trace.py --strict) and nothing else, because almost none of the
+# evidence transfers: C3 is proved here by a missing INTERNET permission and there by the absence of
+# any networking framework, symbol or entitlement in the Mach-O. play-policy-checklist.md §16 lists
+# every answer that differs.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 AAB="${1:-$ROOT/android/app/build/outputs/bundle/release/app-release.aab}"

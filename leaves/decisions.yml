@@ -917,3 +917,31 @@
     llama.cpp checkout and build outputs stay out of the repo; they are fetched by tools/.
   if_rejected: make the repo private and host the privacy policy elsewhere; GitHub Pages on a private repo needs a paid plan.
 
+- id: D-036
+  title: Scope beyond text-in / text-out — share-target, photo OCR, speech, dictionary
+  raised_at: 2026-09-15
+  sla_expires_at: 2026-09-17
+  spine: [C5, C8]
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Hari, GTM]
+  context: >
+    Hari asked what a pocket LLM is for, and specifically whether it can read a picture from
+    the Gallery. Today it cannot: the model is text-only and the app requests no storage
+    permission. leaves/gtm/use-cases.md sets out the outline. The candidates, cheapest first:
+    a share-target so other apps can send text in (no permission, no network);
+    on-device OCR via the photo picker (no permission) plus a bundled text recogniser, which
+    turns "photograph this notice and explain it" into an existing Tier 1 use;
+    offline text-to-speech (Android's own) and speech-to-text (heavier);
+    a bundled dictionary, because a 0.6B model invents definitions.
+  options:
+    - hold iteration-1 exactly as the Spine refuses it (R4, R6) and revisit after W02 and W04
+    - add the share-target only, as the cheapest removal of friction
+    - add photo OCR in iteration-2, accepting recogniser size and per-script model coverage
+  recommendation: >
+    Hold until W02 and W04 show Tier 1 is good on the test phone. Then take the share-target
+    first. OCR is the highest-value second step and the first one that needs a real Spine
+    amendment (R6 refuses images).
+  if_rejected: no code changes; the outline stays a GTM document with no promise attached.
+

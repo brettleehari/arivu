@@ -156,8 +156,8 @@ class ProfileParityTest {
      *
      * Android's `Profile` has no memory model — no `modelBytes`, no `kvBytesPerToken`, no compute or
      * runtime figures — so these four numbers are written down exactly twice, in
-     * `core/src/profile.cpp` and in `ios/**‍/Profile.swift`, and until this test existed nothing
-     * compared them. They had drifted: Swift carried `kvBytesPerToken = 57_344`, which is the core's
+     * `core/src/profile.cpp` and in `ios/ArivuKit/Sources/ArivuCore/Profile.swift`, and until this
+     * test existed nothing compared them. They had drifted: Swift carried `kvBytesPerToken = 57_344`, which is the core's
      * own `28*8*128*2` **without** q8_0's 1.0625 bytes per value, understating the KV cache by
      * 7.3 MB at 2048 ctx. This is the check that would have caught it on the day it was typed.
      */

@@ -108,6 +108,8 @@ fun ChatScreen(
     onAbout: () -> Unit,
     onDismissNotice: () -> Unit,
     onReported: (String) -> Unit,
+    onAcceptRetry: () -> Unit,
+    onDeclineRetry: () -> Unit,
 ) {
     var input by rememberSaveable { mutableStateOf("") }
     // spine: C9 — id of the reply whose report sheet is open; saveable so rotation keeps the sheet.
@@ -130,6 +132,24 @@ fun ChatScreen(
     LaunchedEffect(state.messages.size, last?.text?.length, last?.stop, last?.reported, state.generating, follow) {
         // Offset past the end is clamped by the list: lands on the last line of a long reply, not its top.
         if (follow && !listState.isScrollInProgress && state.messages.isNotEmpty()) listState.scrollToItem(state.messages.size - 1, Int.MAX_VALUE)
+    }
+
+    // D-060: a send that failed before the model wrote anything comes back here, so the Send button
+    // the user already knows is the retry — no second control and no new copy.
+    //
+    // Only when the box is empty. If they have started typing something else, decline: the view
+    // model then leaves the message in the conversation, which is what it did before D-060 and is
+    // the one outcome that cannot lose words.
+    LaunchedEffect(state.pendingRetry) {
+        val retry = state.pendingRetry
+        if (retry != null) {
+            if (input.isEmpty()) {
+                input = retry.text
+                onAcceptRetry()
+            } else {
+                onDeclineRetry()
+            }
+        }
     }
 
     val send = {

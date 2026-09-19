@@ -54,6 +54,20 @@ public enum StartingPhase: Equatable, Sendable {
     }
 }
 
+/// A send that failed before the model wrote anything, offered back to the input box (D-060).
+///
+/// An *offer*, not an action: the session cannot see the input field, so it cannot know whether
+/// taking the text back would overwrite something the user has since typed. The view answers with
+/// `acceptRetry()` or `declineRetry()`, and only an accept removes anything from the conversation.
+/// Declining leaves the message exactly where it was, which is the behaviour this replaces — so the
+/// worst case is the old behaviour rather than lost words.
+public struct PendingRetry: Equatable, Sendable {
+    /// What the user wrote, to be put back in the input.
+    public let text: String
+    let userID: String
+    let replyID: String
+}
+
 @MainActor
 public final class ChatSession: ObservableObject {
     /// False until history has been read from disk, so a returning user never sees the empty state flash.
@@ -65,6 +79,8 @@ public final class ChatSession: ObservableObject {
     @Published public private(set) var engineState: EngineState = .cold
     @Published public private(set) var notice: Notice?
     @Published public private(set) var startingPhase: StartingPhase = .normal
+    /// Set when a send failed before the model wrote anything. spine: C1, C6 (D-060)
+    @Published public private(set) var pendingRetry: PendingRetry?
 
     private let repository: ChatRepository
     private let controller: InferenceController
@@ -124,16 +140,17 @@ public final class ChatSession: ObservableObject {
         messages.append(reply)
         generating = true
         notice = nil
+        pendingRetry = nil
         startStartingPhase()
         persist()
 
         generation = Task { [weak self] in
             guard let self else { return }
-            await self.runSend(replyID: reply.id)
+            await self.runSend(replyID: reply.id, userID: user.id)
         }
     }
 
-    private func runSend(replyID: String) async {
+    private func runSend(replyID: String, userID: String) async {
         let history = messages.filter { !$0.text.isEmpty }
         let turns = history.map { Turn(id: $0.id, fromUser: $0.fromUser, text: $0.text) }
 
@@ -141,32 +158,35 @@ public final class ChatSession: ObservableObject {
         do {
             built = try await promptBuilder.build(turns: turns)
         } catch {
-            removeMessage(replyID)
             generating = false
             stopStartingPhase()
             notice = Self.notice(for: error)
+            offerRetry(replyID: replyID, userID: userID)
             persist()
             return
         }
 
         switch built {
         case .tooLong(let messageTokens, let limitTokens):
-            // The message stays in place so the user can copy and shorten it.
-            removeMessage(replyID)
+            // Back to the input, where it can actually be shortened. It used to stay in the
+            // conversation "so the user can copy and shorten it" — but a bubble has no cursor, and
+            // the notice asks for an edit the user had no way to make in place (D-060).
             generating = false
             stopStartingPhase()
             notice = .tooLong(messageTokens: messageTokens, limitTokens: limitTokens)
+            offerRetry(replyID: replyID, userID: userID)
             persist()
 
         case .ok(let text, let promptTokens, let firstIncluded):
             contextStartID = firstIncluded > 0 ? history[firstIncluded].id : nil
             await runGeneration(replyID: replyID,
+                                userID: userID,
                                 prompt: text,
                                 maxNewTokens: controller.maxReplyTokens(promptTokens: promptTokens))
         }
     }
 
-    private func runGeneration(replyID: String, prompt: String, maxNewTokens: Int32) async {
+    private func runGeneration(replyID: String, userID: String, prompt: String, maxNewTokens: Int32) async {
         var stop: Stop = .error
         var lastSave = Date()
         do {
@@ -192,6 +212,11 @@ public final class ChatSession: ObservableObject {
             let isMemory = (error as? ArivuEngineError)?.isMemoryFailure == true
             stop = isMemory ? .lowMemory : .error
             notice = Self.notice(for: error)
+            // `controller.generate` throws only for a model or context that would not load, so
+            // nothing has been written and the whole send can be offered back. This is the headline
+            // case: on iOS jetsam gives no warning, so "the phone was briefly busy" is the expected
+            // failure and the same send usually succeeds a moment later (D-060).
+            offerRetry(replyID: replyID, userID: userID)
         }
 
         updateMessage(replyID) {
@@ -211,6 +236,35 @@ public final class ChatSession: ObservableObject {
     }
 
     public func dismissNotice() { notice = nil }
+
+    // MARK: - Retrying a send that failed before anything was written (D-060)
+
+    /// The view took the text into its input: drop the unanswered pair from the conversation, so
+    /// the user is not left looking at a message with no reply next to a copy of it they are about
+    /// to send again.
+    public func acceptRetry() {
+        guard let retry = pendingRetry else { return }
+        removeMessage(retry.replyID)
+        removeMessage(retry.userID)
+        pendingRetry = nil
+        persist()
+    }
+
+    /// The view could not take it — the user has typed something else since. Leave the conversation
+    /// exactly as it was: the message stays visible and copyable, which is what happened before
+    /// D-060 and is the one outcome that cannot lose anything.
+    public func declineRetry() {
+        pendingRetry = nil
+    }
+
+    /// Offers the send back. Refuses if anything was written, because a reply with text in it is
+    /// kept and labelled (C7) and resuming that is D-032, not this.
+    private func offerRetry(replyID: String, userID: String) {
+        guard let reply = messages.first(where: { $0.id == replyID }), reply.text.isEmpty,
+              let user = messages.first(where: { $0.id == userID }), !user.text.isEmpty
+        else { return }
+        pendingRetry = PendingRetry(text: user.text, userID: userID, replyID: replyID)
+    }
 
     /// spine: C9 — the reply is marked on the phone when the user confirms the report sheet.
     public func markReported(_ id: String) {

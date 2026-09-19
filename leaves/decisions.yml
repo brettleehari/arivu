@@ -2131,7 +2131,27 @@
   spine: [C1, C6, C7, C11]
   platform: both
   adjudication: human
-  status: pending
+  status: resolved_human
+  decided_at: 2026-09-19
+  decided_by: Hari
+  resolution: >
+    Option 1. A send that fails before the model writes anything is offered back to the input box and
+    the unanswered pair leaves the conversation, so the Send button the user already knows is the
+    retry. No new control, no new copy key, no new accessibility label.
+
+    Implemented on both platforms as an OFFER rather than an action, which is the part that makes it
+    safe: neither state machine can see the input field, so neither can know whether taking the text
+    back would overwrite something the user has since typed. ChatSession publishes `pendingRetry` and
+    ChatViewModel puts it in `ChatUiState`; the view answers with acceptRetry() or declineRetry(),
+    and only an accept removes anything. A decline leaves the conversation exactly as it was, which
+    is the pre-D-060 behaviour — so the worst case is the old behaviour rather than lost words.
+
+    Scoped by C7: nothing is offered back once the reply has text in it. `offerRetry` refuses in that
+    case and the partial reply is kept and labelled as before. Resuming a partial is D-032.
+
+    This also settles the message_too_long remedy, which had been asking for an edit the user had no
+    way to make: a bubble has no cursor. The message now returns to the input, where it can actually
+    be shortened.
   blocks_release: false
   raised_by: [Engineering]
   related: [D-021, D-032, D-047]

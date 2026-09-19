@@ -60,6 +60,8 @@ class MainActivity : ComponentActivity() {
                 onAbout = { showAbout = true },
                 onDismissNotice = vm::dismissNotice,
                 onReported = vm::markReported,
+                onAcceptRetry = vm::acceptRetry,
+                onDeclineRetry = vm::declineRetry,
             )
         }
     }

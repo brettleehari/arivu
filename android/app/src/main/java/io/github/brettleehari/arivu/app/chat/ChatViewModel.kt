@@ -20,6 +20,17 @@ import io.github.brettleehari.arivu.llama.GenerationEvent
 import io.github.brettleehari.arivu.llama.StopReason
 import java.util.UUID
 
+/**
+ * A send that failed before the model wrote anything, offered back to the input box (D-060).
+ *
+ * An *offer*, not an action: the view model cannot see the input field, so it cannot know whether
+ * taking the text back would overwrite something the user has since typed. The screen answers with
+ * [ChatViewModel.acceptRetry] or [ChatViewModel.declineRetry], and only an accept removes anything
+ * from the conversation. Declining leaves the message where it was — the behaviour this replaces —
+ * so the worst case is the old behaviour rather than lost words.
+ */
+data class PendingRetry(val text: String, val userId: String, val replyId: String)
+
 data class ChatUiState(
     /** False until history has been read from disk, so returning users never see the empty state flash. */
     val loaded: Boolean = false,
@@ -30,6 +41,8 @@ data class ChatUiState(
     val engine: EngineState = EngineState.COLD,
     /** Transient notice shown above the input (e.g. message too long). */
     val notice: Notice? = null,
+    /** Set when a send failed before the model wrote anything. spine: C1, C6 (D-060) */
+    val pendingRetry: PendingRetry? = null,
 )
 
 sealed interface Notice {
@@ -74,7 +87,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         // The reply bubble exists from the first moment, so "Starting Arivu…" shows while the model loads and the
         // prompt is measured (spine: C1). Before the emulator run it was only added after both had finished.
         val reply = Message(UUID.randomUUID().toString(), fromUser = false, text = "", createdAt = now)
-        _state.update { it.copy(messages = it.messages + user + reply, generating = true, notice = null) }
+        _state.update { it.copy(messages = it.messages + user + reply, generating = true, notice = null, pendingRetry = null) }
         persist()
 
         generation = viewModelScope.launch {
@@ -83,31 +96,33 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 inference.promptBuilder.build(history.map { Turn(it.id, it.fromUser, it.text) })
             } catch (e: Throwable) {
                 if (e is kotlinx.coroutines.CancellationException) throw e
-                removeMessage(reply.id)
                 // spine: C6 — an allocation that failed is the phone being full, not Arivu being broken,
                 // and the user is told which of the two it was.
                 _state.update { it.copy(generating = false, notice = noticeFor(e)) }
+                offerRetry(reply.id, user.id)
                 persist()
                 return@launch
             }
             when (built) {
                 is BuiltPrompt.TooLong -> {
-                    // Leave the message in place so the user can copy and shorten it.
-                    removeMessage(reply.id)
+                    // Back to the input, where it can actually be shortened. It used to be left in
+                    // the conversation "so the user can copy and shorten it" — but a bubble has no
+                    // cursor, and the notice asked for an edit there was no way to make (D-060).
                     _state.update { it.copy(generating = false, notice = Notice.TooLong(built.messageTokens, built.limitTokens)) }
+                    offerRetry(reply.id, user.id)
                     persist()
                 }
                 is BuiltPrompt.Ok -> {
                     val startId = if (built.firstIncluded > 0) history[built.firstIncluded].id else null
                     _state.update { it.copy(contextStartId = startId) }
                     val maxNew = inference.maxReplyTokens(built.promptTokens)
-                    runGeneration(reply.id, built.text, maxNew)
+                    runGeneration(reply.id, user.id, built.text, maxNew)
                 }
             }
         }
     }
 
-    private suspend fun runGeneration(replyId: String, prompt: String, maxNew: Int) {
+    private suspend fun runGeneration(replyId: String, userId: String, prompt: String, maxNew: Int) {
         var stop = Stop.ERROR
         var lastSave = System.currentTimeMillis()
         try {
@@ -135,6 +150,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 else -> {
                     stop = Stop.ERROR
                     _state.update { it.copy(notice = Notice.LoadFailed) }
+                    // Nothing was written, so the whole send can be offered back (D-060).
+                    offerRetry(replyId, userId)
                 }
             }
         } finally {
@@ -150,6 +167,41 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissNotice() = _state.update { it.copy(notice = null) }
+
+    // ---- Retrying a send that failed before anything was written (D-060) ----
+
+    /**
+     * The screen took the text into its input: drop the unanswered pair from the conversation, so
+     * the user is not left looking at a message with no reply beside a copy of it they are about to
+     * send again.
+     */
+    fun acceptRetry() {
+        val retry = _state.value.pendingRetry ?: return
+        _state.update { s ->
+            s.copy(messages = s.messages.filterNot { it.id == retry.replyId || it.id == retry.userId },
+                   pendingRetry = null)
+        }
+        persist()
+    }
+
+    /**
+     * The screen could not take it — the user has typed something else since. Leave the conversation
+     * exactly as it was: the message stays visible and copyable, which is what happened before D-060
+     * and is the one outcome that cannot lose anything.
+     */
+    fun declineRetry() = _state.update { it.copy(pendingRetry = null) }
+
+    /**
+     * Refuses if anything was written: a reply with text in it is kept and labelled (spine: C7), and
+     * resuming that is D-032, not this.
+     */
+    private fun offerRetry(replyId: String, userId: String) {
+        val messages = _state.value.messages
+        val reply = messages.firstOrNull { it.id == replyId } ?: return
+        val user = messages.firstOrNull { it.id == userId } ?: return
+        if (reply.text.isNotEmpty() || user.text.isEmpty()) return
+        _state.update { it.copy(pendingRetry = PendingRetry(user.text, userId, replyId)) }
+    }
 
     /** spine: C9 — the reply is marked on the phone when the user confirms the report sheet. */
     fun markReported(id: String) {

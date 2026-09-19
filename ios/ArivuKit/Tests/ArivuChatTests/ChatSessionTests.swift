@@ -178,9 +178,13 @@ struct ChatSessionTests {
         #expect(h.session.messages[1].stop == .contextFull)
     }
 
-    /// leaves/design.md §3 — the message stays so it can be copied and shortened; the reply bubble
-    /// that appeared is removed; nothing is sent.
-    @Test("a message that is too long is reported, and the message is kept")
+    /// leaves/design.md §3 — nothing is sent, and the user's words are not lost.
+    ///
+    /// D-060 changed HOW they are kept. They used to stay in the conversation "so the user can copy
+    /// and shorten it"; they are now offered back to the input, where shortening is possible at all.
+    /// Until the view answers, both bubbles are still there, so declining can leave the conversation
+    /// untouched — that is what makes the offer safe.
+    @Test("a message that is too long is reported, and the message is not lost")
     func messageTooLong() async throws {
         let h = try Harness()
         await h.session.loadHistory()
@@ -188,9 +192,17 @@ struct ChatSessionTests {
         h.session.send(String(repeating: "x", count: 5000))
         try await h.settle()
 
-        #expect(h.session.messages.count == 1, "the reply bubble should have been removed")
+        // Offered back, and nothing removed yet (D-060).
+        #expect(h.session.pendingRetry?.text.count == 5000)
+        #expect(h.session.messages.count == 2)
         #expect(h.session.messages[0].fromUser)
         #expect(h.session.messages[0].text.count == 5000)
+        #expect(h.session.messages[1].text.isEmpty, "the reply bubble is still empty")
+
+        // Once the view takes the text, the unanswered pair goes.
+        h.session.acceptRetry()
+        #expect(h.session.messages.isEmpty)
+
         guard case .tooLong(let messageTokens, let limitTokens) = h.session.notice else {
             Issue.record("expected a tooLong notice, got \(String(describing: h.session.notice))"); return
         }
@@ -211,7 +223,11 @@ struct ChatSessionTests {
         h.session.send("go")
         try await h.settle()
         #expect(h.session.notice == .loadFailed)
-        #expect(h.session.messages.count == 1, "no empty reply bubble should be left behind")
+        // D-060: the send is offered back rather than stranded. Accepting clears both bubbles, so no
+        // empty reply is left behind either way.
+        #expect(h.session.pendingRetry?.text == "go")
+        h.session.acceptRetry()
+        #expect(h.session.messages.isEmpty, "no empty reply bubble should be left behind")
 
         h.session.dismissNotice()
         arivu_stub_fail_next_load("failed to allocate: Cannot allocate memory")
@@ -310,5 +326,80 @@ struct ChatSessionTests {
         #expect(h.session.messages.count == 2)
         h.session.stop()
         try await h.settle()
+    }
+
+    // MARK: - D-060: a send that failed before anything was written comes back to the input
+
+    @Test("a load failure offers the send back instead of stranding it")
+    func loadFailureOffersTheSendBack() async throws {
+        let h = try Harness()
+        await h.session.loadHistory()
+        arivu_stub_fail_next_load("gguf: unknown magic")
+
+        h.session.send("Rewrite this to sound polite: send me the report today.")
+        try await h.settle()
+
+        let retry = try #require(h.session.pendingRetry)
+        #expect(retry.text == "Rewrite this to sound polite: send me the report today.")
+        #expect(h.session.notice == .loadFailed)
+
+        // Until the view answers, nothing has been removed — declining must be able to leave the
+        // conversation exactly as it was.
+        #expect(h.session.messages.count == 2)
+
+        h.session.acceptRetry()
+        #expect(h.session.pendingRetry == nil)
+        #expect(h.session.messages.isEmpty, "the unanswered pair goes with the accepted retry")
+    }
+
+    @Test("declining leaves the conversation exactly as it was")
+    func decliningChangesNothing() async throws {
+        let h = try Harness()
+        await h.session.loadHistory()
+        arivu_stub_fail_next_load("gguf: unknown magic")
+
+        h.session.send("hello")
+        try await h.settle()
+        #expect(h.session.pendingRetry != nil)
+
+        let before = h.session.messages
+        h.session.declineRetry()
+        #expect(h.session.pendingRetry == nil)
+        #expect(h.session.messages == before,
+                "a user who has typed something else keeps their message where they can still copy it")
+    }
+
+    /// The constraint that keeps D-060 inside C7: a reply with text in it is kept and labelled, and
+    /// resuming that is D-032, not this. Nothing may be offered back once words exist on screen.
+    @Test("a reply that wrote something is never offered back")
+    func aPartialReplyIsNeverOfferedBack() async throws {
+        let h = try Harness()
+        await h.session.loadHistory()
+        arivu_stub_set_script("one two three")
+
+        h.session.send("hello")
+        try await h.settle()
+
+        #expect(h.session.pendingRetry == nil)
+        #expect(h.session.messages.count == 2)
+        #expect(h.session.messages.last?.text.isEmpty == false)
+    }
+
+    @Test("a message too long comes back to the input, where it can be shortened")
+    func tooLongComesBackToTheInput() async throws {
+        var tiny = Profile.compact
+        tiny.nCtx = 256
+        tiny.replyReserveTokens = 200
+        let h = try Harness(profile: tiny)
+        await h.session.loadHistory()
+
+        // The stub counts one token per byte, so this cannot fit what is left of a 256-token context.
+        let long = String(repeating: "word ", count: 400)
+        h.session.send(long)
+        try await h.settle()
+
+        if case .tooLong = h.session.notice {} else { Issue.record("expected a tooLong notice") }
+        let retry = try #require(h.session.pendingRetry)
+        #expect(retry.text == long.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }

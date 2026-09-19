@@ -116,6 +116,22 @@ struct ChatView: View {
         }
         .padding(12)
         .background(Palette.surface)
+        // D-060: a send that failed before the model wrote anything comes back to the input, so the
+        // Send button the user already knows is the retry — no second control, no new copy.
+        //
+        // Only when the box is empty. If they have started typing something else, decline: the
+        // session then leaves the message in the conversation, which is what it did before D-060
+        // and is the one outcome that cannot lose words.
+        .onChange(of: session.pendingRetry) { _, retry in
+            guard let retry else { return }
+            if input.isEmpty {
+                input = retry.text
+                session.acceptRetry()
+                inputFocused = true
+            } else {
+                session.declineRetry()
+            }
+        }
     }
 
     /// spine: C10 — Send and Stop share one slot at one size. There is never a moment with neither.

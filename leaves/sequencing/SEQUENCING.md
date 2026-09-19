@@ -7,7 +7,7 @@ generated_for: 2026-09-19
 
 # Sequencing Leaf
 
-Today **2026-09-19** (Saturday) · slice **all** · platform **all** · done 39/137 · builders 1 + Hari
+Today **2026-09-19** (Saturday) · slice **all** · platform **all** · done 46/137 · builders 1 + Hari
 
 Done means verified to the stated level, never more. **Nothing has run on a physical Android phone or on any iPhone.** Emulator runs are functional only; the 94 iOS tests ran on macOS, not on iOS.
 
@@ -19,8 +19,8 @@ Every `uses:` value must be declared here as available or not. An unavailable re
 |---|---|---|---|---|
 | `phone` The 4 GB Android test phone (Helio G85 / SD680 class) on adb | **NO** | 1 | W112 (2026-09-29) | 9: W02, W08, W10, W18, W21, W46, W47, W48, W61 |
 | `iphone` A 3-4 GB test iPhone (SE 2020 / iPhone 11 class — the iOS twin of the Helio G85 target) | **NO** | 1 | W111 (2026-10-03) | 5: W101, W92, W93, W94, W99 |
-| `mac-with-xcode` A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen | **NO** | 1 | W85 (2026-09-24) | 17: W101, W109, W119, W86, W87, W88, W89, W90, W91, W92, W93, W94, W95, W96, W97, W98, W99 |
-| `mac` The development Mac as it is today (Command Line Tools, no Xcode) | yes | 1 | — | 1: W85 |
+| `mac-with-xcode` A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen | yes | 1 | W85 (2026-09-19) | 11: W101, W109, W119, W92, W93, W94, W95, W96, W97, W98, W99 |
+| `mac` The development Mac as it is today (Command Line Tools, no Xcode) | yes | 1 | — | 0: — |
 | `Engineering` An agent that can drive builds, adb and scripts, lent to another Leaf's item | yes | 1 | — | 7: W101, W107, W46, W47, W48, W81, W99 |
 | `ci-runner` GitHub-hosted runners (ubuntu-latest and macos-latest) | yes | 1 | — | 2: W74, W75 |
 
@@ -28,15 +28,13 @@ Every `uses:` value must be declared here as available or not. An unavailable re
 
 **`iphone` — not in hand.** Does not exist. Every iOS number in every Leaf is an Android measurement or an estimate (engineering-ios.md "the whole memory story"). Also needs the Apple Developer Program (W110) before an app can be installed on it at all.
 
-**`mac-with-xcode` — not in hand.** The machine this round ran on is macOS with Command Line Tools only — no iOS SDK, no Simulator, no xcodebuild, no cmake, no xcodegen. Everything under ios/App/**, ios/project.yml and tools/ios/*.sh (except verify_macos.sh and sync_licences.sh) has therefore never been compiled or run.
-
 ## Milestones — two per store, independent calendars
 
 | Milestone | Store | Item | Critical path (unconstrained) | Bandwidth-aware finish | Calendar days |
 |---|---|---|---|---|---|
 | **play_internal** — First Play Internal-testing upload (signed AAB accepted on the internal track) | android | W52 | 4 days | 2026-09-25 (Fri) | 7 |
 | **play_production** — Play production release, Wave A (NG, GH, KE, UG, ZA, PH) | android | W19 | 32 days | 2026-10-28 (Wed) | 40 |
-| **ios_testflight** — First TestFlight build (internal testers, no Beta App Review) | ios | W120 | 7.5 days | 2026-10-07 (Wed) | 19 |
+| **ios_testflight** — First TestFlight build (internal testers, no Beta App Review) | ios | W120 | 7.5 days | 2026-10-06 (Tue) | 18 |
 | **ios_appstore** — App Store release (submitted with "Manually release this version") | ios | W123 | 11.25 days | 2026-10-14 (Wed) | 26 |
 
 Unconstrained = sum of effort + elapsed on the longest chain if every owner were free. Bandwidth-aware = simulated with 1 builder(s), Hari 1 slot on weekdays, the declared resource capacities, agents every day; `~` estimates are guesses.
@@ -51,11 +49,11 @@ Unconstrained = sum of effort + elapsed on the longest chain if every owner were
 
 | Scenario | play_internal | play_production | ios_testflight | ios_appstore |
 |---|---|---|---|---|
-| 1 builder(s), hardware still to buy (base) | 2026-09-25 | 2026-10-28 | 2026-10-07 | 2026-10-14 |
+| 1 builder(s), hardware still to buy (base) | 2026-09-25 | 2026-10-28 | 2026-10-06 | 2026-10-14 |
 | 2 builders | 2026-09-25 | 2026-10-28 | 2026-10-05 | 2026-10-12 |
-| both handsets already in a drawer | 2026-09-25 | 2026-10-24 | 2026-10-07 | 2026-10-14 |
-| organisation account exempt from the Play closed test (UNVERIFIED) | 2026-09-25 | 2026-10-07 | 2026-10-07 | 2026-10-14 |
-| both of the above | 2026-09-25 | 2026-10-02 | 2026-10-07 | 2026-10-14 |
+| both handsets already in a drawer | 2026-09-25 | 2026-10-24 | 2026-10-02 | 2026-10-09 |
+| organisation account exempt from the Play closed test (UNVERIFIED) | 2026-09-25 | 2026-10-07 | 2026-10-06 | 2026-10-14 |
+| both of the above | 2026-09-25 | 2026-10-02 | 2026-10-02 | 2026-10-09 |
 
 ## Critical path — play_internal (W52, android)
 
@@ -78,10 +76,10 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | Item | Owner | Plat | Ready | Start | Finish | Queued (days) |
 |---|---|---|---|---|---|---|
 | W112 Buy or borrow the 4 GB Android test phone (Helio G85 / SD680 class | Hari | android | 2026-09-19 | 2026-09-24 | 2026-09-29 | 5.25 |
-| W41 Android test phone on adb — USB debugging, its Google account read | Hari | android | 2026-09-29 | 2026-09-29 | 2026-09-29 | 0 |
-| W21 End-to-end on the Android phone — install bundle, airplane mode, f | Engineering | android | 2026-09-29 | 2026-10-01 | 2026-10-01 | 1.75 |
+| W41 Android test phone on adb — USB debugging, its Google account read | Hari | android | 2026-09-29 | 2026-09-29 | 2026-09-29 | 0.25 |
+| W21 End-to-end on the Android phone — install bundle, airplane mode, f | Engineering | android | 2026-09-30 | 2026-10-02 | 2026-10-02 | 2 |
 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot b | Hari | android | 2026-10-02 | 2026-10-02 | 2026-10-17 | 0 |
-| W58 Apply for production access (form answers from the closed test) an | Hari | android | 2026-10-17 | 2026-10-19 | 2026-10-26 | 1.75 |
+| W58 Apply for production access (form answers from the closed test) an | Hari | android | 2026-10-17 | 2026-10-19 | 2026-10-26 | 1.25 |
 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, P | Hari | android | 2026-10-26 | 2026-10-26 | 2026-10-28 | 0 |
 
 ## Critical path — ios_testflight (W120, ios)
@@ -92,9 +90,11 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 
 | Item | Owner | Plat | Ready | Start | Finish | Queued (days) |
 |---|---|---|---|---|---|---|
-| W78 tools/check_ios_binary.sh — M5 on iOS (no CFNetwork, Network.frame | Engineering | ios | 2026-09-19 | 2026-10-06 | 2026-10-06 | 17 |
+| W111 Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB) | Hari | ios | 2026-09-19 | 2026-09-28 | 2026-10-03 | 9 |
+| W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | 2026-10-03 | 2026-10-05 | 2026-10-05 | 1.75 |
+| W119 First signed device archive — Release configuration, distribution  | Engineering | ios | 2026-10-05 | 2026-10-05 | 2026-10-05 | 0 |
 | W96 iOS step 12 — pre-submission gate: tools/ios_release_check.sh agai | Compliance | ios | 2026-10-06 | 2026-10-06 | 2026-10-06 | 0 |
-| W120 MILESTONE — first TestFlight build (internal testers, team only, n | Hari | ios | 2026-10-07 | 2026-10-07 | 2026-10-07 | 0 |
+| W120 MILESTONE — first TestFlight build (internal testers, team only, n | Hari | ios | 2026-10-06 | 2026-10-06 | 2026-10-06 | 0 |
 
 ## Critical path — ios_appstore (W123, ios)
 
@@ -105,12 +105,12 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | Item | Owner | Plat | Ready | Start | Finish | Queued (days) |
 |---|---|---|---|---|---|---|
 | W111 Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB) | Hari | ios | 2026-09-19 | 2026-09-28 | 2026-10-03 | 9 |
-| W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | 2026-10-03 | 2026-10-04 | 2026-10-04 | 1.25 |
-| W93 iOS step 9 — first iPhone measurement, airplane mode: cold first m | Engineering | ios | 2026-10-05 | 2026-10-08 | 2026-10-08 | 3 |
-| W109 Choose the shipping MinimumOSVersion from measurement (D-042) and  | Engineering | ios | 2026-10-09 | 2026-10-09 | 2026-10-09 | 0.5 |
-| W108 App Store listing finalised — the approved iOS privacy wording, th | GTM | ios | 2026-10-09 | 2026-10-09 | 2026-10-10 | 0 |
-| W107 Four-way privacy consistency read before every submission — listin | GTM | both | 2026-10-10 | 2026-10-11 | 2026-10-11 | 0.75 |
-| W122 Submit to the App Store with "Manually release this version"; wait | Hari | ios | 2026-10-11 | 2026-10-12 | 2026-10-14 | 0.75 |
+| W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | 2026-10-03 | 2026-10-05 | 2026-10-05 | 1.75 |
+| W93 iOS step 9 — first iPhone measurement, airplane mode: cold first m | Engineering | ios | 2026-10-05 | 2026-10-07 | 2026-10-08 | 2 |
+| W109 Choose the shipping MinimumOSVersion from measurement (D-042) and  | Engineering | ios | 2026-10-08 | 2026-10-09 | 2026-10-09 | 0.5 |
+| W108 App Store listing finalised — the approved iOS privacy wording, th | GTM | ios | 2026-10-09 | 2026-10-09 | 2026-10-09 | 0 |
+| W107 Four-way privacy consistency read before every submission — listin | GTM | both | 2026-10-09 | 2026-10-09 | 2026-10-09 | 0 |
+| W122 Submit to the App Store with "Manually release this version"; wait | Hari | ios | 2026-10-10 | 2026-10-12 | 2026-10-14 | 2 |
 | W123 MILESTONE — App Store release (release the held build) | Hari | ios | 2026-10-14 | 2026-10-14 | 2026-10-14 | 0 |
 
 ## Deadlines
@@ -133,7 +133,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-007 | no | no | pending | 2026-09-17 | **OVERDUE** | W66 |
 | D-008 | no | no | pending | 2026-09-17 | **OVERDUE** | W02, W03 |
 | D-009 | **yes** | **yes** | pending | 2026-09-17 | **OVERDUE** | W03, W47, W55, W62, W109 |
-| D-010 | **yes** | **yes** | pending | 2026-09-17 | **OVERDUE** | W36, W16, W51, W89, W96, W105, W106 |
+| D-010 | **yes** | **yes** | pending | 2026-09-17 | **OVERDUE** | W36, W16, W51, W96, W105, W106 |
 | D-011 | no | no | pending | 2026-09-17 | **OVERDUE** | W37 |
 | D-012 | no | no | pending | 2026-09-17 | **OVERDUE** | W66 |
 | D-013 | no | no | pending | 2026-09-17 | **OVERDUE** | W66, W18, W48, W119 |
@@ -164,9 +164,9 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-040 | no | no | pending | 2026-09-18 | **OVERDUE** | W116 |
 | D-041 | no | no | pending | 2026-09-18 | **OVERDUE** | W116, W120, W122, W123, W124, W136 |
 | D-042 | no | **yes** | pending | 2026-09-18 | **OVERDUE** | W93, W108, W109 |
-| D-043 | no | **yes** | pending | 2026-09-18 | **OVERDUE** | W90, W94, W118 |
+| D-043 | no | **yes** | pending | 2026-09-18 | **OVERDUE** | W94, W118 |
 | D-044 | no | no | pending | 2026-09-18 | **OVERDUE** | W118, W121 |
-| D-045 | no | no | pending | 2026-09-18 | **OVERDUE** | W81, W90, W94, W101, W121 |
+| D-045 | no | no | pending | 2026-09-18 | **OVERDUE** | W81, W94, W101, W121 |
 | D-046 | no | **yes** | pending | 2026-09-18 | **OVERDUE** | W76, W110, W114, W119, W120 |
 | D-047 | no | no | pending | 2026-09-18 | **OVERDUE** | W80, W93, W121 |
 | D-048 | no | no | pending | 2026-09-18 | **OVERDUE** | W69, W79, W80, W93, W97, W121 |
@@ -250,8 +250,9 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 
 | Item | Slice | Title | Estimate | Deadline | Decisions | Needs |
 |---|---|---|---|---|---|---|
-| W85 | MVP | iOS step 1 — install the toolchain: Xcode 16+ (Swift 6), brew install cmake xcodegen; confirm xcrun --sdk iphoneos | ~0.5d + 0.5d elapsed |  |  | uses mac; this item CREATES the mac-with-xcode resource; it is the gate every other iOS engineering item sits behind. Xcode is a ~10 GB download and a slow install |
+| W98 | MVP | iOS at-rest test: Data Protection class AND isExcludedFromBackupKey asserted as resource values, not reviewed by eye | 0.5d |  | D-022 | uses mac-with-xcode; ChatRepository.protect() is iOS-only and has never been compiled. Without this the conversation reaches iCloud — exactly what the Android side went to trouble to prevent. privacy-policy.html carries a placeholder block  |
 | W78 | CORE | tools/check_ios_binary.sh — M5 on iOS (no CFNetwork, Network.framework, libcurl, URLSession/socket/connect symbols) | 0.5d |  | D-039 D-049 | GTM's requirement is narrower than Architecture's: it must exist AND its exact guarantee must be written down BEFORE any listing or policy sentence describes it. Until then the copy may not say "our build check fails if any is added" (D-039 |
+| W97 | CORE | Run CoreParityTests against the real core (not the stub) and settle D-052 | 0.5d |  | D-052 D-048 | uses mac-with-xcode; two tests are skipped by design today because the stub answers them. Also settles the three open questions engineering-ios.md put to the Core Leaf (version format, prompt-builder ownership rule, available_memory_bytes = |
 
 **Architecture**
 
@@ -271,6 +272,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | Item | Slice | Title | Estimate | Deadline | Decisions | Needs |
 |---|---|---|---|---|---|---|
 | W100 | MVP | Contrast verification of the iOS palette against design.md §10, computed rather than eyeballed | 0.25d |  |  |  |
+| W95 | STORE | iOS step 11 — icon and launch screen under the system corner mask, light and dark; 1024×1024 App Store icon from the same SVG | 0.25d |  |  | uses mac-with-xcode; arivu-1024.png exists but has never been through actool and has never been seen under the mask |
 
 ## Hari's queue (all open, in simulated order)
 
@@ -293,18 +295,18 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | 15 | W111 Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB) | ios | ~0.25d + 5d elapsed |  |  | ready | 2026-09-28 → 2026-10-03 |
 | 16 | W114 D-046: iOS signing and distribution-certificate custody — Xcode-manage | ios | 0.25d | before the first TestFlight upload | D-046 | W76 | 2026-09-28 → 2026-09-28 |
 | 17 | W118 D-043: what happens to a reply when the user backgrounds the app on iO | ios | 0.25d | before the first TestFlight build goes to anyone outside the team | D-043 D-044 | ready | 2026-09-28 → 2026-09-28 |
-| 18 | W116 D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the launch  | ios | 0.5d |  | D-040 D-041 D-038 | ready | 2026-09-28 → 2026-09-29 |
-| 19 | W66 Stamp the carried-over non-blocking decisions (D-002..D-008, D-011..D- | both | 0.25d |  | D-003 D-005 D-006 D-007 D-012 D-013 D-016 D-019 D-026 D-027 D-028 D-029 D-031 D-032 D-033 D-036 | ready | 2026-09-29 → 2026-09-29 |
+| 18 | W115 D-039 + D-049: the iOS privacy wording, and M5 restated for two platfo | ios | 0.5d | before any iOS listing copy exists | D-039 D-049 | W78 | 2026-09-28 → 2026-09-29 |
+| 19 | W116 D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the launch  | ios | 0.5d |  | D-040 D-041 D-038 | ready | 2026-09-29 → 2026-09-29 |
 | 20 | W41 Android test phone on adb — USB debugging, its Google account ready to | android | ~0.25d |  |  | W112 | 2026-09-29 → 2026-09-29 |
-| 21 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-05 | ios | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 | ready | 2026-09-29 → 2026-09-29 |
+| 21 | W66 Stamp the carried-over non-blocking decisions (D-002..D-008, D-011..D- | both | 0.25d |  | D-003 D-005 D-006 D-007 D-012 D-013 D-016 D-019 D-026 D-027 D-028 D-029 D-031 D-032 D-033 D-036 | ready | 2026-09-30 → 2026-09-30 |
 | 22 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, agr | ios | 0.25d |  | D-001 D-020 | W110 | 2026-09-30 → 2026-09-30 |
-| 23 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | both | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-10-01 → 2026-10-01 |
-| 24 | W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) from D- | android | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-10-01 → 2026-10-01 |
-| 25 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | android | 0.25d + 15d elapsed |  | D-020 | W52, W18, W21, W54, W55, W56, W34 | 2026-10-02 → 2026-10-17 |
-| 26 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | android | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-10-05 → 2026-10-05 |
-| 27 | W115 D-039 + D-049: the iOS privacy wording, and M5 restated for two platfo | ios | 0.5d | before any iOS listing copy exists | D-039 D-049 | W78 | 2026-10-06 → 2026-10-06 |
-| 28 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-07 → 2026-10-07 |
-| 29 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-07 → 2026-10-17 |
+| 23 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-05 | ios | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 | ready | 2026-09-30 → 2026-09-30 |
+| 24 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | both | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-10-01 → 2026-10-01 |
+| 25 | W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) from D- | android | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-10-02 → 2026-10-02 |
+| 26 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | android | 0.25d + 15d elapsed |  | D-020 | W52, W18, W21, W54, W55, W56, W34 | 2026-10-02 → 2026-10-17 |
+| 27 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | android | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-10-05 → 2026-10-05 |
+| 28 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-06 → 2026-10-06 |
+| 29 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-06 → 2026-10-17 |
 | 30 | W122 Submit to the App Store with "Manually release this version"; wait for | ios | ~0.5d + 2d elapsed |  | D-041 D-024 D-025 D-039 D-059 | W120, W108, W105, W106, W107, W39, W59, W65, W109, W116 | 2026-10-12 → 2026-10-14 |
 | 31 | W123 MILESTONE — App Store release (release the held build) | ios | 0.25d |  | D-041 D-059 D-029 | W122 | 2026-10-14 → 2026-10-14 |
 | 32 | W58 Apply for production access (form answers from the closed test) and wa | android | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-19 → 2026-10-26 |
@@ -315,7 +317,7 @@ Hari effort still open: 11.25 days (7.25 of it not iOS).
 
 ## Open items no milestone requires
 
-W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W87 (Engineering, ios), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
+W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
 
 ## Schedule (simulated)
 
@@ -337,86 +339,79 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W51 tools/release_check.sh prints RELEASE CHECK PASSED on the upload-k | Engineering | android | PLAY | 0.25d |  | 2026-09-23 | 2026-09-23 |
 | W53 Play listing copy synced — per-reply Report, Send/Stop/Copy/Report | GTM | android | PLAY | 0.25d |  | 2026-09-23 | 2026-09-23 |
 | W65 D-017 final — is 0.6B good enough; what the listing may promise | Hari | both | BENCH | 0.5d |  | 2026-09-23 | 2026-09-24 |
-| W85 iOS step 1 — install the toolchain: Xcode 16+ (Swift 6), brew inst | Engineering | ios | MVP | ~0.5d + 0.5d elapsed |  | 2026-09-24 | 2026-09-24 |
+| W76 iOS section of release-and-signing.md; the research that feeds D-0 | Architecture | ios | STORE | 1d |  | 2026-09-24 | 2026-09-24 |
 | W34 Developer verification complete (Google's review) | Hari | android | PLAY | ~0.25d + 3d elapsed |  | 2026-09-22 | 2026-09-25 |
 | W52 MILESTONE — first Play Internal-testing upload (create app, intern | Hari | android | PLAY | 0.25d |  | 2026-09-25 | 2026-09-25 |
-| W76 iOS section of release-and-signing.md; the research that feeds D-0 | Architecture | ios | STORE | 1d |  | 2026-09-24 | 2026-09-25 |
+| W98 iOS at-rest test: Data Protection class AND isExcludedFromBackupKe | Engineering | ios | MVP | 0.5d |  | 2026-09-25 | 2026-09-25 |
 | W50 Record Play app-signing cert SHA-256 and release provenance (AAB s | Engineering | android | PLAY | 0.25d |  | 2026-09-25 | 2026-09-25 |
 | W54 Play Console: store listing + App content — privacy URL, Data safe | Hari | android | PLAY | 0.5d |  | 2026-09-25 | 2026-09-25 |
-| W86 iOS step 2 — fetch the inputs on that Mac: fetch_llama.sh, fetch_m | Engineering | ios | MVP | 0.25d |  | 2026-09-25 | 2026-09-25 |
-| W88 iOS step 4 — make tools/ios/build_core.sh actually produce a worki | Engineering | ios | MVP | ~1d | mac-with-xcode→W85 | 2026-09-26 | 2026-09-26 |
-| W89 iOS step 5 — generate and open the Xcode project (ARIVU_REPORT_EMA | Engineering | ios | MVP | ~0.5d | mac-with-xcode→W85 | 2026-09-27 | 2026-09-27 |
+| W78 tools/check_ios_binary.sh — M5 on iOS (no CFNetwork, Network.frame | Engineering | ios | CORE | 0.5d |  | 2026-09-25 | 2026-09-26 |
+| W106 Support page at the privacy-policy host — contact address, the thr | GTM | ios | STORE | 0.5d |  | 2026-09-26 | 2026-09-26 |
+| W105 Draft the App Review Information notes (appstore-policy-checklist. | Compliance | ios | STORE | 0.25d |  | 2026-09-26 | 2026-09-26 |
+| W67 Boundary lint (E3) — grep /core for JNI, Android, Foundation, UIKi | Engineering | both | CORE | 0.5d |  | 2026-09-27 | 2026-09-27 |
+| W68 C-API conformance (E4): C99 header compile + nm symbol check; move | Engineering | both | CORE | 0.5d |  | 2026-09-27 | 2026-09-27 |
 | W114 D-046: iOS signing and distribution-certificate custody — Xcode-ma | Hari | ios | STORE | 0.25d |  | 2026-09-28 | 2026-09-28 |
 | W118 D-043: what happens to a reply when the user backgrounds the app o | Hari | ios | MVP | 0.25d |  | 2026-09-28 | 2026-09-28 |
-| W116 D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the lau | Hari | ios | STORE | 0.5d |  | 2026-09-28 | 2026-09-29 |
+| W115 D-039 + D-049: the iOS privacy wording, and M5 restated for two pl | Hari | ios | STORE | 0.5d |  | 2026-09-28 | 2026-09-29 |
 | W112 Buy or borrow the 4 GB Android test phone (Helio G85 / SD680 class | Hari | android | BENCH | ~0.25d + 5d elapsed |  | 2026-09-24 | 2026-09-29 |
-| W66 Stamp the carried-over non-blocking decisions (D-002..D-008, D-011 | Hari | both | PLAY | 0.25d |  | 2026-09-29 | 2026-09-29 |
-| W90 iOS step 6 — first Simulator build: meet the compiler with ~1,400  | Engineering | ios | MVP | ~2d | mac-with-xcode→W85 | 2026-09-27 | 2026-09-29 |
+| W79 Android DeviceProbe + ProfileSelector; retire the hardcoded arithm | Engineering | android | MVP | 1.5d |  | 2026-09-28 | 2026-09-29 |
+| W116 D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the lau | Hari | ios | STORE | 0.5d |  | 2026-09-29 | 2026-09-29 |
 | W41 Android test phone on adb — USB debugging, its Google account read | Hari | android | BENCH | ~0.25d |  | 2026-09-29 | 2026-09-29 |
-| W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048,  | Hari | ios | STORE | 0.25d |  | 2026-09-29 | 2026-09-29 |
 | W56 Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM | Hari | android | PLAY | ~0.5d + 5d elapsed |  | 2026-09-24 | 2026-09-29 |
-| W91 iOS step 7 — run ArivuTests on the Simulator (model in the bundle, | Engineering | ios | MVP | ~0.5d | mac-with-xcode→W85 | 2026-09-29 | 2026-09-29 |
 | W110 Apple Developer Program enrolment ($99/yr, 2FA, legal name or D-U- | Hari | ios | STORE | ~0.25d + 5d elapsed |  | 2026-09-25 | 2026-09-30 |
+| W66 Stamp the carried-over non-blocking decisions (D-002..D-008, D-011 | Hari | both | PLAY | 0.25d |  | 2026-09-30 | 2026-09-30 |
 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, | Hari | ios | STORE | 0.25d |  | 2026-09-30 | 2026-09-30 |
-| W02 Run benchmark on the physical Android test phone; record leaves/NO | Engineering | android | BENCH | 1d | phone→W112 | 2026-09-30 | 2026-09-30 |
+| W74 Run the core and android CI workflows on a runner for the first ti | Engineering | both | CORE | ~1d |  | 2026-09-29 | 2026-09-30 |
+| W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048,  | Hari | ios | STORE | 0.25d |  | 2026-09-30 | 2026-09-30 |
+| W02 Run benchmark on the physical Android test phone; record leaves/NO | Engineering | android | BENCH | 1d | phone→W112 | 2026-09-30 | 2026-10-01 |
 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurem | Hari | both | BENCH | 0.5d |  | 2026-10-01 | 2026-10-01 |
 | W18 Internal track: download Play split APKs; model STORED, offset % 1 | Engineering | android | PLAY | 0.5d | phone→W112 | 2026-10-01 | 2026-10-01 |
-| W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) fro | Hari | android | PLAY | 0.25d |  | 2026-10-01 | 2026-10-01 |
-| W21 End-to-end on the Android phone — install bundle, airplane mode, f | Engineering | android | MVP | 0.5d | phone→W112 | 2026-10-01 | 2026-10-01 |
+| W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) fro | Hari | android | PLAY | 0.25d |  | 2026-10-02 | 2026-10-02 |
+| W21 End-to-end on the Android phone — install bundle, airplane mode, f | Engineering | android | MVP | 0.5d | phone→W112 | 2026-10-02 | 2026-10-02 |
 | W46 Android phone accessibility pass — TalkBack, 200% text, RTL (desig | Design | android | MVP | ~0.5d | phone→W112 | 2026-10-02 | 2026-10-02 |
-| W48 W18 extension: signed universal APK has the model aligned; apksign | Architecture | android | PLAY | ~0.5d | phone→W112 | 2026-10-02 | 2026-10-02 |
 | W111 Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB) | Hari | ios | BENCH | ~0.25d + 5d elapsed |  | 2026-09-28 | 2026-10-03 |
+| W48 W18 extension: signed universal APK has the model aligned; apksign | Architecture | android | PLAY | ~0.5d | phone→W112 | 2026-10-03 | 2026-10-03 |
 | W08 Verify idle RSS returns to baseline with dumpsys meminfo (M4) | Engineering | android | BENCH | 0.5d | phone→W112 | 2026-10-03 | 2026-10-03 |
-| W10 Gate layer 3 on the phone with fake totalMem; ACTION_DELETE works | Engineering | android | MVP | 0.5d | phone→W112 | 2026-10-03 | 2026-10-03 |
+| W10 Gate layer 3 on the phone with fake totalMem; ACTION_DELETE works | Engineering | android | MVP | 0.5d | phone→W112 | 2026-10-04 | 2026-10-04 |
 | W62 Play production candidate — fixes in, versionCode bumped, release_ | Engineering | android | PLAY | 0.5d |  | 2026-10-04 | 2026-10-04 |
-| W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | BENCH | ~0.5d | mac-with-xcode→W85, iphone→W111 | 2026-10-04 | 2026-10-04 |
 | W49 D-018 final: confirm Google-generated key (A) or switch to own key | Hari | android | PLAY | 0.25d |  | 2026-10-05 | 2026-10-05 |
-| W98 iOS at-rest test: Data Protection class AND isExcludedFromBackupKe | Engineering | ios | MVP | 0.5d | mac-with-xcode→W85 | 2026-10-05 | 2026-10-05 |
-| W119 First signed device archive — Release configuration, distribution  | Engineering | ios | STORE | ~0.5d | mac-with-xcode→W85 | 2026-10-05 | 2026-10-05 |
-| W78 tools/check_ios_binary.sh — M5 on iOS (no CFNetwork, Network.frame | Engineering | ios | CORE | 0.5d |  | 2026-10-06 | 2026-10-06 |
-| W115 D-039 + D-049: the iOS privacy wording, and M5 restated for two pl | Hari | ios | STORE | 0.5d |  | 2026-10-06 | 2026-10-06 |
-| W96 iOS step 12 — pre-submission gate: tools/ios_release_check.sh agai | Compliance | ios | STORE | 0.5d | mac-with-xcode→W85 | 2026-10-06 | 2026-10-06 |
-| W120 MILESTONE — first TestFlight build (internal testers, team only, n | Hari | ios | STORE | 0.25d |  | 2026-10-07 | 2026-10-07 |
-| W94 iOS step 10 — device walk of design.md §3: every state, the gate s | Engineering | ios | MVP | ~1d | mac-with-xcode→W85, iphone→W111 | 2026-10-07 | 2026-10-07 |
-| W93 iOS step 9 — first iPhone measurement, airplane mode: cold first m | Engineering | ios | BENCH | ~1d | mac-with-xcode→W85, iphone→W111 | 2026-10-08 | 2026-10-08 |
-| W101 iOS screenshot set on a real iPhone — the seven Android states at  | GTM | ios | STORE | ~0.5d | mac-with-xcode→W85, iphone→W111 | 2026-10-09 | 2026-10-09 |
-| W109 Choose the shipping MinimumOSVersion from measurement (D-042) and  | Engineering | ios | STORE | 0.25d | mac-with-xcode→W85 | 2026-10-09 | 2026-10-09 |
-| W108 App Store listing finalised — the approved iOS privacy wording, th | GTM | ios | STORE | 0.5d |  | 2026-10-09 | 2026-10-10 |
-| W106 Support page at the privacy-policy host — contact address, the thr | GTM | ios | STORE | 0.5d |  | 2026-10-10 | 2026-10-10 |
-| W105 Draft the App Review Information notes (appstore-policy-checklist. | Compliance | ios | STORE | 0.25d |  | 2026-10-10 | 2026-10-10 |
-| W107 Four-way privacy consistency read before every submission — listin | GTM | both | STORE | 0.25d |  | 2026-10-11 | 2026-10-11 |
-| W67 Boundary lint (E3) — grep /core for JNI, Android, Foundation, UIKi | Engineering | both | CORE | 0.5d |  | 2026-10-11 | 2026-10-11 |
-| W68 C-API conformance (E4): C99 header compile + nm symbol check; move | Engineering | both | CORE | 0.5d |  | 2026-10-11 | 2026-10-12 |
-| W79 Android DeviceProbe + ProfileSelector; retire the hardcoded arithm | Engineering | android | MVP | 1.5d |  | 2026-10-12 | 2026-10-13 |
+| W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | BENCH | ~0.5d | iphone→W111 | 2026-10-05 | 2026-10-05 |
+| W119 First signed device archive — Release configuration, distribution  | Engineering | ios | STORE | ~0.5d |  | 2026-10-05 | 2026-10-05 |
+| W96 iOS step 12 — pre-submission gate: tools/ios_release_check.sh agai | Compliance | ios | STORE | 0.5d |  | 2026-10-06 | 2026-10-06 |
+| W120 MILESTONE — first TestFlight build (internal testers, team only, n | Hari | ios | STORE | 0.25d |  | 2026-10-06 | 2026-10-06 |
+| W94 iOS step 10 — device walk of design.md §3: every state, the gate s | Engineering | ios | MVP | ~1d | iphone→W111 | 2026-10-06 | 2026-10-07 |
+| W93 iOS step 9 — first iPhone measurement, airplane mode: cold first m | Engineering | ios | BENCH | ~1d | iphone→W111 | 2026-10-07 | 2026-10-08 |
+| W101 iOS screenshot set on a real iPhone — the seven Android states at  | GTM | ios | STORE | ~0.5d | iphone→W111 | 2026-10-08 | 2026-10-08 |
+| W109 Choose the shipping MinimumOSVersion from measurement (D-042) and  | Engineering | ios | STORE | 0.25d |  | 2026-10-09 | 2026-10-09 |
+| W108 App Store listing finalised — the approved iOS privacy wording, th | GTM | ios | STORE | 0.5d |  | 2026-10-09 | 2026-10-09 |
+| W107 Four-way privacy consistency read before every submission — listin | GTM | both | STORE | 0.25d |  | 2026-10-09 | 2026-10-09 |
+| W80 iOS DeviceProbe (os_proc_available_memory) + ProfileSelector | Engineering | ios | MVP | 1.5d |  | 2026-10-10 | 2026-10-11 |
+| W60 Truncate whole exchanges, not single turns (+ Design review of div | Engineering | both | MVP | ~1d |  | 2026-10-11 | 2026-10-12 |
+| W72 arivu_backend_init(); move Android's direct ggml/llama calls behin | Engineering | android | CORE | 1d |  | 2026-10-12 | 2026-10-13 |
+| W103 Reconcile the iOS licences index with licence-audit.md §7.4 (Swift | Compliance | ios | STORE | 0.25d |  | 2026-10-13 | 2026-10-13 |
+| W117 tools/make_notice.py — one source, a generated NOTICE per platform | Engineering | both | CORE | 0.5d |  | 2026-10-13 | 2026-10-14 |
 | W122 Submit to the App Store with "Manually release this version"; wait | Hari | ios | STORE | ~0.5d + 2d elapsed |  | 2026-10-12 | 2026-10-14 |
 | W123 MILESTONE — App Store release (release the held build) | Hari | ios | STORE | 0.25d |  | 2026-10-14 | 2026-10-14 |
-| W80 iOS DeviceProbe (os_proc_available_memory) + ProfileSelector | Engineering | ios | MVP | 1.5d |  | 2026-10-13 | 2026-10-15 |
-| W74 Run the core and android CI workflows on a runner for the first ti | Engineering | both | CORE | ~1d |  | 2026-10-15 | 2026-10-16 |
+| W47 Recapture shot 4 (Stop) and final Android screenshots on the phone | GTM | android | PLAY | 0.5d | phone→W112 | 2026-10-14 | 2026-10-14 |
+| W61 Native heap investigation — ~46 MB held after idle context free | Engineering | android | BENCH | ~0.5d | phone→W112 | 2026-10-14 | 2026-10-15 |
+| W69 Profile-budget check in CI (architecture.md §2.5) — a profile that | Engineering | both | CORE | 0.5d |  | 2026-10-15 | 2026-10-15 |
+| W70 Inject core/vX.Y.Z into arivu_version(); About shows the provenanc | Engineering | both | CORE | 0.5d |  | 2026-10-15 | 2026-10-16 |
+| W71 release_check.sh asserts the one-sentence description is identical | Engineering | both | PLAY | 0.5d |  | 2026-10-16 | 2026-10-16 |
+| W124 External TestFlight round with Beta App Review and the same tester | Hari | ios | STORE | ~0.5d + 10d elapsed |  | 2026-10-06 | 2026-10-17 |
+| W73 Tiny GGUF fixture (~5 MB) so CI can run run_smoke.sh without fetch | Engineering | both | CORE | 0.5d |  | 2026-10-16 | 2026-10-17 |
 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot b | Hari | android | PLAY | 0.25d + 15d elapsed |  | 2026-10-02 | 2026-10-17 |
-| W60 Truncate whole exchanges, not single turns (+ Design review of div | Engineering | both | MVP | ~1d |  | 2026-10-16 | 2026-10-17 |
-| W124 External TestFlight round with Beta App Review and the same tester | Hari | ios | STORE | ~0.5d + 10d elapsed |  | 2026-10-07 | 2026-10-17 |
-| W72 arivu_backend_init(); move Android's direct ggml/llama calls behin | Engineering | android | CORE | 1d |  | 2026-10-17 | 2026-10-18 |
-| W103 Reconcile the iOS licences index with licence-audit.md §7.4 (Swift | Compliance | ios | STORE | 0.25d |  | 2026-10-18 | 2026-10-18 |
-| W117 tools/make_notice.py — one source, a generated NOTICE per platform | Engineering | both | CORE | 0.5d |  | 2026-10-18 | 2026-10-18 |
-| W47 Recapture shot 4 (Stop) and final Android screenshots on the phone | GTM | android | PLAY | 0.5d | phone→W112 | 2026-10-19 | 2026-10-19 |
-| W61 Native heap investigation — ~46 MB held after idle context free | Engineering | android | BENCH | ~0.5d | phone→W112 | 2026-10-19 | 2026-10-19 |
-| W69 Profile-budget check in CI (architecture.md §2.5) — a profile that | Engineering | both | CORE | 0.5d |  | 2026-10-20 | 2026-10-20 |
-| W70 Inject core/vX.Y.Z into arivu_version(); About shows the provenanc | Engineering | both | CORE | 0.5d |  | 2026-10-20 | 2026-10-20 |
-| W71 release_check.sh asserts the one-sentence description is identical | Engineering | both | PLAY | 0.5d |  | 2026-10-21 | 2026-10-21 |
-| W73 Tiny GGUF fixture (~5 MB) so CI can run run_smoke.sh without fetch | Engineering | both | CORE | 0.5d |  | 2026-10-21 | 2026-10-21 |
-| W75 Run the ios CI workflow on a macOS runner for the first time; make | Engineering | ios | CORE | ~0.5d |  | 2026-10-22 | 2026-10-22 |
-| W77 tools/check_copy.py — one key set across Android strings.xml and i | Engineering | both | CORE | 0.5d |  | 2026-10-22 | 2026-10-22 |
-| W81 Gate screen says WHY, from arivu_fit_name() — the same copy on bot | Design | both | MVP | 0.5d |  | 2026-10-23 | 2026-10-23 |
-| W83 Finish stopped_low_memory and load_failed_low_memory on Android; a | Engineering | android | MVP | 0.5d |  | 2026-10-23 | 2026-10-23 |
-| W97 Run CoreParityTests against the real core (not the stub) and settl | Engineering | ios | CORE | 0.5d | mac-with-xcode→W85 | 2026-10-24 | 2026-10-24 |
-| W99 iPhone accessibility pass — VoiceOver, AX5 Dynamic Type, RTL pseud | Design | ios | MVP | ~0.5d | mac-with-xcode→W85, iphone→W111 | 2026-10-24 | 2026-10-24 |
-| W100 Contrast verification of the iOS palette against design.md §10, co | Design | ios | MVP | 0.25d |  | 2026-10-25 | 2026-10-25 |
-| W136 Correct architecture/ios-port.md — the Play closed test is NOT fre | Architecture | ios | STORE | 0.25d |  | 2026-10-25 | 2026-10-25 |
-| W64 Play compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and | Compliance | android | PLAY | 0.25d |  | 2026-10-25 | 2026-10-25 |
-| W84 Clipboard confirmation on Android ≤ 12 (design.md §4) so one patte | Engineering | android | MVP | 0.25d |  | 2026-10-25 | 2026-10-25 |
+| W75 Run the ios CI workflow on a macOS runner for the first time; make | Engineering | ios | CORE | ~0.5d |  | 2026-10-17 | 2026-10-17 |
+| W77 tools/check_copy.py — one key set across Android strings.xml and i | Engineering | both | CORE | 0.5d |  | 2026-10-17 | 2026-10-18 |
+| W81 Gate screen says WHY, from arivu_fit_name() — the same copy on bot | Design | both | MVP | 0.5d |  | 2026-10-18 | 2026-10-18 |
+| W83 Finish stopped_low_memory and load_failed_low_memory on Android; a | Engineering | android | MVP | 0.5d |  | 2026-10-18 | 2026-10-19 |
+| W97 Run CoreParityTests against the real core (not the stub) and settl | Engineering | ios | CORE | 0.5d |  | 2026-10-19 | 2026-10-19 |
+| W99 iPhone accessibility pass — VoiceOver, AX5 Dynamic Type, RTL pseud | Design | ios | MVP | ~0.5d | iphone→W111 | 2026-10-19 | 2026-10-20 |
+| W100 Contrast verification of the iOS palette against design.md §10, co | Design | ios | MVP | 0.25d |  | 2026-10-20 | 2026-10-20 |
+| W136 Correct architecture/ios-port.md — the Play closed test is NOT fre | Architecture | ios | STORE | 0.25d |  | 2026-10-20 | 2026-10-20 |
+| W64 Play compliance checklist sync — D-018/D-019 → D-021/D-026; §1 and | Compliance | android | PLAY | 0.25d |  | 2026-10-20 | 2026-10-20 |
+| W84 Clipboard confirmation on Android ≤ 12 (design.md §4) so one patte | Engineering | android | MVP | 0.25d |  | 2026-10-21 | 2026-10-21 |
+| W95 iOS step 11 — icon and launch screen under the system corner mask, | Design | ios | STORE | 0.25d |  | 2026-10-21 | 2026-10-21 |
 | W58 Apply for production access (form answers from the closed test) an | Hari | android | PLAY | ~0.25d + 7d elapsed |  | 2026-10-19 | 2026-10-26 |
-| W87 iOS step 3 — run the 94 ArivuKit tests the normal way (swift test  | Engineering | ios | MVP | 0.25d |  | 2026-10-26 | 2026-10-26 |
-| W95 iOS step 11 — icon and launch screen under the system corner mask, | Design | ios | STORE | 0.25d | mac-with-xcode→W85 | 2026-10-26 | 2026-10-26 |
 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, P | Hari | android | PLAY | ~0.25d + 2d elapsed |  | 2026-10-26 | 2026-10-28 |
 | W63 Wave B (ID, BR) then Wave C, by country | Hari | android | PLAY | ~0.25d + 7d elapsed |  | 2026-10-28 | 2026-11-04 |
 
@@ -463,6 +458,13 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W135 Decisions Leaf rewritten for 0.2 — 59 entries, platform and  | Decisions | both | delivered (decisions.yml D-001..D-059, decisions-brief.md) — 10 Play-blocking, 6 App-Store-blocking, one ID map from six Leaves' independent numbering |
 | W35 D-001: package name (confirm domain control); record resolut | Hari | both | resolved_human 2026-09-15: io.github.brettleehari.arivu; renamed across the source tree; unit tests + emulator run confirm JNI still binds. Now also the iOS bundle id in ios/project.yml |
 | W42 Public source repo URL exists (privacy policy, listing, GitH | Hari | both | delivered — github.com/brettleehari/arivu, public, pushed 2026-09-15 (D-035) |
+| W85 iOS step 1 — install the toolchain: Xcode 16+ (Swift 6), bre | Engineering | ios | build — Xcode 27.0 (Swift 6); cmake 4.1.2 and ninja 1.12.1 come from the Android SDK, so no Homebrew (brew here is an Intel install that cannot run on arm64); xcodegen 2.46; xcrun resolves iphoneos and iphonesimulator |
+| W86 iOS step 2 — fetch the inputs on that Mac: fetch_llama.sh, f | Engineering | ios | host — third_party/llama.cpp patched, models/ sha256-verified, tools/host/run_smoke.sh ALL PASSED: fd-window load, prefix reuse 31 of 48, cancel, context-full, UTF-8 boundary |
+| W87 iOS step 3 — run the 94 ArivuKit tests the normal way (swift | Engineering | ios | swift-macos — 98 tests in 12 suites, green. Also found why it had never passed here; Strings.swift hand-built a bundle path that exists on iOS but not macOS |
+| W88 iOS step 4 — make tools/ios/build_core.sh actually produce a | Engineering | ios | build — tools/ios/build_core.sh produces build/ios/ArivuCore.xcframework, ios-arm64 7.6M and ios-arm64-simulator 7.7M, linked by the app. First cross-compile of /core for an Apple SDK |
+| W89 iOS step 5 — generate and open the Xcode project (ARIVU_REPO | Engineering | ios | build — tools/ios/generate_project.sh produces ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and both script phases; project.yml fixed for EXCLUDED_ARCHS, Accelerate and the ArivuTests host relationship. ARIVU_REPORT_EMAIL deliberately unset: that is D-010, and tools/ios/check_release.sh refuses the placeholder so nothing can ship with it |
+| W90 iOS step 6 — first Simulator build: meet the compiler with ~ | Engineering | ios | simulator — xcodebuild -sdk iphonesimulator BUILD SUCCEEDED; the app launches and renders the empty state. Four defects found only by compiling: proc_pid_rusage is macOS-only, EXCLUDED_ARCHS missing, Accelerate unlinked, the gate refused an unmeasured device |
+| W91 iOS step 7 — run ArivuTests on the Simulator (model in the b | Engineering | ios | simulator — 10 of 10 on the iPhone 17 Simulator, 1 known issue (the D-010 placeholder). Model in the bundle at 378 MB, privacy manifest, licences folder reference and copy catalogue all confirmed |
 
 ## Graph
 
@@ -569,13 +571,13 @@ flowchart LR
   W83["W83 Finish stopped_low_memory and load_faile…"]:::todo
   W84["W84 Clipboard confirmation on Android ≤ 12 d…"]:::todo
   W117["W117 tools/make_notice.py — one source, a gen…"]:::todo
-  W85["W85 iOS step 1 — install the toolchain: Xcod…"]:::todo
-  W86["W86 iOS step 2 — fetch the inputs on that Ma…"]:::todo
-  W87["W87 iOS step 3 — run the 94 ArivuKit tests t…"]:::todo
-  W88["W88 iOS step 4 — make tools/ios/build_core.s…"]:::todo
-  W89["W89 iOS step 5 — generate and open the Xcode…"]:::todo
-  W90["W90 iOS step 6 — first Simulator build: meet…"]:::todo
-  W91["W91 iOS step 7 — run ArivuTests on the Simul…"]:::todo
+  W85["W85 iOS step 1 — install the toolchain: Xcod…"]:::done
+  W86["W86 iOS step 2 — fetch the inputs on that Ma…"]:::done
+  W87["W87 iOS step 3 — run the 94 ArivuKit tests t…"]:::done
+  W88["W88 iOS step 4 — make tools/ios/build_core.s…"]:::done
+  W89["W89 iOS step 5 — generate and open the Xcode…"]:::done
+  W90["W90 iOS step 6 — first Simulator build: meet…"]:::done
+  W91["W91 iOS step 7 — run ArivuTests on the Simul…"]:::done
   W92["W92 iOS step 8 — put it on a physical iPhone…"]:::todo
   W93["W93 iOS step 9 — first iPhone measurement, a…"]:::todo
   W94["W94 iOS step 10 — device walk of design.md §…"]:::todo
@@ -762,39 +764,26 @@ flowchart LR
   W85 --> W86
   W85 --> W87
   W86 --> W88
-  W85 --> W88
   W87 -.-> W88
   W88 --> W89
-  W85 --> W89
   W89 --> W90
-  W85 --> W90
   W90 --> W91
-  W85 --> W91
   W91 --> W92
   W110 --> W92
-  W85 --> W92
   W111 --> W92
   W92 --> W93
-  W85 --> W93
   W111 --> W93
   W92 --> W94
-  W85 --> W94
   W111 --> W94
   W90 --> W95
-  W85 --> W95
   W119 --> W96
   W36 --> W96
   W78 --> W96
-  W85 --> W96
   W88 --> W97
-  W85 --> W97
   W90 --> W98
-  W85 --> W98
   W94 --> W99
-  W85 --> W99
   W111 --> W99
   W94 --> W101
-  W85 --> W101
   W111 --> W101
   W36 --> W105
   W44 --> W106
@@ -809,7 +798,6 @@ flowchart LR
   W109 --> W108
   W40 --> W108
   W93 --> W109
-  W85 --> W109
   W03 -.-> W109
   W33 --> W110
   W110 --> W113
@@ -820,7 +808,6 @@ flowchart LR
   W114 --> W119
   W98 --> W119
   W102 --> W119
-  W85 --> W119
   W119 --> W120
   W96 --> W120
   W118 --> W120
@@ -843,5 +830,5 @@ flowchart LR
   classDef blocked fill:#f7d4d0,stroke:#a33,color:#222
   classDef crit stroke:#c0392b,stroke-width:3px
   class W02,W03,W33,W34,W41,W52,W55,W57,W58,W19,W92,W94,W96,W101,W107,W108,W110,W112,W119,W120,W122,W123 crit
-  linkStyle 2,4,60,65,76,105,111,114,124,164,170,175,186,194,197,204,208,215,221,227 stroke:#c0392b,stroke-width:3px
+  linkStyle 2,4,60,65,76,105,111,114,124,160,164,167,174,181,184,190,194,200,206,212 stroke:#c0392b,stroke-width:3px
 ```

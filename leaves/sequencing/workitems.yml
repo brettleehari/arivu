@@ -21,10 +21,10 @@
 #   core               core/tests — no model, no platform SDK
 #   host               macOS arm64 host build sharing core/src/engine.cpp
 #   unit               JVM tests (Android) — 56 of them
-#   swift-macos        ios/ArivuKit compiled and tested on macOS — 94 tests, no iOS SDK involved
+#   swift-macos        ios/ArivuKit compiled and tested on macOS — 98 tests, no iOS SDK involved
 #   build              Gradle/scripts asserting something about the artifact
 #   emulator           arm64 AVD, FUNCTIONAL ONLY, never performance
-#   simulator          iOS Simulator, FUNCTIONAL ONLY, never performance  (nothing is here yet)
+#   simulator          iOS Simulator, FUNCTIONAL ONLY, never performance
 #   phone              the 4 GB Android test phone        — nothing has reached this level
 #   iphone             the 3-4 GB test iPhone             — nothing has reached this level
 #   play / appstore    the store accepted or reviewed it  — nothing has reached this level
@@ -119,7 +119,7 @@ resources:
       before an app can be installed on it at all.
   mac-with-xcode:
     title: A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen
-    available: false
+    available: true
     capacity: 1
     acquired_by: W85
     note: >
@@ -1402,7 +1402,8 @@ items:
     platform: ios
     spine: [C11]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "build \u2014 Xcode 27.0 (Swift 6); cmake 4.1.2 and ninja 1.12.1 come from the Android SDK, so no Homebrew (brew here is an Intel install that cannot run on arm64); xcodegen 2.46; xcrun resolves iphoneos and iphonesimulator"
     needs: this item CREATES the mac-with-xcode resource; it is the gate every other iOS engineering item sits behind. Xcode is a ~10 GB download and a slow install
     uses: [mac]
     estimate_days: 0.5
@@ -1416,7 +1417,8 @@ items:
     platform: ios
     spine: [C11, C2]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "host \u2014 third_party/llama.cpp patched, models/ sha256-verified, tools/host/run_smoke.sh ALL PASSED: fd-window load, prefix reuse 31 of 48, cancel, context-full, UTF-8 boundary"
     needs: if the core is broken, find out before Xcode is involved
     uses: [mac-with-xcode]
     estimate_days: 0.25
@@ -1428,7 +1430,8 @@ items:
     platform: ios
     spine: [C11]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "swift-macos \u2014 98 tests in 12 suites, green. Also found why it had never passed here; Strings.swift hand-built a bundle path that exists on iOS but not macOS"
     needs: expect the same 94 passes and 2 skips. If the manifest does not load, the Command Line Tools defect described in engineering-ios.md has followed you; a full Xcode install fixes it
     uses: [mac-with-xcode]
     estimate_days: 0.25
@@ -1440,7 +1443,8 @@ items:
     platform: ios
     spine: [C11, C2]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "build \u2014 tools/ios/build_core.sh produces build/ios/ArivuCore.xcframework, ios-arm64 7.6M and ios-arm64-simulator 7.7M, linked by the app. First cross-compile of /core for an Apple SDK"
     needs: "never run, and it is not even executable today (mode 644). Two predicted failures: libtool complaining about duplicate members from the ggml backends, and CMake refusing -G Ninja under the iOS toolchain. Exit criterion: plutil -p on the xcframework Info.plist shows both slices"
     uses: [mac-with-xcode]
     estimate_days: 1
@@ -1454,7 +1458,8 @@ items:
     platform: ios
     spine: [C11, C9]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "build \u2014 tools/ios/generate_project.sh produces ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and both script phases; project.yml fixed for EXCLUDED_ARCHS, Accelerate and the ArivuTests host relationship. ARIVU_REPORT_EMAIL deliberately unset: that is D-010, and tools/ios/check_release.sh refuses the placeholder so nothing can ship with it"
     needs: XcodeGen has never parsed this spec. The framework path, the folder-reference for licenses and the build-phase input/output files are all plausible and unproven. Wants D-010's real address, but the placeholder builds
     uses: [mac-with-xcode]
     decisions: [D-010]
@@ -1468,7 +1473,8 @@ items:
     platform: ios
     spine: [C11, C7, C8, C10]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "simulator \u2014 xcodebuild -sdk iphonesimulator BUILD SUCCEEDED; the app launches and renders the empty state. Four defects found only by compiling: proc_pid_rusage is macOS-only, EXCLUDED_ARCHS missing, Accelerate unlinked, the gate refused an unmeasured device"
     needs: "the biggest honest unknown on the iOS side. Named suspects: sheet(item:) plumbing, ScrollViewReader follow behaviour, Form inside a .sheet with detents, @FocusState, @UIApplicationDelegateAdaptor with a @StateObject stored property, and whether applicationDidReceiveMemoryWarning fires for a SwiftUI-lifecycle app. Label every Simulator number non-representative"
     uses: [mac-with-xcode]
     decisions: [D-043, D-045]
@@ -1482,7 +1488,8 @@ items:
     platform: ios
     spine: [C11, C1, C4, C3]
     owner: Engineering
-    status: todo
+    status: done
+    verified: "simulator \u2014 10 of 10 on the iPhone 17 Simulator, 1 known issue (the D-010 placeholder). Model in the bundle at 378 MB, privacy manifest, licences folder reference and copy catalogue all confirmed"
     uses: [mac-with-xcode]
     estimate_days: 0.5
     guess: true

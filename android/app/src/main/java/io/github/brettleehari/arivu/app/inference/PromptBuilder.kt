@@ -1,5 +1,8 @@
 package io.github.brettleehari.arivu.app.inference
 
+/** The tokenizer could not count a turn. A programming or engine fault, never a user state. */
+class CountFailedException(turnId: String) : RuntimeException("token count failed for turn $turnId")
+
 /** A turn as the prompt sees it. */
 data class Turn(val id: String, val fromUser: Boolean, val text: String)
 
@@ -57,8 +60,23 @@ class PromptBuilder(
         return BuiltPrompt.Ok(text, fixed + used, first)
     }
 
-    private suspend fun tokensOf(turn: Turn): Int =
-        cache[turn.id + ":" + turn.text.length] ?: countTokens(render(turn)).also { cache[turn.id + ":" + turn.text.length] = it }
+    /**
+     * Tokens in one rendered turn, cached by id and length.
+     *
+     * A negative count means the tokenizer failed. It is neither cached nor returned: cached, it
+     * would poison that turn for the rest of the session; returned, it would *reduce* `used` and let
+     * more history in than fits, so the prompt would overrun the context and come back as
+     * CONTEXT_FULL instead of an error anyone can act on. The core returns INVALID here and iOS
+     * throws `.countFailed`; Android was the only one of the three that carried on (spine: C7).
+     */
+    private suspend fun tokensOf(turn: Turn): Int {
+        val key = turn.id + ":" + turn.text.length
+        cache[key]?.let { return it }
+        val n = countTokens(render(turn))
+        if (n < 0) throw CountFailedException(turn.id)
+        cache[key] = n
+        return n
+    }
 
     companion object {
         const val ASSISTANT_OPEN = "<|im_start|>assistant\n<think>\n\n</think>\n\n"

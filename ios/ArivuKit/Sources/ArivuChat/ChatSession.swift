@@ -186,7 +186,11 @@ public final class ChatSession: ObservableObject {
                 }
             }
         } catch {
-            stop = .error
+            // The bubble carries the same verdict as the notice. This said `.error` while the
+            // notice said "your phone is low on memory", so the saved reply disagreed with the
+            // sentence above it — and Android labels the same failure LOW_MEMORY (spine: C6, C11).
+            let isMemory = (error as? ArivuEngineError)?.isMemoryFailure == true
+            stop = isMemory ? .lowMemory : .error
             notice = Self.notice(for: error)
         }
 

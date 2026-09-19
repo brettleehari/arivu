@@ -124,7 +124,12 @@ class LlamaEngine(context: Context) : Closeable {
             trySend(
                 GenerationEvent.Done(
                     GenerationStats(
-                        stop = StopReason.entries[r[0].toInt()],
+                        // getOrNull, not [ordinal]. The index comes from the C enum, so a stop
+                        // reason added to core/include/arivu/arivu.h would throw
+                        // IndexOutOfBoundsException here and take the reply with it. iOS already
+                        // degrades — `StopReason(rawValue:) ?? .error` — and the two platforms must
+                        // not differ in whether a core change crashes the app (spine: C11).
+                        stop = StopReason.entries.getOrNull(r[0].toInt()) ?: StopReason.ERROR,
                         promptTokens = r[1].toInt(),
                         reusedTokens = r[2].toInt(),
                         generated = r[3].toInt(),

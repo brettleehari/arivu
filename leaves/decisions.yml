@@ -2123,3 +2123,76 @@
     launch and the D-024 override should be checked against each other before submission.
   implemented_provisionally: "n/a (App Store Connect)"
   if_rejected: "a Console setting; no code, no copy change."
+
+- id: D-060
+  title: Recovering from a failure the user did not cause — put their text back, or add a Try again action
+  raised_at: 2026-09-19
+  sla_expires_at: 2026-09-21
+  spine: [C1, C6, C7, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  related: [D-021, D-032, D-047]
+  context: >
+    What happens today when a send fails before the model produces anything — load_failed or
+    load_failed_low_memory: the empty reply bubble is removed, a notice appears, and the user's own
+    message is LEFT IN THE CONVERSATION as an orphan with no reply. The input box is empty. So the
+    only way to try again is to copy your own words back out of a bubble and paste them in. Verified
+    in ChatSession.runSend and ChatViewModel.send; both platforms behave the same way.
+
+    The copy then asks for manual work on top: "Close Arivu fully, then open it again",
+    "Close other apps, then send your message again". A user who did nothing wrong is asked to do
+    systems administration and re-enter their text. That is the furthest the product gets from C1,
+    and it happens on exactly the phones the product exists for — the full, cheap ones.
+
+    This matters more on iOS than Android. Jetsam gives no warning before it kills the app
+    (engineering-ios.md), so "the phone was briefly busy" is the expected failure, not the rare one,
+    and it is usually transient: the same send a moment later succeeds.
+
+    message_too_long has the same shape and the same remedy today: "The message stays in place so
+    the user can copy and shorten it" (ChatSession.runSend). The user cannot shorten a bubble; they
+    can only copy it out and edit it somewhere that has a cursor.
+
+    PocketPal answers the general version of this by making the error carry its own fix — its
+    context banner renders the button that resolves the condition rather than describing what the
+    user should go and do (src/components/ChatView/BannerRow.tsx). The mechanism is worth taking
+    even though almost none of its error taxonomy is, since most of theirs exists to serve model
+    downloads that Arivu does not have.
+
+    Scope note: this is about failures BEFORE any text is generated. A reply that dies part-way
+    through keeps what was written (C7) and resuming it is D-032's "continue", which is a different
+    question with a worse answer — the W04 eval found the model restarting instead of resuming.
+  options:
+    - "Put the text back in the input box and drop the orphan bubble; Send is the retry (recommended)"
+    - "Leave the message in the conversation and add a Try again action to the notice bar"
+    - "Retry once automatically, silently, before any notice is shown"
+    - "Leave it: the user copies their message out of the bubble and pastes it back (today)"
+  recommendation: >
+    Option 1. On a failure before generation, restore the user's text to the input and remove the
+    message from the conversation, so the existing Send button IS the retry.
+
+    It is the smallest of the four. No new control, no new copy key, no new accessibility label, no
+    new state in the chat machine — and D-053 is about to make every new string cost two platforms
+    and a check_copy.py rule. It also fixes message_too_long in the same move, because a message in
+    the input box can be edited down where a message in a bubble cannot, which is what that notice
+    has been asking for all along.
+
+    Option 2 is the conventional answer and the one PocketPal takes, but it buys a second way to
+    send the same text and leaves a bubble on screen that will never be answered. If option 1 is
+    rejected on the grounds that a sent message should stay sent, option 2 is the right fallback.
+
+    Option 3 is refused. A silent retry during memory pressure is the one moment when trying again
+    immediately is most likely to fail again and most likely to be what gets the app killed, and it
+    would hide from the user the fact that anything went wrong — which C6 does not allow.
+
+    Two constraints if option 1 is accepted. Restore only when the input is empty, so a retry can
+    never overwrite something the user has since typed. And the restore must not fire for a failure
+    that happened after streaming began, where C7 says the partial reply is kept.
+  implemented_provisionally: >
+    no — today both platforms remove the reply bubble, keep the user's message, and leave the input
+    empty (ChatSession.runSend, ChatViewModel.send)
+  if_rejected: >
+    nothing to undo; option 1 is a few lines in each chat state machine. Choosing option 2 instead
+    costs a copy key, its two platform strings, an accessibility label and a check_copy.py entry.

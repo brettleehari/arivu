@@ -22,6 +22,20 @@ CMAKE="${CMAKE:-$(command -v cmake || echo "$HOME/Library/Android/sdk/cmake/4.1.
 MODEL="${MODEL:-$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf}"
 CASES="${CASES:-$ROOT/tools/eval/cases.yml}"
 
+# Pick an interpreter that is (a) the right architecture and (b) has PyYAML. Not the shebang: the
+# first python3 on PATH here was an x86_64 3.8 that dies with "Bad CPU type in executable" on Apple
+# silicon. tools/bench.sh, release_check.sh and ios_release_check.sh all hardcode /usr/bin/python3
+# for the same reason; this keeps that convention and says so when it cannot be met.
+PY_BIN="${PYTHON:-}"
+if [[ -z "$PY_BIN" ]]; then
+  for candidate in /usr/bin/python3 python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c 'import yaml' >/dev/null 2>&1; then
+      PY_BIN="$candidate"; break
+    fi
+  done
+fi
+[[ -n "$PY_BIN" ]] || { echo "no python3 with PyYAML found (tried /usr/bin/python3, python3). Set PYTHON=/path/to/python3" >&2; exit 1; }
+
 WANT_SHEET=0
 [[ "${1:-}" == "--sheet" ]] && WANT_SHEET=1
 
@@ -44,14 +58,14 @@ export PATH="$(dirname "$CMAKE"):$PATH"
 # The dataset is YAML for humans; the runner reads a length-prefixed record file. This step is also
 # what extracts the shipped system prompt out of Policy.kt, so there is no second copy of it.
 PREPARED="$OUT/cases.bin"
-SEEDS_FROM_FILE="$("$ROOT/tools/eval/prepare_cases.py" "$CASES" "$PREPARED" | sed -n 's/^seeds: //p')"
+SEEDS_FROM_FILE="$("$PY_BIN" "$ROOT/tools/eval/prepare_cases.py" "$CASES" "$PREPARED" | sed -n 's/^seeds: //p')"
 SEEDS="${SEEDS:-$SEEDS_FROM_FILE}"
 
 STAMP="$(date +%Y%m%d-%H%M%S)"
 ROWS="$OUT/rows-$STAMP.jsonl"
 "$BUILD/arivu_eval" "$MODEL" "$PREPARED" "$SEEDS" "$ROWS"
 
-GRADE=("$ROOT/tools/eval/grade.py" "$ROWS" --cases "$CASES")
+GRADE=("$PY_BIN" "$ROOT/tools/eval/grade.py" "$ROWS" --cases "$CASES")
 [[ $WANT_SHEET == 1 ]] && GRADE+=(--sheet "$OUT/sheet-$STAMP.md")
 "${GRADE[@]}"
 
@@ -59,4 +73,4 @@ echo "  rows:  $ROWS"
 [[ $WANT_SHEET == 1 ]] && echo "  sheet: $OUT/sheet-$STAMP.md"
 echo
 echo "  D-017 is decided on the human column. Score the sheet, save it as CSV (case,seed,score),"
-echo "  then re-run:  tools/eval/grade.py $ROWS --scores <that.csv>"
+echo "  then re-run:  $PY_BIN tools/eval/grade.py $ROWS --scores <that.csv>"

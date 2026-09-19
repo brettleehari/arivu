@@ -196,11 +196,22 @@ public extension Profile {
     /// The arithmetic is `footprint/1000*permille + footprint%1000*permille/1000` rather than the
     /// obvious multiply — integer, in that order, to match `arivu_profile_fits` bit for bit and to
     /// keep a large footprint from overflowing on the way through.
-    func requiredAvailableBytes(_ source: MemorySource) -> UInt64 {
+    /// - Parameter observedFootprintBytes: the largest charged footprint this profile has ever
+    ///   actually cost on this device, or 0 if it has never run here.
+    ///
+    /// Mirrors `arivu_profile_required_available_bytes`. When the device has run this profile, what
+    /// it cost replaces what was predicted — in both directions. `runtimeOverheadBytes` is one
+    /// provisional number standing in for every phone that will ever run this, so shipping it
+    /// static to thousands of device models guarantees being wrong twice: refusing phones that
+    /// would have worked, and admitting phones that then get killed.
+    func requiredAvailableBytes(_ source: MemorySource,
+                                observedFootprintBytes: UInt64 = 0) -> UInt64 {
         let permille = UInt64(source.headroomPermille)
         guard permille != 0 else { return 0 }
-        let footprint = footprintBytes
-        return footprint / 1000 * permille + footprint % 1000 * permille / 1000
+        // Measurement beats prediction. The headroom still applies on top, so adapting the
+        // magnitude never removes the margin.
+        let basis = observedFootprintBytes != 0 ? observedFootprintBytes : footprintBytes
+        return basis / 1000 * permille + basis % 1000 * permille / 1000
     }
 
     /// "Can this device run this profile", answered from measured numbers only.
@@ -213,7 +224,8 @@ public extension Profile {
     /// Mirrors `arivu_profile_fits`; `CoreParityTests.fitMatchesCore` runs both over the same inputs.
     func fits(_ device: DeviceFacts,
               availableMemoryBytes: UInt64 = 0,
-              memorySource: MemorySource = .unmeasured) -> ProfileFit {
+              memorySource: MemorySource = .unmeasured,
+              observedFootprintBytes: UInt64 = 0) -> ProfileFit {
         if let problem = validationError { return .invalidProfile(problem) }
         if !device.arm64 { return .noArm64 }
         if device.lowRamFlagged { return .lowRamDevice }
@@ -223,7 +235,7 @@ public extension Profile {
         if device.totalRamBytes != 0 && device.totalRamBytes < minTotalRamBytes {
             return .totalRam(actual: device.totalRamBytes, required: minTotalRamBytes)
         }
-        let required = requiredAvailableBytes(memorySource)
+        let required = requiredAvailableBytes(memorySource, observedFootprintBytes: observedFootprintBytes)
         if required > 0 && availableMemoryBytes > 0 && availableMemoryBytes < required {
             return .availableMemory(actual: availableMemoryBytes, required: required)
         }
@@ -242,4 +254,40 @@ public extension Profile {
             $0.fits(device, availableMemoryBytes: availableMemoryBytes, memorySource: memorySource) == .ok
         }
     }
+}
+
+/// What this profile has actually cost on this device.
+///
+/// The one thing Arivu learns about the phone it is on. Not a preference and not settable by the
+/// user, so C8 still holds — the same footing as `GatePassStore` ("this phone already passed") and
+/// `LoadedBeforeFlag` ("a model has been mapped here before").
+///
+/// Kept as a **maximum**, never a last-value: a generation that happened to run cheaply must not
+/// relax the bar for every generation after it. Keyed by profile id, because a different profile
+/// has a different footprint and its measurement says nothing about this one.
+///
+/// Why one observation is enough: llama.cpp allocates the whole KV cache for `n_ctx` when the
+/// context is created, so the footprint once a context exists is already the steady-state peak. It
+/// does not grow as the conversation does.
+public final class MemoryCalibrationStore: @unchecked Sendable {
+    private let defaults: UserDefaults
+    private let prefix = "io.github.brettleehari.arivu.calibration.footprint."
+
+    public init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+    public static let standard = MemoryCalibrationStore()
+
+    /// The largest footprint recorded for `profileID`, or 0 if this profile has never run here.
+    public func observedFootprintBytes(for profileID: String) -> UInt64 {
+        let stored = defaults.object(forKey: prefix + profileID) as? NSNumber
+        return stored?.uint64Value ?? 0
+    }
+
+    /// Records a footprint, keeping the larger of it and whatever was already known.
+    /// Ignores 0, which means "the platform would not say" rather than "it cost nothing".
+    public func record(_ bytes: UInt64, for profileID: String) {
+        guard bytes > 0, bytes > observedFootprintBytes(for: profileID) else { return }
+        defaults.set(NSNumber(value: bytes), forKey: prefix + profileID)
+    }
+
+    public func forget(_ profileID: String) { defaults.removeObject(forKey: prefix + profileID) }
 }

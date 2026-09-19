@@ -219,4 +219,52 @@ struct StopReasonTests {
         #expect(stats.decodeTokensPerSecond == 20)
         #expect(GenerationStats(stop: .error).decodeTokensPerSecond == 0)
     }
+
+    /// The one thing Arivu learns about the phone it runs on.
+    @Test("a measured footprint replaces the estimate, in both directions")
+    func calibrationBeatsTheEstimate() {
+        let p = Profile.compact
+        let estimate = p.requiredAvailableBytes(.probed)
+
+        // Hungrier than predicted: demand more. This is the only thing between the user and a kill
+        // on a device whose runtime overhead the profile under-guessed.
+        let hungry = p.requiredAvailableBytes(.probed, observedFootprintBytes: p.footprintBytes * 2)
+        #expect(hungry > estimate)
+
+        // Cheaper than predicted: demand less. Refusing a phone this app has already run on is the
+        // other half of the same mistake.
+        let lean = p.requiredAvailableBytes(.probed, observedFootprintBytes: p.footprintBytes / 2)
+        #expect(lean < estimate)
+
+        // The headroom survives either way: adapting the magnitude must not remove the margin.
+        #expect(lean > p.footprintBytes / 2)
+
+        // No observation yet, or a platform that never measures: unchanged, and no ceiling at all.
+        #expect(p.requiredAvailableBytes(.probed, observedFootprintBytes: 0) == estimate)
+        #expect(p.requiredAvailableBytes(.unmeasured, observedFootprintBytes: p.footprintBytes * 99) == 0)
+    }
+
+    @Test("the calibration store keeps the maximum, per profile, and ignores nothing-readings")
+    func calibrationStoreKeepsTheWorstCase() throws {
+        let defaults = try #require(UserDefaults(suiteName: "arivu.calibration.\(UUID().uuidString)"))
+        let store = MemoryCalibrationStore(defaults: defaults)
+
+        #expect(store.observedFootprintBytes(for: "compact") == 0)
+        store.record(300_000_000, for: "compact")
+        #expect(store.observedFootprintBytes(for: "compact") == 300_000_000)
+
+        // A cheaper run must not relax the bar — the store is a high-water mark, not a last value.
+        store.record(100_000_000, for: "compact")
+        #expect(store.observedFootprintBytes(for: "compact") == 300_000_000)
+
+        store.record(400_000_000, for: "compact")
+        #expect(store.observedFootprintBytes(for: "compact") == 400_000_000)
+
+        // 0 means "the platform would not say", not "it cost nothing".
+        store.record(0, for: "compact")
+        #expect(store.observedFootprintBytes(for: "compact") == 400_000_000)
+
+        // A different profile has a different footprint; its measurement says nothing about this one.
+        #expect(store.observedFootprintBytes(for: "standard") == 0)
+    }
 }

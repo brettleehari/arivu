@@ -125,13 +125,35 @@ final class Catalogue: @unchecked Sendable {
         }
 
         var out: [(URL, String)] = []
-        for (_, path, how) in roots {
+        for (bundle, path, how) in roots {
+            // Ask the Bundle first, where there is one. A bundle's internal layout is not the same
+            // on every platform: iOS puts resources at the top level, macOS nests them under
+            // Contents/Resources. Hand-building "<bundle>/en.lproj/Localizable.strings" therefore
+            // finds the catalogue on a device and misses it under `swift test` on a Mac — which is
+            // the one configuration this package exists to keep working, and it was failing with
+            // "copy catalogue has no key message_too_long" the first time the suite ever ran here.
+            if let bundle {
+                for language in preferredLanguages() {
+                    if let url = bundle.url(forResource: "Localizable", withExtension: "strings",
+                                            subdirectory: nil, localization: language) {
+                        out.append((url, how))
+                    }
+                }
+                if let url = bundle.url(forResource: "Localizable", withExtension: "strings") {
+                    out.append((url, how))
+                }
+            }
+            // Then the hand-built paths, which are what a plain directory (ARIVU_STRINGS_DIR, the
+            // macOS verification harness) needs, and a useful fallback for any layout the Bundle
+            // API declines to resolve.
             let base = URL(fileURLWithPath: path, isDirectory: true)
             for language in preferredLanguages() {
                 out.append((base.appendingPathComponent("\(language).lproj/Localizable.strings"), how))
+                out.append((base.appendingPathComponent("Contents/Resources/\(language).lproj/Localizable.strings"), how))
             }
             // A flat layout (no .lproj) is what a String Catalog compiles down to in some configurations.
             out.append((base.appendingPathComponent("Localizable.strings"), how))
+            out.append((base.appendingPathComponent("Contents/Resources/Localizable.strings"), how))
         }
         return out
     }

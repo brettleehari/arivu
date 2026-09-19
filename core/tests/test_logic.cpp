@@ -226,7 +226,10 @@ void test_prompt_c_api() {
 }
 
 arivu_device good_device() {
-    arivu_device d;
+    // `{}`, not a bare declaration: arivu_device grows, and a caller that assigns field by field
+    // inherits garbage in whatever was added since. That is exactly what happened when
+    // observed_footprint_bytes arrived — these tests started demanding 8.6 GB.
+    arivu_device d{};
     d.total_ram_bytes        = 4ull * 1024 * 1024 * 1024;
     d.available_memory_bytes = 0;
     d.free_storage_bytes     = 2ull * 1024 * 1024 * 1024;
@@ -385,6 +388,42 @@ void test_profile() {
         CHECK(arivu_profile_fits(&p, &dev).fit == ARIVU_FIT_OK);
         dev.memory_source = ARIVU_MEM_PROBED;
         CHECK(arivu_profile_fits(&p, &dev).fit == ARIVU_FIT_AVAILABLE_MEMORY);
+    }
+    {
+        // Calibration: what the profile ACTUALLY cost on this device replaces what was predicted
+        // for every device. The estimate exists to be superseded; runtime_overhead_bytes in
+        // particular is one provisional number standing in for every phone that will ever run this.
+
+        // (a) Observed HIGHER than predicted: this device is hungrier than the estimate allowed.
+        //     Demanding more is the only thing between the user and a kill.
+        arivu_device dev = good_device();
+        dev.memory_source            = ARIVU_MEM_PROBED;
+        dev.observed_footprint_bytes = footprint * 2;
+        CHECK_EQ(arivu_profile_required_available_bytes(&p, &dev), footprint * 2 * 14 / 10);
+        dev.available_memory_bytes   = footprint * 14 / 10;   // enough for the ESTIMATE
+        CHECK(arivu_profile_fits(&p, &dev).fit == ARIVU_FIT_AVAILABLE_MEMORY);
+
+        // (b) Observed LOWER than predicted: the estimate was pessimistic here. Refusing a device
+        //     this app has already demonstrably run on is the other half of the same mistake.
+        dev.observed_footprint_bytes = footprint / 2;
+        CHECK_EQ(arivu_profile_required_available_bytes(&p, &dev), (footprint / 2) * 14 / 10);
+        dev.available_memory_bytes   = footprint;             // below the ESTIMATE's requirement
+        CHECK(arivu_profile_fits(&p, &dev).fit == ARIVU_FIT_OK);
+
+        // (c) The headroom multiplier still applies on top. Adapting the magnitude must never
+        //     remove the margin, or a device that just fits would have no room to breathe.
+        CHECK(arivu_profile_required_available_bytes(&p, &dev) > dev.observed_footprint_bytes);
+
+        // (d) No observation yet: the estimate stands, unchanged.
+        dev.observed_footprint_bytes = 0;
+        CHECK_EQ(arivu_profile_required_available_bytes(&p, &dev), footprint * 14 / 10);
+
+        // (e) An unmeasured platform has no ceiling, however large the observation. Calibration
+        //     refines a ceiling; it never invents one.
+        dev.observed_footprint_bytes = footprint * 100;
+        dev.memory_source            = ARIVU_MEM_UNMEASURED;
+        CHECK_EQ(arivu_profile_required_available_bytes(&p, &dev), (uint64_t) 0);
+        CHECK(arivu_profile_fits(&p, &dev).fit == ARIVU_FIT_OK);
     }
     {
         // A platform that does not know must say so, and the core then makes no ceiling check at

@@ -32,6 +32,42 @@ public enum CoreParity {
     /// copies stop agreeing.
     public static var assistantOpen: String { String(cString: arivu_assistant_open()) }
 
+    /// The core's answer to "how much available memory does this profile need on this device".
+    /// Compared directly, so calibration cannot drift in the arithmetic while still agreeing on the
+    /// verdict for the handful of readings the matrix happens to try.
+    public static func requiredAvailableBytes(_ profile: Profile,
+                                              source: MemorySource,
+                                              observedFootprintBytes: UInt64) -> UInt64 {
+        var c = arivu_profile()
+        var id = Array(profile.id.utf8CString)
+        var modelID = Array(profile.modelID.utf8CString)
+        return id.withUnsafeMutableBufferPointer { idBuffer in
+            modelID.withUnsafeMutableBufferPointer { modelBuffer in
+                c.id = UnsafePointer(idBuffer.baseAddress)
+                c.model_id = UnsafePointer(modelBuffer.baseAddress)
+                c.model_bytes = profile.modelBytes
+                c.n_ctx = profile.nCtx
+                c.n_batch = profile.nBatch
+                c.n_threads = profile.nThreads
+                c.kv_q8_0 = profile.kvQ8_0
+                c.repack = profile.repack
+                c.reply_reserve_tokens = profile.replyReserveTokens
+                c.max_reply_tokens = profile.maxReplyTokens
+                c.kv_bytes_per_token = profile.kvBytesPerToken
+                c.compute_buffer_bytes = profile.computeBufferBytes
+                c.runtime_overhead_bytes = profile.runtimeOverheadBytes
+                c.min_total_ram_bytes = profile.minTotalRamBytes
+                c.min_free_storage_bytes = profile.minFreeStorageBytes
+                c.capabilities = profile.capabilities.rawValue
+
+                var d = arivu_device()
+                d.memory_source = arivu_memory_source(UInt32(source.rawValue))
+                d.observed_footprint_bytes = observedFootprintBytes
+                return arivu_profile_required_available_bytes(&c, &d)
+            }
+        }
+    }
+
     /// The core's headroom table, so `MemorySource.headroomPermille` is checked against it rather
     /// than trusted to have been typed in the same order.
     public static func headroomPermille(_ source: MemorySource) -> UInt32 {
@@ -125,14 +161,31 @@ public enum CoreParity {
         ]
         let required = swift.requiredAvailableBytes(.probed)
         let readings: [UInt64] = [0, 1_000, required > 1 ? required - 1 : 1, required, required + 1, 2_000_000_000]
+        // 0 = never run here; below and above the estimate = the two directions calibration has to
+        // be trusted in.
+        let observations: [UInt64] = [0, swift.footprintBytes / 2, swift.footprintBytes * 2]
         for device in devices {
             for source in MemorySource.allCases {
                 for available in readings {
-                    let fromCore = fit(swift, on: device, availableMemoryBytes: available, memorySource: source)
-                    let fromSwift = swift.fits(device, availableMemoryBytes: available, memorySource: source)
-                    if fromCore != fromSwift {
-                        found.append("fit disagreement: ram=\(device.totalRamBytes) storage=\(device.freeStorageBytes) arm64=\(device.arm64) available=\(available) source=\(source): core \(fromCore) vs Swift \(fromSwift)")
+                    for observed in observations {
+                        let fromCore = fit(swift, on: device, availableMemoryBytes: available,
+                                           memorySource: source, observedFootprintBytes: observed)
+                        let fromSwift = swift.fits(device, availableMemoryBytes: available,
+                                                   memorySource: source, observedFootprintBytes: observed)
+                        if fromCore != fromSwift {
+                            found.append("fit disagreement: ram=\(device.totalRamBytes) storage=\(device.freeStorageBytes) arm64=\(device.arm64) available=\(available) source=\(source) observed=\(observed): core \(fromCore) vs Swift \(fromSwift)")
+                        }
                     }
+                }
+            }
+        }
+        // And the required-bytes arithmetic itself, not just the verdict it produces.
+        for source in MemorySource.allCases {
+            for observed in observations {
+                let c = requiredAvailableBytes(swift, source: source, observedFootprintBytes: observed)
+                let s = swift.requiredAvailableBytes(source, observedFootprintBytes: observed)
+                if c != s {
+                    found.append("requiredAvailableBytes(source: \(source), observed: \(observed)): core \(c) vs Swift \(s)")
                 }
             }
         }
@@ -186,7 +239,8 @@ public enum CoreParity {
     /// that exists for jetsam, permanently out of reach of the parity test.
     public static func fit(_ profile: Profile, on device: DeviceFacts,
                            availableMemoryBytes: UInt64 = 0,
-                           memorySource: MemorySource = .unmeasured) -> ProfileFit {
+                           memorySource: MemorySource = .unmeasured,
+                           observedFootprintBytes: UInt64 = 0) -> ProfileFit {
         var c = arivu_profile()
         var id = Array(profile.id.utf8CString)
         var modelID = Array(profile.modelID.utf8CString)
@@ -217,6 +271,7 @@ public enum CoreParity {
                 d.arm64 = device.arm64
                 d.low_ram_flagged = device.lowRamFlagged
                 d.memory_source = arivu_memory_source(UInt32(memorySource.rawValue))
+                d.observed_footprint_bytes = observedFootprintBytes
 
                 let check = arivu_profile_fits(&c, &d)
                 switch check.fit {

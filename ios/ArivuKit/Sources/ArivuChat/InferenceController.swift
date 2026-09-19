@@ -95,6 +95,7 @@ public actor InferenceController {
     public nonisolated let states: AsyncStream<EngineState>
 
     private let modelSource: ModelSource
+    private let calibration: MemoryCalibrationStore
     /// Nonisolated: the UI asks `hasLoadedBefore` while deciding which Starting line to show, and
     /// must not have to wait behind a model load to find out.
     private nonisolated let loadedBefore: LoadedBeforeFlag
@@ -108,8 +109,10 @@ public actor InferenceController {
 
     public init(modelSource: ModelSource,
                 profile: Profile = .compact,
-                loadedBefore: LoadedBeforeFlag = LoadedBeforeFlag()) {
+                loadedBefore: LoadedBeforeFlag = LoadedBeforeFlag(),
+                calibration: MemoryCalibrationStore = .standard) {
         self.modelSource = modelSource
+        self.calibration = calibration
         self.profile = profile
         self.loadedBefore = loadedBefore
         let (stream, continuation) = AsyncStream<EngineState>.makeStream(bufferingPolicy: .bufferingNewest(8))
@@ -173,7 +176,10 @@ public actor InferenceController {
                                                        sampling: .shipped()) {
                         // Closes the microsecond window between the check above and the native start.
                         if self.cancelBox.isRequested { engine.cancel() }
-                        if case .done(let stats) = event { await self.logDone(stats) }
+                        if case .done(let stats) = event {
+                            await self.logDone(stats)
+                            if stats.generated > 0 { await self.recordFootprint() }
+                        }
                         continuation.yield(event)
                     }
                     continuation.finish()
@@ -228,7 +234,7 @@ public actor InferenceController {
 
         // Ask before allocating, where the platform can say. A context that cannot be created is a
         // different screen from one that failed for any other reason (leaves/design.md §7).
-        if DeviceMemory.hasRoomForContext(for: profile) == false {
+        if DeviceMemory.hasRoomForContext(for: profile, calibration: calibration) == false {
             throw ArivuEngineError.contextCreateFailed("not enough memory available for a context")
         }
         try await engine.ensureContext(ContextParameters(profile: profile,
@@ -285,6 +291,16 @@ public actor InferenceController {
             await engine.freeContext()
             log.notice("context freed: \(reason, privacy: .public); \(DeviceMemory.summary(), privacy: .public)")
         }
+    }
+
+    /// Record what this reply actually cost, so the next memory check is answered from this phone
+    /// rather than from an estimate made on a different one.
+    ///
+    /// Taken after a generation that produced something, because a run that failed says nothing
+    /// about the steady-state cost. The store keeps the maximum, so this only ever tightens.
+    private func recordFootprint() {
+        guard let footprint = DeviceMemory.footprintBytes() else { return }
+        calibration.record(footprint, for: profile.id)
     }
 
     private func logDone(_ stats: GenerationStats) {

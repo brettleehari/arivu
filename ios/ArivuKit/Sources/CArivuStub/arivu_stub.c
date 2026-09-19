@@ -309,6 +309,17 @@ uint64_t arivu_profile_estimated_peak_bytes(const arivu_profile * profile) {
     return arivu_profile_mapped_bytes(profile) + arivu_profile_footprint_bytes(profile);
 }
 
+uint64_t arivu_profile_required_available_bytes(const arivu_profile * profile,
+                                                const arivu_device * device) {
+    if (!profile || !device) return 0;
+    const uint32_t permille = arivu_headroom_permille(device->memory_source);
+    if (permille == 0) return 0;
+    const uint64_t basis = device->observed_footprint_bytes != 0
+                         ? device->observed_footprint_bytes
+                         : arivu_profile_footprint_bytes(profile);
+    return basis / 1000ull * permille + basis % 1000ull * permille / 1000ull;
+}
+
 uint32_t arivu_headroom_permille(arivu_memory_source source) {
     switch (source) {
         case ARIVU_MEM_PROBED:     return 1400;
@@ -413,6 +424,5 @@ size_t arivu_utf8_complete_prefix(const char * bytes, size_t len) {
     else if ((lead & 0xF8) == 0xF0) needed = 4;
     else return len;  // stray continuation byte; nothing sensible to hold back
     if (start + needed <= len) return len;
-    i = start;
-    return i;
+    return start;   // hold back the incomplete tail
 }

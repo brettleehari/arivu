@@ -172,6 +172,19 @@ uint32_t arivu_headroom_permille(arivu_memory_source source) {
     return 0;
 }
 
+uint64_t arivu_profile_required_available_bytes(const arivu_profile * p, const arivu_device * d) {
+    if (p == nullptr || d == nullptr) return 0;
+    const uint32_t permille = arivu_headroom_permille(d->memory_source);
+    if (permille == 0) return 0;   // the platform did not measure; no ceiling to apply
+
+    // Measurement beats prediction. See the header for why this is trusted downwards as well as
+    // upwards, and why one observation is enough.
+    const uint64_t basis = d->observed_footprint_bytes != 0 ? d->observed_footprint_bytes
+                                                            : arivu_profile_footprint_bytes(p);
+    // Integer, in this order, so a large basis cannot overflow on the way through.
+    return basis / 1000ull * permille + basis % 1000ull * permille / 1000ull;
+}
+
 arivu_profile_check arivu_profile_fits(const arivu_profile * p, const arivu_device * d) {
     arivu_profile_check r;
     r.fit                       = ARIVU_FIT_OK;
@@ -210,10 +223,10 @@ arivu_profile_check arivu_profile_fits(const arivu_profile * p, const arivu_devi
     //      refuse phones that would have run this profile perfectly well.
     //   2. the headroom demanded depends on how the number was obtained, not on which platform
     //      obtained it. That is the same rule as everything else here (spine: C11).
-    const uint32_t permille = arivu_headroom_permille(d->memory_source);
-    if (permille != 0 && d->available_memory_bytes != 0) {
-        const uint64_t required = r.estimated_footprint_bytes / 1000ull * permille +
-                                  r.estimated_footprint_bytes % 1000ull * permille / 1000ull;
+    //   3. once this device has actually run the profile, what it cost here replaces what was
+    //      predicted for every phone (arivu_profile_required_available_bytes).
+    const uint64_t required = arivu_profile_required_available_bytes(p, d);
+    if (required != 0 && d->available_memory_bytes != 0) {
         if (d->available_memory_bytes < required) {
             r.fit            = ARIVU_FIT_AVAILABLE_MEMORY;
             r.required_bytes = required;

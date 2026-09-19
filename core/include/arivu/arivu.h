@@ -164,8 +164,16 @@ typedef struct {
     int32_t  performance_cores;
     bool     arm64;
     bool     low_ram_flagged;         // Android isLowRamDevice(); false on iOS
-    // Zero-initialising this struct gives ARIVU_MEM_UNMEASURED, which is the safe answer.
+    // ZERO-INITIALISE THIS STRUCT. `arivu_device d = {0};`, `arivu_device d{};`, memset, or Swift's
+    // `arivu_device()` — never a bare declaration followed by field assignments. Every field's
+    // zero is deliberately the safe answer (ARIVU_MEM_UNMEASURED, "not measured", "never observed"),
+    // and fields get added here: a caller that assigns each one by hand silently inherits garbage
+    // in whatever is newer than it is.
     arivu_memory_source memory_source;
+
+    // The largest charged footprint this profile has ever actually cost ON THIS DEVICE, in bytes;
+    // 0 if it has never run here. See arivu_profile_required_available_bytes.
+    uint64_t observed_footprint_bytes;
 } arivu_device;
 
 typedef enum {
@@ -215,6 +223,33 @@ uint64_t arivu_profile_estimated_peak_bytes(const arivu_profile * profile);
 // pressure. An inferred number is already a conservative derivation. Returns 0 for
 // ARIVU_MEM_UNMEASURED, where no ceiling check is made at all.
 uint32_t arivu_headroom_permille(arivu_memory_source source);
+
+// How much available memory this profile needs on THIS device, headroom included. 0 means no
+// ceiling applies, because the platform did not measure one.
+//
+// The estimate in a profile is an estimate. `runtime_overhead_bytes` in particular is one number
+// standing in for ART, Compose, SwiftUI and an allocator across every phone that will ever run
+// this, and it is marked provisional for that reason. Shipping a single static figure to thousands
+// of device models guarantees being wrong in both directions: refusing phones that would have run
+// it, and admitting phones that are then killed.
+//
+// So when the device has actually run this profile, what it cost is used instead of what was
+// predicted. `observed_footprint_bytes` is the largest charged footprint ever seen here — the
+// platform keeps the maximum, so one lucky reading cannot relax the bar for good.
+//
+// Trusted in BOTH directions, deliberately:
+//   higher than the estimate  the estimate was optimistic on this device; demanding more is the
+//                             only thing standing between the user and a kill.
+//   lower than the estimate   the estimate was pessimistic here; demanding more would refuse a
+//                             phone this app has already demonstrably run on.
+//
+// The headroom multiplier still applies on top, so adapting the magnitude never removes the margin.
+//
+// Safe to calibrate from a single observation because llama.cpp allocates the whole KV cache for
+// n_ctx when the context is created: the footprint right after a context exists is already the
+// steady-state peak, not a figure that grows with the conversation.
+uint64_t arivu_profile_required_available_bytes(const arivu_profile * profile,
+                                                const arivu_device * device);
 
 // "Can this device run this profile", answered from measured numbers only. The memory ceiling is
 // applied to the charged footprint plus headroom, never to the peak: charging a device for clean

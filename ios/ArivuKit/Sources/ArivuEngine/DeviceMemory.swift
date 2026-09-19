@@ -88,9 +88,16 @@ public enum DeviceMemory {
     /// quality earns (`Profile.requiredAvailableBytes`), not from a flat constant: a profile with a
     /// bigger context must raise this number by itself, or the check silently stops matching what
     /// the app is about to allocate.
-    public static func hasRoomForContext(for profile: Profile) -> Bool? {
+    public static func hasRoomForContext(
+        for profile: Profile,
+        calibration: MemoryCalibrationStore = .standard
+    ) -> Bool? {
         guard let available = availableBytes() else { return nil }
-        let required = profile.requiredAvailableBytes(memorySource())
+        // What this profile actually cost here, if it has ever run here. A static estimate tuned on
+        // one test phone is wrong in both directions across thousands of device models; this is the
+        // correction, and it costs one defaults read.
+        let observed = calibration.observedFootprintBytes(for: profile.id)
+        let required = profile.requiredAvailableBytes(memorySource(), observedFootprintBytes: observed)
         guard required > 0 else { return nil }
         return available >= required
     }

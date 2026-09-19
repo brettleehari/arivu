@@ -25,7 +25,12 @@ OUT="$BUILD/ArivuCore.xcframework"
 DEPLOYMENT_TARGET="${IOS_DEPLOYMENT_TARGET:-17.0}"
 CONFIG="${CONFIG:-Release}"
 
-command -v cmake >/dev/null || { echo "cmake not found (brew install cmake)"; exit 1; }
+# cmake, with the same fallback tools/host/run_smoke.sh uses: the Android SDK ships cmake AND ninja
+# under $ANDROID_HOME/cmake/<version>/bin, so a machine set up for the Android build already has
+# both and needs no Homebrew. Putting that directory on PATH is also what lets -G Ninja find ninja.
+CMAKE="${CMAKE:-$(command -v cmake || ls -d "$HOME"/Library/Android/sdk/cmake/*/bin/cmake 2>/dev/null | sort -V | tail -1)}"
+[[ -x "$CMAKE" ]] || { echo "cmake not found. Install it, or set CMAKE=/path/to/cmake."; exit 1; }
+export PATH="$(dirname "$CMAKE"):$PATH"
 command -v xcodebuild >/dev/null || { echo "xcodebuild not found — install Xcode, not just the Command Line Tools"; exit 1; }
 [[ -f "$ROOT/third_party/llama.cpp/src/llama-mmap.cpp" ]] || { echo "run tools/llama/fetch_llama.sh first"; exit 1; }
 
@@ -70,12 +75,12 @@ build_slice() {
   local name="$1" sysroot="$2" archs="$3"
   local dir="$BUILD/$name"
   echo "== $name ($sysroot, $archs)"
-  cmake -S "$ROOT/core" -B "$dir" -G Ninja \
+  "$CMAKE" -S "$ROOT/core" -B "$dir" -G Ninja \
     "${common_flags[@]}" \
     -DCMAKE_OSX_SYSROOT="$sysroot" \
     -DCMAKE_OSX_ARCHITECTURES="$archs" \
     >/dev/null
-  cmake --build "$dir" --config "$CONFIG" -j "$(sysctl -n hw.ncpu)"
+  "$CMAKE" --build "$dir" --config "$CONFIG" -j "$(sysctl -n hw.ncpu)"
 
   # Merge every static library the build produced into one. `find` rather than a list, because the
   # set of ggml backend libraries changes between llama.cpp versions and a stale list fails at link

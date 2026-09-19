@@ -28,8 +28,10 @@ struct CoreParityTests {
     /// written down in C. A failure prints every disagreement, not just the first.
     @Test func theSwiftCopiesAgreeWithTheCore() {
         let disagreements = CoreParity.disagreements()
+        // A literal with interpolation, not a concatenation: #expect's second argument is a
+        // `Comment`, which is ExpressibleByStringInterpolation but not the result of `+`.
         #expect(disagreements.isEmpty,
-                "the Swift copies and /core disagree:\n  - " + disagreements.joined(separator: "\n  - "))
+                "the Swift copies and /core disagree:\n  - \(disagreements.joined(separator: "\n  - "))")
     }
 
     /// Guards the thing that made this suite worth writing: if the real core were not linked,

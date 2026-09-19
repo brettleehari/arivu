@@ -13,6 +13,10 @@ import ArivuCore
 import ArivuEngine
 import Testing
 import Foundation
+// The app target, for `AppInfo`. This bundle is hosted by Arivu.app and `AppInfo` is declared in
+// ArivuApp.swift with no access modifier, so without `@testable` it is not visible here and the
+// suite does not compile: "cannot find 'AppInfo' in scope".
+@testable import Arivu
 
 @Suite("The shipped bundle")
 struct BundleTests {

@@ -126,10 +126,15 @@ targets:
     sources:
       - path: App/Tests
         optional: true
+    # ONLY the app. Not the ArivuKit package and not the XCFramework: this bundle is hosted by
+    # Arivu.app, which already links both, and naming them again is an error —
+    #   "Swift package product 'ArivuKit-product' is linked as a static library by 'ArivuTests'
+    #    and 'Arivu'. This will result in duplication of library code."
+    # Being hosted is also what makes CoreParityTests work at all: the real core arrives through
+    # the host app, which is the only place ArivuCore.xcframework is linked, so this is the one
+    # target where the Swift copies are actually compared against the C instead of skipping.
     dependencies:
       - target: Arivu
-      - package: ArivuKit
-        product: ArivuKit
     settings:
       base:
         # The ArivuKit suites run on macOS with `swift test`; this bundle exists for the few things

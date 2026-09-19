@@ -323,8 +323,10 @@ struct CoreParityTests {
     @Test("the Swift copies agree with the core", .enabled(if: CoreParity.isRealCore))
     func swiftAgreesWithCore() {
         let disagreements = CoreParity.disagreements()
+        // A literal with interpolation, not a concatenation: #expect's second argument is a
+        // `Comment`, which is ExpressibleByStringInterpolation but not the result of `+`.
         #expect(disagreements.isEmpty,
-                "the Swift copies and /core disagree:\n  - " + disagreements.joined(separator: "\n  - "))
+                "the Swift copies and /core disagree:\n  - \(disagreements.joined(separator: "\n  - "))")
     }
 
     /// `disagreements()` must not report agreement when it compared nothing. Against the stub it

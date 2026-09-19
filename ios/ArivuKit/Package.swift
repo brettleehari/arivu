@@ -30,7 +30,16 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
-        .library(name: "ArivuKit", targets: ["ArivuCore", "ArivuEngine", "ArivuChat"]),
+        // STATIC, explicitly. Left to SwiftPM's default, an Xcode test bundle causes this product
+        // to be built as a dynamic library, which then has to resolve `arivu_*` at its own link
+        // time — and it cannot, because CArivuCore deliberately carries no `link` directive and the
+        // real symbols come from ArivuCore.xcframework, which only the final binary links. The app
+        // target linked fine and the test bundle failed with "Undefined symbols: _arivu_cancel,
+        // _arivu_assistant_open …".
+        //
+        // Static also matches what ios/project.yml already asks of the framework: link it, do not
+        // embed it, and add no dylib to load at launch for no benefit.
+        .library(name: "ArivuKit", type: .static, targets: ["ArivuCore", "ArivuEngine", "ArivuChat"]),
     ],
     targets: [
         .target(

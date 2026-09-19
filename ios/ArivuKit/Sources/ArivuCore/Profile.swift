@@ -217,14 +217,17 @@ public extension Profile {
         if let problem = validationError { return .invalidProfile(problem) }
         if !device.arm64 { return .noArm64 }
         if device.lowRamFlagged { return .lowRamDevice }
-        if device.totalRamBytes < minTotalRamBytes {
+        // Zero is "not measured", not "measured as none" — `arivu_profile_fits` guards both of
+        // these with `!= 0` and this copy did not, which is how a Simulator that would not report
+        // its free space got told it had 0 B and was refused.
+        if device.totalRamBytes != 0 && device.totalRamBytes < minTotalRamBytes {
             return .totalRam(actual: device.totalRamBytes, required: minTotalRamBytes)
         }
         let required = requiredAvailableBytes(memorySource)
         if required > 0 && availableMemoryBytes > 0 && availableMemoryBytes < required {
             return .availableMemory(actual: availableMemoryBytes, required: required)
         }
-        if device.freeStorageBytes < minFreeStorageBytes {
+        if device.freeStorageBytes != 0 && device.freeStorageBytes < minFreeStorageBytes {
             return .storage(actual: device.freeStorageBytes, required: minFreeStorageBytes)
         }
         return .ok

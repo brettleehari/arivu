@@ -31,6 +31,13 @@ settings:
     DEAD_CODE_STRIPPING: YES
     ENABLE_BITCODE: NO
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    # ArivuCore.xcframework ships ONE simulator slice, arm64, and that is deliberate:
+    # tools/ios/build_core.sh refuses to build an x86_64 slice because it would serve only Intel
+    # Macs, which cannot run a useful benchmark anyway. Without this line Xcode still tries to build
+    # the simulator for x86_64 as well and the link fails with "missing architecture(s) required by
+    # this target (x86_64)" — which is what the first simulator build of this app actually did.
+    # Encoded here rather than passed on the xcodebuild command line so the GUI behaves the same way.
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
     # D-043: the App Store has no device-exclusion catalogue, so the minimum iOS version is the only
     # exclusion there is. 17.0 implies an A12 or newer with >= 3 GB; the runtime gate does the rest.
   configs:
@@ -69,6 +76,14 @@ targets:
       - framework: ../build/ios/ArivuCore.xcframework
         embed: false
         link: true
+      # Required by the XCFramework above, not by any Swift in this app. tools/ios/build_core.sh
+      # builds ggml with GGML_ACCELERATE=ON — Apple's BLAS for prompt processing, CPU-side, and so
+      # no extra dirty memory — which leaves ggml referencing vDSP_maxv, vDSP_measqv and vDSP_sve.
+      # Without this the first link of the app fails with "Undefined symbols for architecture
+      # arm64: _vDSP_maxv ... referenced from _ggml_compute_forward_soft_max". A build flag in one
+      # script and a link dependency in another file have to be changed together; if Accelerate is
+      # ever turned off there, this line goes with it.
+      - sdk: Accelerate.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.brettleehari.arivu

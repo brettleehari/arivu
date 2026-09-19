@@ -22,20 +22,31 @@ import Foundation
 public enum DeviceMemory {
     /// Bytes this process is charged for by jetsam. `nil` if the kernel would not say.
     ///
-    /// This is the number to compare against a budget, and the number to log. It is available on
-    /// macOS too, which is why it can be exercised here rather than only on a device.
+    /// This is the number to compare against a budget, and the number to log. It works on macOS too,
+    /// so it can be exercised by `swift test` rather than only on a device.
     public static func footprintBytes() -> UInt64? {
-        // `proc_pid_rusage` rather than `task_info(TASK_VM_INFO)`: it reports `ri_phys_footprint`
-        // directly, it is the same number, and it needs no read of `mach_task_self_`, which Swift 6
-        // refuses from a concurrent context because the Darwin overlay declares it a global `var`.
-        var info = rusage_info_current()
-        let result = withUnsafeMutablePointer(to: &info) { pointer -> Int32 in
-            pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { rebound in
-                proc_pid_rusage(getpid(), RUSAGE_INFO_CURRENT, rebound)
+        // `task_info(TASK_VM_INFO)`, reading `phys_footprint`.
+        //
+        // This was `proc_pid_rusage(...ri_phys_footprint)`, which reports the same number and reads
+        // no globals — but it is declared in `libproc.h`, and **`libproc.h` does not exist in the
+        // iOS SDK at all**. It is macOS-only. The first compile of this app for a device was what
+        // found that: "cannot find 'proc_pid_rusage' in scope". The most important number on this
+        // platform was being read with an API the platform does not have.
+        //
+        // The objection recorded against `task_info` was that it needs `mach_task_self_`, which
+        // Swift 6 would not let a concurrent context read because the overlay declared it a global
+        // `var`. That is no longer true: the SDK now declares it
+        // `extern __swift_nonisolated_unsafe mach_port_t mach_task_self_;`, so the read is allowed.
+        // Verified to type-check under `-swift-version 6` for iphoneos, iphonesimulator and macOS.
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &info) { pointer -> kern_return_t in
+            pointer.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { rebound in
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), rebound, &count)
             }
         }
-        guard result == 0 else { return nil }
-        return info.ri_phys_footprint
+        guard result == KERN_SUCCESS else { return nil }
+        return UInt64(info.phys_footprint)
     }
 
     /// What this process may still allocate before it is killed, as of this instant.

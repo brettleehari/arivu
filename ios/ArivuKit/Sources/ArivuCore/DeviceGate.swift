@@ -63,10 +63,20 @@ public enum CompatibilityGate {
     public static func evaluate(_ facts: DeviceFacts, _ t: GateThresholds) -> GateResult {
         if !facts.arm64 { return .fail(.noArm64) }
         if facts.lowRamFlagged { return .fail(.lowRamDevice) }
-        if facts.totalRamBytes < t.minTotalRamBytes {
+        // Zero means "not measured", never "measured as none" — the same rule `arivu_profile_fits`
+        // applies with its `d->total_ram_bytes != 0` and `d->free_storage_bytes != 0` guards. A
+        // platform that cannot answer says so, and the check stands down rather than inventing a
+        // verdict (architecture B23).
+        //
+        // Without this, the first run of the app said "This phone has 0 B of free storage. Arivu
+        // needs at least 268 MB" and refused to start — on a Simulator with 600 GB free, because
+        // `volumeAvailableCapacityForImportantUsage` does not answer there. Condemning a device we
+        // failed to measure is the worst of the available mistakes: it is invisible, it is
+        // permanent from the user's side, and there is no "continue anyway" (R8).
+        if facts.totalRamBytes != 0 && facts.totalRamBytes < t.minTotalRamBytes {
             return .fail(.totalRam(actual: facts.totalRamBytes, required: t.minTotalRamBytes))
         }
-        if facts.freeStorageBytes < t.minFreeStorageBytes {
+        if facts.freeStorageBytes != 0 && facts.freeStorageBytes < t.minFreeStorageBytes {
             return .fail(.storage(actual: facts.freeStorageBytes, required: t.minFreeStorageBytes))
         }
         return .pass

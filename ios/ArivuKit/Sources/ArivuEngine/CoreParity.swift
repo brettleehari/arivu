@@ -117,6 +117,11 @@ public enum CoreParity {
             DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 2_000_000_000, freeStorageBytes: 8_000_000_000),
             DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 1_000),
             DeviceFacts(arm64: false, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 8_000_000_000),
+            // Zero = "the platform would not say". The core stands down; the Swift copy used to
+            // refuse the device. The matrix never tried a zero, which is why it did not catch it.
+            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 8_000_000_000, freeStorageBytes: 0),
+            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 0, freeStorageBytes: 8_000_000_000),
+            DeviceFacts(arm64: true, lowRamFlagged: false, totalRamBytes: 0, freeStorageBytes: 0),
         ]
         let required = swift.requiredAvailableBytes(.probed)
         let readings: [UInt64] = [0, 1_000, required > 1 ? required - 1 : 1, required, required + 1, 2_000_000_000]

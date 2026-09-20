@@ -48,7 +48,7 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
 
       # AGP would download most of this itself, but pinning it makes a failure legible, and the NDK
       # android/app/build.gradle.kts names (29.0.14206865) must not be silently substituted: the

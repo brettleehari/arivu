@@ -4,10 +4,10 @@
 # nothing in it is a decision worth reviewing. `tools/ios/generate_project.sh` runs xcodegen if it is
 # installed and tells you how to install it if not.
 #
-# PARTLY VERIFIED: `tools/ios/generate_project.sh` now runs against this spec and produces
-# ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and the two
-# script phases wired up. What is still unproven is everything after generation — the spec has never
-# been *built*, because that needs Xcode. The build settings are deliberate; they are not yet tested.
+# VERIFIED on a device. This spec generates, builds, links, signs and installs: Debug for
+# iphonesimulator and for iphoneos, signed with an Apple Development certificate and installed on an
+# iPhone 17 Pro Max (iOS 26.7) with the 378 MB model in the bundle. What is still unproven is
+# Release, archiving and anything needing a paid team — the enrolment is pending.
 #
 # spine: C1, C3, C8
 
@@ -87,6 +87,18 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.github.brettleehari.arivu
+        # Signing lives here, not in Xcode's UI, for the same reason everything else does: the
+        # project is generated and anything set through the UI is gone at the next regeneration.
+        # That is not hypothetical — the bundle id had already drifted to
+        # "io.github.brettleehari.arivu.dev" in the generated project while this file still said the
+        # real one, and the .dev suffix was not even needed: the canonical id provisions fine.
+        # D-001 makes that identifier irreversible once uploaded, so it must not drift again.
+        #
+        # The team id is not a secret — it ships inside the provisioning profile of every signed
+        # app. A fork replaces this line, or overrides it for one build with
+        #   xcodebuild ... DEVELOPMENT_TEAM=<theirs>
+        DEVELOPMENT_TEAM: AJ4SSKV57N
+        CODE_SIGN_STYLE: Automatic
         PRODUCT_NAME: Arivu
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"

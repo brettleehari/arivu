@@ -250,6 +250,29 @@ void arivu_set_log_fn(arivu_log_fn fn, void * user_data) { (void) fn; (void) use
 
 const char * arivu_version(void) { return "stub-0"; }
 
+// Shaped like Qwen3-0.6B so a test can reason about it, but clearly fake: the name says so.
+bool arivu_model_info_get(const arivu_engine * engine, arivu_model_info * out) {
+    if (!engine || !out) return false;
+    memset(out, 0, sizeof(*out));
+    snprintf(out->description,  sizeof(out->description),  "%s", "stub 0.6B Q4_K_M");
+    snprintf(out->architecture, sizeof(out->architecture), "%s", "stub");
+    snprintf(out->name,         sizeof(out->name),         "%s", "Stub Model");
+    out->parameters = 596049920ull;
+    out->size_bytes = 396705472ull;
+    out->n_layer = 28; out->n_head = 16; out->n_head_kv = 8;
+    out->n_embd = 1024; out->key_length = 128; out->value_length = 128;
+    out->n_ctx_train = 40960; out->n_vocab = 151936;
+    return true;
+}
+
+uint64_t arivu_kv_bytes_per_token(int32_t n_layer, int32_t n_head_kv,
+                                  int32_t key_length, int32_t value_length, bool kv_q8_0) {
+    if (n_layer <= 0 || n_head_kv <= 0 || key_length <= 0 || value_length <= 0) return 0;
+    const uint64_t values = (uint64_t) n_layer * (uint64_t) n_head_kv
+                          * ((uint64_t) key_length + (uint64_t) value_length);
+    return kv_q8_0 ? values * 17ull / 16ull : values * 2ull;
+}
+
 // ---------------------------------------------------------------------------- profiles
 
 arivu_profile arivu_default_profile(void) {

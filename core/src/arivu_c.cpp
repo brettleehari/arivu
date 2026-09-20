@@ -8,6 +8,7 @@
 
 #include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -206,5 +207,57 @@ arivu_prompt_builder * arivu_prompt_builder_create_for_engine(const char * syste
 }
 
 const char * arivu_version(void) { return "0.1.0"; }
+
+// ---------------------------------------------------------------------------------------------
+// The model card, read from the GGUF. See arivu.h for why none of this is written down anywhere.
+
+namespace {
+void copy_meta(const llama_model * m, const char * key, char * out, size_t cap) {
+    out[0] = '\0';
+    if (llama_model_meta_val_str(m, key, out, cap) < 0) out[0] = '\0';
+}
+}  // namespace
+
+bool arivu_model_info_get(const arivu_engine * engine, arivu_model_info * out) {
+    if (engine == nullptr || out == nullptr) return false;
+    const llama_model * m = as_engine(engine)->model();
+    if (m == nullptr) return false;
+
+    std::memset(out, 0, sizeof(*out));
+    llama_model_desc(m, out->description, sizeof(out->description));
+    copy_meta(m, "general.architecture", out->architecture, sizeof(out->architecture));
+    copy_meta(m, "general.name",         out->name,         sizeof(out->name));
+
+    out->parameters  = llama_model_n_params(m);
+    out->size_bytes  = llama_model_size(m);
+    out->n_layer     = llama_model_n_layer(m);
+    out->n_head      = llama_model_n_head(m);
+    out->n_head_kv   = llama_model_n_head_kv(m);
+    out->n_embd      = llama_model_n_embd(m);
+    out->n_ctx_train = llama_model_n_ctx_train(m);
+
+    // <arch>.attention.key_length / .value_length. Only if the file does not carry them does this
+    // fall back to n_embd / n_head, which is right for most architectures and wrong for Qwen3.
+    char key[128], value[64];
+    std::snprintf(key, sizeof(key), "%s.attention.key_length", out->architecture);
+    out->key_length = llama_model_meta_val_str(m, key, value, sizeof(value)) > 0 ? std::atoi(value) : 0;
+    std::snprintf(key, sizeof(key), "%s.attention.value_length", out->architecture);
+    out->value_length = llama_model_meta_val_str(m, key, value, sizeof(value)) > 0 ? std::atoi(value) : 0;
+    if (out->key_length   <= 0 && out->n_head > 0) out->key_length   = out->n_embd / out->n_head;
+    if (out->value_length <= 0) out->value_length = out->key_length;
+    const llama_vocab * v = llama_model_get_vocab(m);
+    out->n_vocab     = v != nullptr ? llama_vocab_n_tokens(v) : 0;
+    return true;
+}
+
+uint64_t arivu_kv_bytes_per_token(int32_t n_layer, int32_t n_head_kv,
+                                  int32_t key_length, int32_t value_length, bool kv_q8_0) {
+    if (n_layer <= 0 || n_head_kv <= 0 || key_length <= 0 || value_length <= 0) return 0;
+    // One K and one V per layer per KV head. q8_0 packs 32 values into 34 bytes — 1.0625 bytes a
+    // value — which is the whole reason the KV cache fits a phone; f16 would be exactly double.
+    const uint64_t values = (uint64_t) n_layer * (uint64_t) n_head_kv
+                          * ((uint64_t) key_length + (uint64_t) value_length);
+    return kv_q8_0 ? values * 17ull / 16ull : values * 2ull;
+}
 
 }  // extern "C"

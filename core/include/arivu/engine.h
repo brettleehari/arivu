@@ -66,6 +66,8 @@ public:
     bool load_model_fd(int fd, uint64_t offset, uint64_t length, bool use_repack, std::string * err);
     bool load_model_path(const std::string & path, bool use_repack, std::string * err);
     bool has_model() const { return model_ != nullptr; }
+    /// The raw handle, for the C layer's model-card query. Read-only and never stored by callers.
+    const llama_model * model() const { return model_; }
     void free_model();  // also frees the context
 
     // KV cache + compute buffers. Created lazily, freed explicitly.

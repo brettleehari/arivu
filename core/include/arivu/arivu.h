@@ -104,6 +104,44 @@ void arivu_set_log_fn(arivu_log_fn fn, void * user_data);
 const char * arivu_version(void);
 
 // ---------------------------------------------------------------------------------------------
+// The model card, read from the GGUF rather than written down.
+//
+// Everything here comes out of the file the app shipped, at the moment it is asked. That is the
+// whole point: a model card typed into the UI is true on the day it is typed and quietly wrong
+// after the next model change, and a page whose purpose is to explain the model is the worst place
+// for a stale number. Swapping the model updates this by itself.
+//
+// Requires a loaded model; returns false if there is none.
+typedef struct {
+    char     description[128];   // llama's own summary, e.g. "qwen3 0.6B Q4_K_M"
+    char     architecture[32];   // general.architecture, e.g. "qwen3"
+    char     name[96];           // general.name from the GGUF
+    uint64_t parameters;         // total weights, counted from the file
+    uint64_t size_bytes;         // what those weights occupy once mapped
+    int32_t  n_layer;
+    int32_t  n_head;             // attention heads
+    int32_t  n_head_kv;          // KV heads; fewer than n_head means grouped-query attention,
+                                 // which is what makes the KV cache small enough for a phone
+    int32_t  n_embd;
+    // Head dimension, read from the file and NOT derived. Qwen3 sets it explicitly and decoupled
+    // from n_embd / n_head: 0.6B is n_embd 1024 over 16 heads, which would give 64, while the real
+    // key_length is 128. Deriving it halved the KV estimate — on a page whose purpose is to explain
+    // the model, that is the worst possible place for a confident wrong number.
+    int32_t  key_length;
+    int32_t  value_length;
+    int32_t  n_ctx_train;        // the context the model was TRAINED for, not the one Arivu uses
+    int32_t  n_vocab;
+} arivu_model_info;
+
+bool arivu_model_info_get(const arivu_engine * engine, arivu_model_info * out);
+
+// KV cache cost per token, in bytes. Takes the head dimensions rather than deriving them, for the
+// reason given on key_length above. The platform shows this; the profile predicts it; comparing the
+// two is how a wrong profile figure gets noticed instead of shipped.
+uint64_t arivu_kv_bytes_per_token(int32_t n_layer, int32_t n_head_kv,
+                                  int32_t key_length, int32_t value_length, bool kv_q8_0);
+
+// ---------------------------------------------------------------------------------------------
 // Device profiles (spine: C11, C8; MULTIPLATFORM.md appendix "the device tier is a config object").
 //
 // What the app can do is chosen by what the device can carry, never by which platform it is.

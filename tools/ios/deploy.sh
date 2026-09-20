@@ -21,8 +21,11 @@ SHA="$(git rev-parse --short HEAD)"
 git diff --quiet && git diff --cached --quiet || SHA="$SHA+"   # '+' means uncommitted changes
 export ARIVU_GIT_SHA="$SHA"
 
+# Match the UDID by shape, not by column. Device names contain spaces — "Brettlee's iPhone" —
+# so positional awk picked the word "Pro" out of "iPhone 17 Pro Max" and tried to install to that.
 DEVICE="${ARIVU_DEVICE:-$(xcrun devicectl list devices 2>/dev/null \
-  | awk '/physical/ && /connected/ {print $(NF-3); exit}')}"
+  | grep -E 'connected' | grep -E 'physical' \
+  | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}' | head -1)}"
 [[ -n "$DEVICE" ]] || { echo "no connected iPhone. Plug one in, or set ARIVU_DEVICE=<udid>." >&2; exit 1; }
 
 [[ -d build/ios/ArivuCore.xcframework ]] || { echo "no ArivuCore.xcframework — run tools/ios/build_core.sh" >&2; exit 1; }
@@ -31,16 +34,22 @@ echo "== generating the project (ARIVU_GIT_SHA=$SHA)"
 tools/ios/generate_project.sh >/dev/null
 
 echo "== building"
+# PIPESTATUS, not the pipeline's status: piping into grep would otherwise report grep's success as
+# the build's. This script exists to be believed, so it must not say "on the device" after a failure.
+set -o pipefail
 xcodebuild -project ios/Arivu.xcodeproj -scheme Arivu -configuration Debug \
   -destination "id=$DEVICE" -allowProvisioningUpdates build 2>&1 \
-  | grep -E "error:|warning: .*(deprecat|unused)|BUILD SUCCEEDED|BUILD FAILED" | sort -u || true
+  | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED" | sort -u
+[[ "${PIPESTATUS[0]}" -eq 0 ]] || { echo "build failed" >&2; exit 1; }
 
 APP="$(find "$HOME/Library/Developer/Xcode/DerivedData" -maxdepth 5 \
         -path '*Debug-iphoneos/Arivu.app' -print -quit)"
 [[ -n "$APP" ]] || { echo "no built Arivu.app" >&2; exit 1; }
 
 echo "== installing $(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist") ($SHA)"
-xcrun devicectl device install app --device "$DEVICE" "$APP" | grep -E "App installed|error" || true
+if ! xcrun devicectl device install app --device "$DEVICE" "$APP" | grep -E "App installed|error"; then
+  echo "install failed" >&2; exit 1
+fi
 
 if [[ "${1:-}" != "--no-launch" ]]; then
   # A running app keeps the old binary until it is replaced, so launch rather than assume.

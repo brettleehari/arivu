@@ -33,7 +33,13 @@ public enum StringKey: String, CaseIterable, Sendable {
     case chat_stats, a11y_chat_stats
     /// The exact text handed to the model, between the question and the answer.
     case prompt_disclosure_label, prompt_disclosure_body, a11y_prompt_disclosure
-    case prompt_disclosure_changed, prompt_disclosure_unknown
+    case prompt_disclosure_changed, prompt_disclosure_unknown, prompt_disclosure_custom
+    /// Editing the wording this conversation runs with (D-064).
+    case prompt_edit_open, prompt_edit_nav_title, prompt_edit_title, prompt_edit_body
+    case prompt_edit_fixed_title, prompt_edit_fixed_body, prompt_edit_reset, prompt_edit_save
+    case prompt_edit_chars
+    case learn_prompt_title, learn_prompt_body, learn_prompt_state
+    case learn_prompt_standard, learn_prompt_edited
 
     // About
     case about_title, about_what_title, about_what_body, about_good_title, about_good_body

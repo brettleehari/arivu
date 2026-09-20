@@ -35,6 +35,7 @@ import SwiftUI
 
 struct LearnView: View {
     @ObservedObject var session: ChatSession
+    @State private var editingPrompt = false
     private let profile = Profile.compact
 
     init(session: ChatSession) { self.session = session }
@@ -125,6 +126,17 @@ struct LearnView: View {
             //
             // So this is the one section on the page with no live figures in it, deliberately. The
             // rows are definitions, in the order the line prints them.
+            // The prompt, and the way in to changing it (D-064). It sits here rather than on the
+            // chat screen for the reason the whole page sits here: wanting it has to be an explicit
+            // act, or it is a setting (C8).
+            section(.learn_prompt_title, .learn_prompt_body) {
+                row(.learn_prompt_state,
+                    Strings.string(session.usesCustomPrompt ? .learn_prompt_edited
+                                                            : .learn_prompt_standard))
+                Button(Strings.string(.prompt_edit_open)) { editingPrompt = true }
+                    .foregroundStyle(Palette.primary)
+            }
+
             section(.learn_speed_measured_title, .learn_speed_measured_body) {
                 definition(.learn_speed_tokens_in, .learn_speed_tokens_in_body)
                 definition(.learn_speed_tokens_out, .learn_speed_tokens_out_body)
@@ -136,6 +148,7 @@ struct LearnView: View {
         .background(Palette.surface)
         .navigationTitle(Strings.string(.learn_title))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $editingPrompt) { SystemPromptEditor(session: session) }
     }
 
     /// A titled section: the explanation first, then the figures it explains. Prose before numbers,

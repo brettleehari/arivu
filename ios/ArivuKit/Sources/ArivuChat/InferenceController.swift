@@ -134,8 +134,8 @@ public actor InferenceController {
 
     /// The token counter the prompt builder uses. Building a prompt is what forces the model to
     /// load, which is why "Starting Arivu…" has to be on screen before this is called.
-    public nonisolated func makePromptBuilder() -> PromptBuilder {
-        PromptBuilder(systemPrompt: Policy.systemPrompt,
+    public nonisolated func makePromptBuilder(systemPrompt: String = Policy.systemPrompt) -> PromptBuilder {
+        PromptBuilder(systemPrompt: systemPrompt,
                       nCtx: profile.nCtx,
                       replyReserve: profile.replyReserveTokens) { [weak self] text in
             guard let self else { return 0 }

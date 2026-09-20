@@ -7,7 +7,7 @@ generated_for: 2026-09-20
 
 # Sequencing Leaf
 
-Today **2026-09-20** (Sunday) · slice **all** · platform **all** · done 48/141 · builders 1 + Hari
+Today **2026-09-20** (Sunday) · slice **all** · platform **all** · done 49/143 · builders 1 + Hari
 
 Done means verified to the stated level, never more. **Nothing has run on a physical Android phone or on any iPhone.** Emulator runs are functional only; the 94 iOS tests ran on macOS, not on iOS.
 
@@ -183,6 +183,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-059 | no | no | pending | 2026-09-18 | **OVERDUE** | W108, W121, W122, W123 |
 | D-061 | no | no | resolved_human | 2026-09-22 |  | W139 |
 | D-063 | no | no | resolved_human | 2026-09-22 |  | W139 |
+| D-064 | no | no | resolved_human |  |  | W142 |
 
 10 open decisions block the Play release; 14 block the App Store release; 8 block both.
 
@@ -222,6 +223,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | W112 | BENCH | Buy or borrow the 4 GB Android test phone (Helio G85 / SD680 class) | ~0.25d + 5d elapsed |  |  | 0.1 assumed Hari already owned this. Nothing in the repo is evidence that he does, and M1–M4, D-009, D-008 and D-015 all wait on it. If it is already in a drawer, close this item and W41 on the same day |
 | W56 | PLAY | Recruit 20–25 closed testers (Wave A teachers + 2–3 in BR/ID); GTM drafts the message | ~0.5d + 5d elapsed |  |  | agents cannot recruit humans; launch-plan.md Phase 2. Apple needs none of this (W133) |
 | W139 | MVP | Android does not draw the per-reply stats its conversation file now carries | 0.5d |  | D-061 D-063 | the `stats` field is in ChatRepository.Message so an Android save cannot silently drop what an iOS save wrote, but nothing on Android writes or shows it. Until it does, the same conversation tells the user what a reply cost on one phone and |
+| W142 | MVP | D-064 is iOS-only, which is a live C11 violation until Android has the same editor | 0.5d |  | D-064 | the schema field is mirrored in StoredConversation so no Android save drops an iOS edit, but Android has no editor and no split safety suffix. Two phones running the same conversation file would behave differently with nothing measured to j |
 
 **Engineering**
 
@@ -305,25 +307,26 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | 21 | W66 Stamp the carried-over non-blocking decisions (D-002..D-008, D-011..D- | both | 0.25d |  | D-003 D-005 D-006 D-007 D-012 D-013 D-016 D-019 D-026 D-027 D-028 D-029 D-031 D-032 D-033 D-036 | ready | 2026-09-30 → 2026-09-30 |
 | 22 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, agr | ios | 0.25d |  | D-001 D-020 | W110 | 2026-09-30 → 2026-09-30 |
 | 23 | W139 Android does not draw the per-reply stats its conversation file now ca | android | 0.5d |  | D-061 D-063 | ready | 2026-09-30 → 2026-09-30 |
-| 24 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-05 | ios | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 | ready | 2026-10-01 → 2026-10-01 |
-| 25 | W138 EngineWrapperTests.handleCannotLeak is intermittently red — a global c | ios | 0.25d |  |  | ready | 2026-10-01 → 2026-10-01 |
-| 26 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | both | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-10-01 → 2026-10-01 |
-| 27 | W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) from D- | android | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-10-02 → 2026-10-02 |
+| 24 | W142 D-064 is iOS-only, which is a live C11 violation until Android has the | android | 0.5d |  | D-064 | ready | 2026-10-01 → 2026-10-01 |
+| 25 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurements | both | 0.5d | D-009 before any track wider than Internal testing | D-004 D-008 D-009 D-015 | W02 | 2026-10-01 → 2026-10-01 |
+| 26 | W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) from D- | android | 0.25d | before any track wider than Internal testing | D-009 | W03, W52 | 2026-10-02 → 2026-10-02 |
+| 27 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-05 | ios | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 | ready | 2026-10-02 → 2026-10-02 |
 | 28 | W57 Closed test — 12 testers opted in for 14 continuous days (cannot be co | android | 0.25d + 15d elapsed |  | D-020 | W52, W18, W21, W54, W55, W56, W34 | 2026-10-02 → 2026-10-17 |
-| 29 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | android | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-10-05 → 2026-10-05 |
-| 30 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-06 → 2026-10-06 |
-| 31 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-06 → 2026-10-17 |
-| 32 | W122 Submit to the App Store with "Manually release this version"; wait for | ios | ~0.5d + 2d elapsed |  | D-041 D-024 D-025 D-039 D-059 | W120, W108, W105, W106, W107, W39, W59, W65, W109, W116 | 2026-10-12 → 2026-10-14 |
-| 33 | W123 MILESTONE — App Store release (release the held build) | ios | 0.25d |  | D-041 D-059 D-029 | W122 | 2026-10-14 → 2026-10-14 |
-| 34 | W58 Apply for production access (form answers from the closed test) and wa | android | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-19 → 2026-10-26 |
-| 35 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, PH) | android | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-26 → 2026-10-28 |
-| 36 | W63 Wave B (ID, BR) then Wave C, by country | android | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-28 → 2026-11-04 |
+| 29 | W138 EngineWrapperTests.handleCannotLeak is intermittently red — a global c | ios | 0.25d |  |  | ready | 2026-10-02 → 2026-10-02 |
+| 30 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | android | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-10-05 → 2026-10-05 |
+| 31 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-06 → 2026-10-06 |
+| 32 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-06 → 2026-10-17 |
+| 33 | W122 Submit to the App Store with "Manually release this version"; wait for | ios | ~0.5d + 2d elapsed |  | D-041 D-024 D-025 D-039 D-059 | W120, W108, W105, W106, W107, W39, W59, W65, W109, W116 | 2026-10-12 → 2026-10-14 |
+| 34 | W123 MILESTONE — App Store release (release the held build) | ios | 0.25d |  | D-041 D-059 D-029 | W122 | 2026-10-14 → 2026-10-14 |
+| 35 | W58 Apply for production access (form answers from the closed test) and wa | android | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-19 → 2026-10-26 |
+| 36 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, PH) | android | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-26 → 2026-10-28 |
+| 37 | W63 Wave B (ID, BR) then Wave C, by country | android | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-28 → 2026-11-04 |
 
-Hari effort still open: 12 days (7.75 of it not iOS).
+Hari effort still open: 12.5 days (8.25 of it not iOS).
 
 ## Open items no milestone requires
 
-W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W138 (Hari, ios), W139 (Hari, android), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
+W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W142 (Hari, android), W138 (Hari, ios), W139 (Hari, android), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
 
 ## Schedule (simulated)
 
@@ -368,13 +371,14 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, | Hari | ios | STORE | 0.25d |  | 2026-09-30 | 2026-09-30 |
 | W79 Android DeviceProbe + ProfileSelector; retire the hardcoded arithm | Engineering | android | MVP | 1.5d |  | 2026-09-29 | 2026-09-30 |
 | W139 Android does not draw the per-reply stats its conversation file no | Hari | android | MVP | 0.5d |  | 2026-09-30 | 2026-09-30 |
-| W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048,  | Hari | ios | STORE | 0.25d |  | 2026-10-01 | 2026-10-01 |
 | W02 Run benchmark on the physical Android test phone; record leaves/NO | Engineering | android | BENCH | 1d | phone→W112 | 2026-09-30 | 2026-10-01 |
-| W138 EngineWrapperTests.handleCannotLeak is intermittently red — a glob | Hari | ios | MVP | 0.25d |  | 2026-10-01 | 2026-10-01 |
+| W142 D-064 is iOS-only, which is a live C11 violation until Android has | Hari | android | MVP | 0.5d |  | 2026-10-01 | 2026-10-01 |
 | W03 Decide threads, repack, RAM floor (and 1.7B fit) from W02 measurem | Hari | both | BENCH | 0.5d |  | 2026-10-01 | 2026-10-01 |
 | W18 Internal track: download Play split APKs; model STORED, offset % 1 | Engineering | android | PLAY | 0.5d | phone→W112 | 2026-10-01 | 2026-10-01 |
 | W55 Play Console: device-catalog RAM exclusion rule (gate layer 2) fro | Hari | android | PLAY | 0.25d |  | 2026-10-02 | 2026-10-02 |
+| W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048,  | Hari | ios | STORE | 0.25d |  | 2026-10-02 | 2026-10-02 |
 | W21 End-to-end on the Android phone — install bundle, airplane mode, f | Engineering | android | MVP | 0.5d | phone→W112 | 2026-10-02 | 2026-10-02 |
+| W138 EngineWrapperTests.handleCannotLeak is intermittently red — a glob | Hari | ios | MVP | 0.25d |  | 2026-10-02 | 2026-10-02 |
 | W46 Android phone accessibility pass — TalkBack, 200% text, RTL (desig | Design | android | MVP | ~0.5d | phone→W112 | 2026-10-02 | 2026-10-02 |
 | W111 Buy or borrow a test iPhone (SE 2020 / iPhone 11 class, 3–4 GB) | Hari | ios | BENCH | ~0.25d + 5d elapsed |  | 2026-09-28 | 2026-10-03 |
 | W48 W18 extension: signed universal APK has the model aligned; apksign | Architecture | android | PLAY | ~0.5d | phone→W112 | 2026-10-03 | 2026-10-03 |
@@ -473,6 +477,7 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W89 iOS step 5 — generate and open the Xcode project (ARIVU_REPO | Engineering | ios | build — tools/ios/generate_project.sh produces ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and both script phases; project.yml fixed for EXCLUDED_ARCHS, Accelerate and the ArivuTests host relationship. ARIVU_REPORT_EMAIL deliberately unset: that is D-010, and tools/ios/check_release.sh refuses the placeholder so nothing can ship with it |
 | W90 iOS step 6 — first Simulator build: meet the compiler with ~ | Engineering | ios | simulator — xcodebuild -sdk iphonesimulator BUILD SUCCEEDED; the app launches and renders the empty state. Four defects found only by compiling: proc_pid_rusage is macOS-only, EXCLUDED_ARCHS missing, Accelerate unlinked, the gate refused an unmeasured device |
 | W91 iOS step 7 — run ArivuTests on the Simulator (model in the b | Engineering | ios | simulator — 10 of 10 on the iPhone 17 Simulator, 1 known issue (the D-010 placeholder). Model in the bundle at 378 MB, privacy manifest, licences folder reference and copy catalogue all confirmed |
+| W141 Edit the system prompt for one conversation, with the safety | Hari | ios | unit — CustomPromptTests proves no editor input, including an empty string and a prompt injection, can produce a prompt without Policy.systemPromptSafetySuffix; on the phone |
 | W140 Show the exact prompt between the question and the answer, s | Hari | ios | iphone — PromptTranscriptTests builds a prompt with the real PromptBuilder and requires the rebuilt text to be byte-identical, including the truncated-history case; on the phone from f808f43+ |
 | W137 D-063: replace the system prompt so C5's hedge actually fire | Hari | both | host — tools/eval/sweep.cpp re-run across Qwen3 0.6B/1.7B/4B after the change: off-task corrections 1/6 -> 5/6, hedges 1/6 -> 3/6, on-task output unchanged. Byte-identical on both platforms (ProfileParityTest); 57 Android tests and 61+20+25 iOS tests pass |
 
@@ -622,6 +627,8 @@ flowchart LR
   W122["W122 Submit to the App Store with Manually re…"]:::hari
   W123["W123 MILESTONE — App Store release release th…"]:::hari
   W124["W124 External TestFlight round with Beta App…"]:::hari
+  W141["W141 Edit the system prompt for one conversat…"]:::done
+  W142["W142 D-064 is iOS-only, which is a live C11 v…"]:::hari
   W140["W140 Show the exact prompt between the questi…"]:::done
   W138["W138 EngineWrapperTests.handleCannotLeak is i…"]:::hari
   W139["W139 Android does not draw the per-reply stat…"]:::hari

@@ -1890,6 +1890,28 @@ items:
     guess: true
     deps: [W120]
 
+  - id: W141
+    title: "Edit the system prompt for one conversation, with the safety sentences non-removable"
+    slice: MVP
+    platform: ios
+    spine: [C5, C8, C9]
+    owner: Hari
+    status: done
+    verified: "unit — CustomPromptTests proves no editor input, including an empty string and a prompt injection, can produce a prompt without Policy.systemPromptSafetySuffix; on the phone"
+    decisions: [D-064]
+    estimate_days: 0.5
+    deps: []
+  - id: W142
+    title: "D-064 is iOS-only, which is a live C11 violation until Android has the same editor"
+    slice: MVP
+    platform: android
+    spine: [C11, C5, C9]
+    owner: Hari
+    status: todo
+    needs: "the schema field is mirrored in StoredConversation so no Android save drops an iOS edit, but Android has no editor and no split safety suffix. Two phones running the same conversation file would behave differently with nothing measured to justify it — which is precisely what C11 forbids. Needs Policy.kt split the same way, with the Kotlin twin of CustomPromptTests"
+    decisions: [D-064]
+    estimate_days: 0.5
+    deps: []
   - id: W140
     title: "Show the exact prompt between the question and the answer, so context stops being invisible"
     slice: MVP

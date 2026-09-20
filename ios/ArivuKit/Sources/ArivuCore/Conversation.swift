@@ -130,17 +130,23 @@ public struct Message: Codable, Equatable, Identifiable, Sendable {
 public struct StoredConversation: Codable, Equatable, Sendable {
     public var version: Int
     public var messages: [Message]
+    /// The wording this conversation runs with, or nil for the shipped one (D-064). Only the part a
+    /// user may edit: `Policy.systemPromptSafetySuffix` is appended when the prompt is assembled and
+    /// is deliberately not stored here, so a hand-edited file cannot remove it either.
+    public var systemPromptBody: String?
 
-    public init(version: Int = 1, messages: [Message] = []) {
+    public init(version: Int = 1, messages: [Message] = [], systemPromptBody: String? = nil) {
         self.version = version
         self.messages = messages
+        self.systemPromptBody = systemPromptBody
     }
 
-    private enum CodingKeys: String, CodingKey { case version, messages }
+    private enum CodingKeys: String, CodingKey { case version, messages, systemPromptBody }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = (try? c.decode(Int.self, forKey: .version)) ?? 1
+        systemPromptBody = try? c.decodeIfPresent(String.self, forKey: .systemPromptBody)
         // Deliberately NOT tolerant: a malformed message must throw, so ChatRepository sets the file
         // aside instead of quietly starting an empty conversation over the top of it.
         messages = try c.decode([Message].self, forKey: .messages)

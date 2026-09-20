@@ -89,9 +89,28 @@
 /* Between the question and the answer: the exact bytes the model was given. */
 "prompt_disclosure_label" = "What Arivu read · %1$d tokens";
 "prompt_disclosure_body" = "You typed one message. This is everything that went in with it. Arivu keeps nothing between replies, so the instructions it is given and the conversation so far are sent again in full every time — which is why a short question can still be hundreds of tokens, and why a long conversation gets slower. The <|im_start|> marks are how the model is told who is speaking. They are part of the format, not something you wrote.";
-"prompt_disclosure_changed" = "Arivu's instructions changed in an app update after this reply was written, so the exact text it read can no longer be shown. Newer replies will show theirs.";
+"prompt_disclosure_changed" = "The instructions changed after this reply was written — either you edited them or an app update did — so the exact text this reply read can no longer be shown. Newer replies will show theirs.";
+"prompt_disclosure_custom" = "Edited instructions";
 "prompt_disclosure_unknown" = "This reply was written before Arivu started recording what it read, so the exact text cannot be shown.";
 "a11y_prompt_disclosure" = "Shows the exact text the model was given for this reply";
+
+/* Editing the wording, for this conversation only (D-064). */
+"prompt_edit_open" = "Edit these instructions";
+"prompt_edit_nav_title" = "Instructions";
+"prompt_edit_title" = "What Arivu is told to be";
+"prompt_edit_body" = "These are the instructions Arivu is given before it sees anything you write. Change them and send another message to see what it does — this is the fastest way to learn what a system prompt actually is. It applies to this conversation only. Every new conversation starts from the standard wording, and one tap below puts it back.";
+"prompt_edit_fixed_title" = "Always added";
+"prompt_edit_fixed_body" = "These sentences go in whatever you write above, and cannot be removed.";
+"prompt_edit_reset" = "Use the standard wording";
+"prompt_edit_save" = "Save";
+"prompt_edit_chars" = "%1$d/%2$d";
+
+/* The learning page's own way in. */
+"learn_prompt_title" = "What Arivu is told to be";
+"learn_prompt_body" = "Before Arivu sees a word you wrote, it is given a paragraph telling it what it is, what it is bad at, and what to refuse. It is not trained to be cautious about facts — it is told to be, every single time, because it remembers nothing. That paragraph is most of what separates this app from the raw model inside it, and you can change it for this conversation and watch what happens.";
+"learn_prompt_state" = "This conversation";
+"learn_prompt_standard" = "Standard wording";
+"learn_prompt_edited" = "Edited";
 "a11y_report_reply" = "Report this reply";
 "a11y_stop" = "Stop writing the reply";
 "a11y_expanded" = "Open";

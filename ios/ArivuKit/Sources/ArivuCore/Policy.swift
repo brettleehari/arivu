@@ -56,6 +56,43 @@ public enum Policy {
         + "Refuse sexual content involving minors, instructions for weapons or serious harm, and forging official "
         + "documents or IDs. If someone mentions self-harm, reply kindly and briefly and suggest talking to someone they trust or local emergency help."
 
+    /// The part of `systemPrompt` a user may NOT change (D-064). It is an exact suffix of it —
+    /// `CopyAndPolicyTests` asserts that, so the two cannot drift apart — and it is appended to
+    /// whatever wording a conversation carries, standard or edited.
+    ///
+    /// The prompt is the only safety mechanism in this app that is not a UI affordance. Everything
+    /// else a user could get wrong, they can see; this they cannot. So the editor hands out the
+    /// sentences above it and keeps these, and there is no code path that assembles a prompt
+    /// without them. A checkbox saying "keep me safe" would be a setting, and a setting is a thing
+    /// that can be off (spine: C9, R5).
+    public static let systemPromptSafetySuffix: String =
+        "Refuse sexual content involving minors, instructions for weapons or serious harm, and forging official "
+        + "documents or IDs. If someone mentions self-harm, reply kindly and briefly and suggest talking to someone they trust or local emergency help."
+
+    /// The editable part: everything the shipped prompt says before the safety sentences. Derived,
+    /// never typed twice — D-063 changed this wording once already and a second copy would have been
+    /// the copy that got missed.
+    public static var systemPromptBody: String {
+        String(systemPrompt.dropLast(systemPromptSafetySuffix.count))
+    }
+
+    /// The prompt a conversation actually runs with. `nil` is the shipped wording, which is what
+    /// every conversation starts as and what all but a curious few will ever use.
+    public static func systemPrompt(customBody: String?) -> String {
+        guard let customBody, !customBody.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return systemPrompt
+        }
+        // One trailing space, because `systemPromptSafetySuffix` begins with a word and the shipped
+        // body ends with one. Without it an edited prompt would read "...plain.Refuse sexual".
+        let body = customBody.hasSuffix(" ") ? customBody : customBody + " "
+        return body + systemPromptSafetySuffix
+    }
+
+    /// A cap on an edited prompt, in characters. Not a policy about taste — a prompt long enough to
+    /// fill the context would leave no room for the user's own text, and the failure would arrive as
+    /// "your message is too long" pointing at a message that is not the problem (spine: C6).
+    public static let customPromptMaxChars = 1200
+
     /// The model in the app bundle. No `.so` suffix and no alignment dance: D-013 is Android-only
     /// complexity that disappears because an iOS app bundle is a directory, not a zip
     /// (leaves/architecture/ios-port.md). Offset 0, whole file.

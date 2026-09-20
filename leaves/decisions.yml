@@ -2526,3 +2526,80 @@
     check working. And the new wording is longer, so it costs a few more tokens of context: worth
     measuring against n_ctx before it ships, though at 2048 the margin is wide.
   verified: "host — tools/eval/sweep.cpp across Qwen3 0.6B/1.7B/4B, and the parity and copy tests on both platforms"
+
+- id: D-064
+  title: A conversation may run on wording the user edited, and the safety sentences are not theirs to remove
+  raised_at: 2026-09-20
+  spine: [C5, C8, C9, C11]
+  platform: ios
+  adjudication: human
+  status: resolved_human
+  decided_at: 2026-09-20
+  decided_by: Hari
+  blocks_release: false
+  raised_by: [Hari]
+  related: [D-026, D-061, D-063]
+  context: >
+    Asked for directly: "provide an edit option to update the system prompt in the conversation. By
+    default it has what it is but when you want to tinker with it."
+
+    It contradicts things the Spine says plainly, and that is worth writing down rather than
+    discovering later. C8: there is no settings screen. R5 refuses settings and personas. And
+    ProfileParityTest's own comment says the system prompt "is the only safety mechanism that is not
+    a UI affordance" and "must be byte-identical on both platforms, or the two stores are reviewing
+    two different models' behaviour".
+
+    The case for it is the other half of the product. D-061 built a page that explains the model;
+    W140 put the exact prompt between every question and its answer. Having shown a user the bytes,
+    refusing to let them change one word teaches them that this is a thing done to them. The prompt
+    is also, by a distance, the highest-leverage thing in the app — D-063 moved the hedge rate from
+    1 in 6 to 5 in 6 by rewording a sentence — so it is the single best demonstration the learning
+    half has.
+  options:
+    - "Per-conversation editing, safety sentences non-removable (recommended)"
+    - "No editing — the prompt is fixed, as C8 and R5 say"
+    - "Global editing, a real setting"
+    - "Editing including the safety sentences"
+  recommendation: >
+    Option 1, and the constraints are what make it not-a-setting:
+
+    PER CONVERSATION. Nothing edited here changes the next conversation. A new conversation always
+    starts from the shipped wording, so the app a new user opens is the one C1 promises, every time,
+    and there is no persistent state to get stuck in. This is the difference between an experiment
+    and a preference.
+
+    THE SAFETY SENTENCES ARE STRUCTURAL. Policy.systemPromptSafetySuffix is split out as an exact
+    suffix of the shipped prompt and appended to whatever wording a conversation carries. There is
+    no code path that assembles a prompt without it, no checkbox — a checkbox is a thing that can be
+    off — and it is not stored in the conversation file, so hand-editing the JSON cannot remove it
+    either. CustomPromptTests tries nil, empty, whitespace, a persona, a prompt injection and a
+    5000-character string, and requires the suffix on every result.
+
+    WHERE IT LIVES. Not on the chat screen. It opens from the learning page, and from inside the
+    expanded prompt disclosure — where a user is already reading the exact bytes and the next
+    question is "what if that said something else?". The chat screen gains no control (C8).
+
+    IT SAYS SO. A conversation on edited wording carries an "Edited instructions" badge on every
+    disclosure, so replies below it are not mistakable for the app's own behaviour. Replies written
+    under earlier wording fail the hash check and say the instructions changed, rather than being
+    redrawn under the new one (C7).
+
+    Option 4 is refused outright: it would ship an app whose refusals a user can delete, which is
+    not defensible to either store and not defensible anyway.
+
+    Option 3 is refused because a global override is a setting by any definition, and the first
+    support question would be from someone who changed it six weeks ago and forgot.
+  resolution: >
+    Option 1, implemented as described. iOS only for now.
+
+    TWO THINGS THIS COSTS, both recorded rather than waved past:
+
+    C11 — capability by device, never by platform. An iOS-only editor is exactly the platform
+    difference C11 forbids, with no measurement behind it. W142 carries the Android port; until it
+    lands this is a known, named violation rather than an unnoticed one.
+
+    Store review — the prompt is no longer one fixed string that a reviewer can be shown. What is
+    fixed, and what the listing should say, is the safety suffix: it is in every prompt the app can
+    build, by construction and under test. The editable part is scoped to one conversation and
+    resets.
+  verified: "unit — CustomPromptTests (7 cases) and PromptTranscriptTests; swift-macos, the full ArivuKit suite; 57 Android tests still green with the mirrored schema field"

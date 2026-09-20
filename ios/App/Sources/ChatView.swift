@@ -16,6 +16,7 @@ struct ChatView: View {
     @ObservedObject var session: ChatSession
     @State private var input = ""
     @State private var reportingID: String?
+    @State private var editingPrompt = false
     @State private var copiedID: String?
     @State private var followsNewestLine = true
     @FocusState private var inputFocused: Bool
@@ -53,6 +54,7 @@ struct ChatView: View {
                             onDismiss: { reportingID = nil })
             }
         }
+        .sheet(isPresented: $editingPrompt) { SystemPromptEditor(session: session) }
     }
 
     @ViewBuilder
@@ -75,7 +77,11 @@ struct ChatView: View {
                         if message.id == session.contextStartID { ContextDivider() }
                         // Between the question and the answer, because that is where the question
                         // "how did six words become 196 tokens?" is actually asked.
-                        PromptDisclosure(reply: message, messages: session.messages)
+                        PromptDisclosure(reply: message,
+                                         messages: session.messages,
+                                         systemPrompt: session.effectiveSystemPrompt,
+                                         isCustom: session.usesCustomPrompt,
+                                         onEdit: { editingPrompt = true })
                         MessageBubble(
                             message: message,
                             streaming: session.generating && message.id == session.messages.last?.id && !message.fromUser,
@@ -355,6 +361,9 @@ private struct MessageBubble: View {
 private struct PromptDisclosure: View {
     let reply: Message
     let messages: [Message]
+    let systemPrompt: String
+    let isCustom: Bool
+    let onEdit: () -> Void
     @State private var expanded = false
 
     var body: some View {
@@ -363,7 +372,8 @@ private struct PromptDisclosure: View {
         if !reply.fromUser, let stats = reply.stats {
             DisclosureGroup(isExpanded: $expanded) {
                 VStack(alignment: .leading, spacing: 8) {
-                    switch PromptTranscript.rebuild(reply: reply, in: messages) {
+                    switch PromptTranscript.rebuild(reply: reply, in: messages,
+                                                    systemPrompt: systemPrompt) {
                     case .success(let text):
                         Text(Strings.string(.prompt_disclosure_body))
                             .font(.footnote)
@@ -375,6 +385,13 @@ private struct PromptDisclosure: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(10)
                             .background(Palette.surface, in: RoundedRectangle(cornerRadius: 8))
+                        // The lever, next to the thing it moves. Someone reading the exact bytes
+                        // is exactly the person who wants to know what happens if they differ.
+                        Button(Strings.string(.prompt_edit_open), action: onEdit)
+                            .font(.footnote)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Palette.primary)
+                            .frame(minHeight: Metrics.minTouchTarget)
                     case .failure(let reason):
                         // Never an approximation. A page whose whole claim is "this is exactly what
                         // went in" has nothing to offer if it starts guessing (spine: C6).
@@ -386,9 +403,20 @@ private struct PromptDisclosure: View {
                 }
                 .padding(.top, 6)
             } label: {
-                Text(Strings.string(.prompt_disclosure_label, Int(stats.promptTokens)))
-                    .font(.caption)
-                    .foregroundStyle(Palette.onSurfaceVariant)
+                HStack(spacing: 6) {
+                    Text(Strings.string(.prompt_disclosure_label, Int(stats.promptTokens)))
+                    // A conversation running on edited wording says so without being opened: the
+                    // replies below are not the app's behaviour any more, they are yours.
+                    if isCustom {
+                        Text(Strings.string(.prompt_disclosure_custom))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                            .background(Palette.primaryContainer, in: Capsule())
+                            .foregroundStyle(Palette.onPrimaryContainer)
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(Palette.onSurfaceVariant)
             }
             .tint(Palette.onSurfaceVariant)
             .padding(.horizontal, 12)

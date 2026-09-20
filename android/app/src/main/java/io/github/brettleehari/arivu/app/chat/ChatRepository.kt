@@ -47,7 +47,19 @@ data class ReplyStats(
 private fun corruptPrefix(file: File) = file.name + ".corrupt-"
 
 @Serializable
-data class StoredConversation(val version: Int = 1, val messages: List<Message> = emptyList())
+data class StoredConversation(
+    val version: Int = 1,
+    val messages: List<Message> = emptyList(),
+    /**
+     * The wording this conversation runs with, or null for the shipped one (D-064). Only the part a
+     * user may edit — Policy.SYSTEM_PROMPT's safety sentences are appended when the prompt is
+     * assembled and are deliberately not stored, so a hand-edited file cannot remove them either.
+     *
+     * Android has no editor yet (W142). The field is here so an Android save cannot silently drop
+     * what an iOS save wrote, which is the whole point of one schema across platforms.
+     */
+    val systemPromptBody: String? = null,
+)
 
 /**
  * Flat JSON file (leaves/BRIEF.md "Persistence"). App-private storage, excluded from backup (spine: C3).

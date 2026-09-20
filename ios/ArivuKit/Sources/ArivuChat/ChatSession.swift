@@ -75,6 +75,10 @@ public final class ChatSession: ObservableObject {
     @Published public private(set) var messages: [Message] = []
     /// Id of the oldest message the model saw on the last send; nil when nothing was dropped. spine: C7
     @Published public private(set) var contextStartID: String?
+
+    /// The wording THIS conversation runs with, or nil for the shipped one (D-064). Only the
+    /// editable part: `Policy.systemPromptSafetySuffix` is added when the prompt is assembled.
+    @Published public private(set) var customPromptBody: String?
     @Published public private(set) var generating = false
     @Published public private(set) var engineState: EngineState = .cold
     @Published public private(set) var notice: Notice?
@@ -98,7 +102,10 @@ public final class ChatSession: ObservableObject {
     private var repository: ChatRepository
     private let store: ConversationStore
     private let controller: InferenceController
-    private let promptBuilder: PromptBuilder
+    /// `var`, because the wording is per conversation now (D-064): switching conversations or
+    /// editing the prompt replaces the builder rather than mutating it, which also throws away its
+    /// token cache — the right thing, since the cache is keyed on turns whose header has changed.
+    private var promptBuilder: PromptBuilder
     private var generation: Task<Void, Never>?
     private var startingTimer: Task<Void, Never>?
     private var stateWatcher: Task<Void, Never>?
@@ -109,7 +116,10 @@ public final class ChatSession: ObservableObject {
         self.currentID = id
         self.repository = store.repository(for: id)
         self.controller = controller
-        self.promptBuilder = controller.makePromptBuilder()
+        let stored = self.repository.loadStored()
+        self.customPromptBody = stored.systemPromptBody
+        self.promptBuilder = controller.makePromptBuilder(
+            systemPrompt: Policy.systemPrompt(customBody: stored.systemPromptBody))
 
         // The stream, not the controller: capturing `controller` here would keep it alive for as
         // long as this task is suspended, which is forever, because the stream only finishes when
@@ -138,7 +148,9 @@ public final class ChatSession: ObservableObject {
         generation?.cancel()
         currentID = id
         repository = store.repository(for: id)
-        messages = repository.load().map(Self.repairUnfinished)
+        let stored = repository.loadStored()
+        messages = stored.messages.map(Self.repairUnfinished)
+        adoptPrompt(stored.systemPromptBody)
         contextStartID = nil
         notice = nil
         pendingRetry = nil
@@ -166,12 +178,43 @@ public final class ChatSession: ObservableObject {
             let next = store.list().first?.id ?? store.create()
             currentID = next
             repository = store.repository(for: next)
-            messages = repository.load().map(Self.repairUnfinished)
+            let stored = repository.loadStored()
+            messages = stored.messages.map(Self.repairUnfinished)
+            adoptPrompt(stored.systemPromptBody)
             contextStartID = nil
             notice = nil
             pendingRetry = nil
         }
         refreshConversations()
+    }
+
+    // MARK: - The wording this conversation runs with (D-064)
+
+    /// The prompt as the model will actually receive it, safety sentences included. The one place
+    /// a prompt is assembled, so there is no path that assembles one without them.
+    public var effectiveSystemPrompt: String { Policy.systemPrompt(customBody: customPromptBody) }
+
+    public var usesCustomPrompt: Bool { customPromptBody != nil }
+
+    /// Edit the wording, or pass nil to go back to the shipped one. Takes effect on the next
+    /// message; replies already written were written under whatever was in force then, and the
+    /// disclosure says so rather than redrawing history (spine: C7).
+    public func setCustomPrompt(_ body: String?) {
+        let cleaned = body?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolved: String?
+        if let cleaned, !cleaned.isEmpty,
+           cleaned != Policy.systemPromptBody.trimmingCharacters(in: .whitespacesAndNewlines) {
+            resolved = String(cleaned.prefix(Policy.customPromptMaxChars))
+        } else {
+            // Empty, whitespace, or the standard wording typed back in by hand: all of them mean
+            // "standard", and storing it as a custom string would mark the conversation edited for
+            // a prompt that is not.
+            resolved = nil
+        }
+        guard resolved != customPromptBody else { return }
+        customPromptBody = resolved
+        promptBuilder = controller.makePromptBuilder(systemPrompt: effectiveSystemPrompt)
+        persist()
     }
 
     public func refreshConversations() {
@@ -291,7 +334,7 @@ public final class ChatSession: ObservableObject {
                                            generatedTokens: stats.generated,
                                            decodeMs: stats.decodeMs,
                                            contextFirstID: contextFirstID,
-                                           systemPromptHash: PromptTranscript.hash(Policy.systemPrompt))
+                                           systemPromptHash: PromptTranscript.hash(self.effectiveSystemPrompt))
                     }
                 }
             }
@@ -426,6 +469,14 @@ public final class ChatSession: ObservableObject {
         return .loadFailed
     }
 
+    /// Adopt the wording a conversation was saved with, rebuilding the builder only when it
+    /// actually differs — a new builder throws away a token cache that is usually still valid.
+    private func adoptPrompt(_ body: String?) {
+        guard body != customPromptBody else { return }
+        customPromptBody = body
+        promptBuilder = controller.makePromptBuilder(systemPrompt: effectiveSystemPrompt)
+    }
+
     private func removeMessage(_ id: String) {
         messages.removeAll { $0.id == id }
     }
@@ -437,7 +488,10 @@ public final class ChatSession: ObservableObject {
 
     private func persist() {
         let snapshot = messages
-        Task.detached(priority: .utility) { [repository] in repository.save(snapshot) }
+        let prompt = customPromptBody
+        Task.detached(priority: .utility) { [repository] in
+            repository.save(snapshot, systemPromptBody: prompt)
+        }
         // The list shows each conversation's first line and its age, so it changes when the
         // conversation does. Cheap enough to redo here; if it stops being, it needs an index.
         refreshConversations()

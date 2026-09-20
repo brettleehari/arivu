@@ -43,12 +43,16 @@ public final class ChatRepository: @unchecked Sendable {
         return base.appendingPathComponent(Policy.conversationFileName)
     }
 
-    public func load() -> [Message] {
+    public func load() -> [Message] { loadStored().messages }
+
+    /// The whole file, because a conversation is now more than its messages: it carries the wording
+    /// it runs with (D-064).
+    public func loadStored() -> StoredConversation {
         lock.lock()
         defer { lock.unlock() }
-        guard let data = try? Data(contentsOf: url) else { return [] }
+        guard let data = try? Data(contentsOf: url) else { return StoredConversation() }
         do {
-            return try JSONDecoder().decode(StoredConversation.self, from: data).messages
+            return try JSONDecoder().decode(StoredConversation.self, from: data)
         } catch {
             // Keep the unreadable file rather than overwrite it on the next save, but only the newest
             // one: older copies are private text nobody can reach, kept forever otherwise (T13). spine: C3
@@ -56,16 +60,17 @@ public final class ChatRepository: @unchecked Sendable {
                 .appendingPathComponent(Self.corruptPrefix(url) + String(Message.now()))
             try? FileManager.default.moveItem(at: url, to: aside)
             pruneCorruptCopiesLocked()
-            return []
+            return StoredConversation()
         }
     }
 
-    public func save(_ messages: [Message]) {
+    public func save(_ messages: [Message], systemPromptBody: String? = nil) {
         lock.lock()
         defer { lock.unlock() }
         let dir = url.deletingLastPathComponent()
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        guard let data = try? encoder.encode(StoredConversation(messages: messages)) else { return }
+        guard let data = try? encoder.encode(
+            StoredConversation(messages: messages, systemPromptBody: systemPromptBody)) else { return }
         let tmp = dir.appendingPathComponent(url.lastPathComponent + ".tmp")
         do {
             try data.write(to: tmp, options: [.atomic])

@@ -1710,7 +1710,8 @@ items:
     platform: ios
     spine: [C1]
     owner: Hari
-    status: todo
+    status: in_progress
+    progress_note: "Enrolment submitted 2026-09-19; Apple Developer app shows \"Enrollment Pending \u2014 You'll receive an email soon\". Individual review is usually a day or two but has no published SLA. NOTE: this does not gate putting Arivu on a personal iPhone \u2014 free provisioning with a plain Apple ID does that today (W92). It gates TestFlight, App Store Connect and any signed archive (W113, W119, W120, W122)."
     needs: "longest lead time on the iOS side and the same personal-vs-organisation trade-off as D-020 (W33): individual enrolment PUBLISHES HARI'S LEGAL NAME as the seller on every product page; organisation needs a D-U-N-S and a public website on a domain he owns. No tester gate. Nothing can be installed on an iPhone without it"
     decisions: [D-020, D-046]
     estimate_days: 0.25

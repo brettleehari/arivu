@@ -19,9 +19,17 @@ struct ChatView: View {
     @State private var copiedID: String?
     @State private var followsNewestLine = true
     @FocusState private var inputFocused: Bool
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
 
     var body: some View {
-        NavigationStack {
+        // `preferredCompactColumn: .detail` is the whole reason this is safe on iPhone: a split view
+        // otherwise opens on the list, and Arivu would greet a new user with an empty table instead
+        // of somewhere to type. C1 says one tap and it works, so the chat is what opens and the
+        // conversations sit behind the back button.
+        NavigationSplitView(columnVisibility: $columnVisibility,
+                            preferredCompactColumn: .constant(.detail)) {
+            ConversationsView(session: session)
+        } detail: {
             VStack(spacing: 0) {
                 content
                 session.notice.map { NoticeBar(notice: $0, onDismiss: session.dismissNotice) }
@@ -33,7 +41,7 @@ struct ChatView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     // A word, not a gear: there are no settings to put behind one (C8).
-                    NavigationLink(Strings.string(.about)) { AboutView() }
+                    NavigationLink(Strings.string(.about)) { AboutView(session: session) }
                 }
             }
         }

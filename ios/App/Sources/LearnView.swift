@@ -28,12 +28,16 @@
 //
 // spine: C1, C4, C5, C8
 
+import ArivuChat
 import ArivuCore
 import ArivuEngine
 import SwiftUI
 
 struct LearnView: View {
+    @ObservedObject var session: ChatSession
     private let profile = Profile.compact
+
+    init(session: ChatSession) { self.session = session }
 
     var body: some View {
         List {
@@ -48,6 +52,32 @@ struct LearnView: View {
                 row(.learn_model_quant, Strings.string(.learn_model_quant_value))
                 row(.learn_model_size, ByteSize.si(profile.modelBytes))
                 row(.learn_model_licence, Strings.string(.learn_model_licence_value))
+            }
+
+            // What the file itself says. Read once the model is mapped; before that the page says
+            // so rather than showing zeros that would read as measurements.
+            section(.learn_card_title, .learn_card_body) {
+                if let m = session.modelInfo {
+                    row(.learn_card_arch, m.architecture)
+                    row(.learn_card_params,
+                        Strings.string(.learn_billions,
+                                       String(format: "%.2f", Double(m.parameters) / 1_000_000_000)))
+                    row(.learn_card_layers, "\(m.layers)")
+                    row(.learn_card_heads, "\(m.heads)")
+                    row(.learn_card_kv_heads, "\(m.kvHeads)")
+                    row(.learn_card_sharing, Strings.string(.learn_sharing_value, Int(m.queriesPerKVHead)))
+                    row(.learn_card_head_dim, "\(m.keyLength)")
+                    row(.learn_card_embd, "\(m.embeddingWidth)")
+                    row(.learn_card_vocab, "\(m.vocabulary)")
+                    row(.learn_card_trained_ctx, Strings.string(.learn_tokens_value, Int(m.trainedContext)))
+                    // The one number the page can check rather than report: the model's own shape
+                    // predicts this, and so does the profile. They must agree.
+                    row(.learn_card_kv_cost, ByteSize.si(m.kvBytesPerToken(q8_0: profile.kvQ8_0)))
+                } else {
+                    Text(Strings.string(.learn_card_unloaded))
+                        .font(.footnote)
+                        .foregroundStyle(Palette.onSurfaceVariant)
+                }
             }
 
             section(.learn_context_title, .learn_context_body) {
@@ -75,6 +105,32 @@ struct LearnView: View {
                 row(.learn_speed_threads, "\(DeviceMemory.performanceCoreCount())")
                 row(.learn_speed_backend, Strings.string(.learn_speed_backend_value))
                 row(.learn_engine_core, ArivuEngine.coreVersion)
+            }
+
+            // Why the processor and not the graphics chip. The trade is the whole memory argument,
+            // and it is a property of the phone rather than of Arivu (D-051).
+            Section {
+                Text(Strings.string(.learn_metal_body))
+                    .font(.subheadline)
+                    .foregroundStyle(Palette.onSurfaceVariant)
+            } header: {
+                Text(Strings.string(.learn_metal_title)).foregroundStyle(Palette.onSurfaceVariant)
+            }
+
+            // Measured, not promised. Two rates, because reading and writing are not the same
+            // thing and conflating them is how "tokens per second" becomes meaningless.
+            section(.learn_speed_measured_title, .learn_speed_measured_body) {
+                if let s = session.lastStats {
+                    row(.learn_speed_ttft, Strings.string(.learn_ms, String(format: "%.1f", s.firstTokenMs / 1000)))
+                    row(.learn_speed_read, Strings.string(.learn_tps, String(format: "%.0f", s.prefillTokensPerSecond)))
+                    row(.learn_speed_write, Strings.string(.learn_tps, String(format: "%.1f", s.decodeTokensPerSecond)))
+                    row(.learn_speed_tokens_in, Strings.string(.learn_tokens_value, Int(s.promptTokens)))
+                    row(.learn_speed_tokens_out, Strings.string(.learn_tokens_value, Int(s.generated)))
+                } else {
+                    Text(Strings.string(.learn_speed_none))
+                        .font(.footnote)
+                        .foregroundStyle(Palette.onSurfaceVariant)
+                }
             }
         }
         .listStyle(.insetGrouped)

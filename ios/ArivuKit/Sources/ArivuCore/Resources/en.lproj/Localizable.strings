@@ -227,3 +227,50 @@
 "learn_speed_backend" = "Runs on";
 "learn_speed_backend_value" = "Processor only";
 "learn_engine_core" = "Engine";
+
+/* The model card, read from the GGUF at runtime (D-061). */
+"learn_card_title" = "What is in the file";
+"learn_card_body" = "These are read from the model file itself when Arivu loads it, not written down here. A model is a stack of layers; each layer has attention heads that decide which earlier words matter. Arivu's model has fewer key-value heads than attention heads — several heads share one set of notes — and that sharing is the single reason its memory of the conversation is small enough for a phone.";
+"learn_card_unloaded" = "Arivu loads the model on your first message, so these appear after you have sent one.";
+"learn_card_params" = "Parameters";
+"learn_card_layers" = "Layers";
+"learn_card_heads" = "Attention heads";
+"learn_card_kv_heads" = "Key-value heads";
+"learn_card_sharing" = "Heads sharing one set";
+"learn_card_head_dim" = "Size of each head";
+"learn_card_embd" = "Width";
+"learn_card_vocab" = "Vocabulary";
+"learn_card_trained_ctx" = "Trained to read";
+"learn_card_kv_cost" = "Memory per token";
+"learn_card_arch" = "Architecture";
+"learn_billions" = "%1$@ billion";
+"learn_sharing_value" = "%1$d to 1";
+
+/* Why the processor and not the graphics chip — the Metal question (D-051). */
+"learn_metal_title" = "Why not the graphics chip";
+"learn_metal_body" = "On a phone the processor and the graphics chip share one pool of memory. Moving the model to the graphics chip would not make it use less — it would change memory the system can take back at any moment into memory it cannot. Arivu maps the model straight from the app, so the phone can drop it under pressure and read it back from storage. That is what lets it run on a phone with little to spare, and it is the property offloading would spend. On a phone with memory to spare the trade is worth making, and it is a property of the phone rather than of Arivu, which is why it is a setting nobody has to see.";
+
+/* Tokens per second, explained rather than displayed. */
+"learn_speed_measured_title" = "Your last reply";
+"learn_speed_measured_body" = "Speed is counted in tokens a second, not words. Two numbers matter and they are not the same. Reading is how fast Arivu takes in what you wrote, and it is fast because the whole message is processed at once. Writing is how fast the reply appears, and it is slower because each word depends on the one before it, so they cannot be done together. The wait before the first word is mostly reading.";
+"learn_speed_none" = "Send a message and these will appear.";
+"learn_speed_ttft" = "Wait before the first word";
+"learn_speed_read" = "Reading";
+"learn_speed_write" = "Writing";
+"learn_speed_tokens_in" = "Words read";
+"learn_speed_tokens_out" = "Words written";
+"learn_tps" = "%1$@ tokens/sec";
+"learn_ms" = "%1$@ seconds";
+
+/* The build, so two installs can be told apart. */
+"about_build" = "Build %1$@";
+
+/* Conversations (D-011). */
+"conversations_title" = "Conversations";
+"conversations_new" = "New conversation";
+"conversations_empty" = "Conversations you have had will be listed here.";
+"conversations_untitled" = "New conversation";
+"conversations_delete" = "Delete";
+"conversations_count_one" = "1 message";
+"conversations_count_many" = "%1$d messages";
+"a11y_conversations" = "Conversations";

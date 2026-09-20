@@ -48,6 +48,12 @@ settings:
       SWIFT_COMPILATION_MODE: wholemodule
       VALIDATE_PRODUCT: YES
 
+# The commit the build came from, written by tools/ios/generate_project.sh and read by Info.plist
+# as ARIVUGitSHA. Two builds of an app that looks the same are otherwise indistinguishable.
+configFiles:
+  Debug: App/Support/Build.xcconfig
+  Release: App/Support/Build.xcconfig
+
 packages:
   ArivuKit:
     path: ArivuKit

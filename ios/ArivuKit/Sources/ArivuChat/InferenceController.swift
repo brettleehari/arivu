@@ -143,6 +143,13 @@ public actor InferenceController {
         }
     }
 
+    /// The loaded model's own description of itself, or nil if nothing is loaded. Never loads:
+    /// mapping 378 MB to fill a page would break the lifecycle rule this file exists to enforce.
+    public func modelInfo() async -> ModelInfo? {
+        guard let engine, await engine.hasModel() else { return nil }
+        return await engine.modelInfo()
+    }
+
     public func countTokens(_ text: String) async throws -> Int32 {
         let engine = try await ensureModel()
         return try await engine.countTokens(text)

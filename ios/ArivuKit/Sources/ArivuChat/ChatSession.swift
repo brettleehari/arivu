@@ -79,18 +79,35 @@ public final class ChatSession: ObservableObject {
     @Published public private(set) var engineState: EngineState = .cold
     @Published public private(set) var notice: Notice?
     @Published public private(set) var startingPhase: StartingPhase = .normal
+    /// Every conversation, newest first. Recomputed when one is opened, created or deleted.
+    @Published public private(set) var conversations: [ConversationSummary] = []
+    /// The one on screen.
+    @Published public private(set) var currentID: String
     /// Set when a send failed before the model wrote anything. spine: C1, C6 (D-060)
     @Published public private(set) var pendingRetry: PendingRetry?
+    /// The last reply's measurements, for the learning page. Nil until one has been produced —
+    /// which is the honest state, not a zero (D-061).
+    @Published public private(set) var lastStats: GenerationStats?
+    /// What the loaded GGUF says about itself. Nil until the model is mapped, because it is mapped
+    /// lazily on the first message (C1) and no page is worth forcing that.
+    @Published public private(set) var modelInfo: ModelInfo?
 
-    private let repository: ChatRepository
+    /// Which conversation is open. `var`, because switching conversations is switching this file —
+    /// every other property of the store (atomic writes, data protection, backup exclusion) comes
+    /// along unchanged (D-011).
+    private var repository: ChatRepository
+    private let store: ConversationStore
     private let controller: InferenceController
     private let promptBuilder: PromptBuilder
     private var generation: Task<Void, Never>?
     private var startingTimer: Task<Void, Never>?
     private var stateWatcher: Task<Void, Never>?
 
-    public init(repository: ChatRepository, controller: InferenceController) {
-        self.repository = repository
+    public init(store: ConversationStore, controller: InferenceController, openID: String? = nil) {
+        self.store = store
+        let id = openID ?? store.list().first?.id ?? store.create()
+        self.currentID = id
+        self.repository = store.repository(for: id)
         self.controller = controller
         self.promptBuilder = controller.makePromptBuilder()
 
@@ -111,18 +128,68 @@ public final class ChatSession: ObservableObject {
         stateWatcher?.cancel()
     }
 
+    // MARK: - Conversations (D-011)
+
+    /// Open another conversation. A reply in flight is stopped first: letting one finish into a file
+    /// the user has navigated away from would write text into a conversation they are not looking at.
+    public func open(_ id: String) {
+        guard id != currentID else { return }
+        if generating { controller.cancelBox.request(.user) }
+        generation?.cancel()
+        currentID = id
+        repository = store.repository(for: id)
+        messages = repository.load().map(Self.repairUnfinished)
+        contextStartID = nil
+        notice = nil
+        pendingRetry = nil
+        generating = false
+        stopStartingPhase()
+        refreshConversations()
+    }
+
+    /// Start a new one. Does nothing if the current conversation is already empty, so tapping twice
+    /// cannot leave a trail of blank conversations behind.
+    public func newConversation() {
+        guard !messages.isEmpty else { return }
+        open(store.create())
+    }
+
+    /// spine: C3 — the first way a user has ever had to take their own text off the device.
+    public func delete(_ id: String) {
+        store.delete(id)
+        if id == currentID {
+            let next = store.list().first?.id ?? store.create()
+            currentID = next
+            repository = store.repository(for: next)
+            messages = repository.load().map(Self.repairUnfinished)
+            contextStartID = nil
+            notice = nil
+            pendingRetry = nil
+        }
+        refreshConversations()
+    }
+
+    public func refreshConversations() {
+        conversations = store.list()
+    }
+
+    /// A reply interrupted by process death is kept, and marked as stopped. The app cannot know why
+    /// it was killed, so it does not guess (leaves/design.md §3).
+    private static func repairUnfinished(_ message: Message) -> Message {
+        guard !message.fromUser, message.stop == nil else { return message }
+        var repaired = message
+        repaired.stop = stopAfterProcessDeath
+        return repaired
+    }
+
     public func loadHistory() async {
         guard !loaded else { return }
         let stored = await Task.detached(priority: .userInitiated) { [repository] in repository.load() }.value
         // A reply interrupted by process death is kept, and marked as stopped. The app cannot know
         // why it was killed, so it does not guess (leaves/design.md §3).
-        messages = stored.map { message in
-            guard !message.fromUser, message.stop == nil else { return message }
-            var repaired = message
-            repaired.stop = stopAfterProcessDeath
-            return repaired
-        }
+        messages = stored.map(Self.repairUnfinished)
         loaded = true
+        refreshConversations()
     }
 
     // MARK: - Sending
@@ -203,6 +270,7 @@ public final class ChatSession: ObservableObject {
                     }
                 case .done(let stats):
                     stop = resolveStop(stats.stop, cancelCause: controller.cancelBox.cause)
+                    if stats.generated > 0 { lastStats = stats }
                 }
             }
         } catch {
@@ -226,6 +294,15 @@ public final class ChatSession: ObservableObject {
         generating = false
         stopStartingPhase()
         persist()
+
+        // The model is mapped by now, so the card can be read. Once only: it cannot change while
+        // one model ships.
+        if modelInfo == nil {
+            Task { [weak self] in
+                guard let info = await self?.controller.modelInfo() else { return }
+                await MainActor.run { self?.modelInfo = info }
+            }
+        }
     }
 
     // MARK: - The user's controls
@@ -338,5 +415,8 @@ public final class ChatSession: ObservableObject {
     private func persist() {
         let snapshot = messages
         Task.detached(priority: .utility) { [repository] in repository.save(snapshot) }
+        // The list shows each conversation's first line and its age, so it changes when the
+        // conversation does. Cheap enough to redo here; if it stops being, it needs an index.
+        refreshConversations()
     }
 }

@@ -9,10 +9,13 @@
 //
 // spine: C3, C4, C5, C9
 
+import ArivuChat
 import ArivuCore
 import SwiftUI
 
 struct AboutView: View {
+    @ObservedObject var session: ChatSession
+
     @State private var openRow: String?
     @State private var reportPresentation: ReportPresentation?
 
@@ -34,7 +37,7 @@ struct AboutView: View {
                 // (leaves/design.md §8a). It sits after "private" and before "report" so the page
                 // reads as what Arivu is, then how it works, then what to do when it is wrong.
                 NavigationLink {
-                    LearnView()
+                    LearnView(session: session)
                 } label: {
                     Text(Strings.string(.about_learn_link))
                         .font(.body)
@@ -67,6 +70,11 @@ struct AboutView: View {
                     }
                 }
 
+                // The commit this build came from, so two installs can be told apart.
+                Text(Strings.string(.about_build, AppInfo.gitSHA))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(Palette.onSurfaceVariant)
+                    .textSelection(.enabled)
                 Text(Strings.string(.about_version, AppInfo.version))
                     .font(.caption)
                     .foregroundStyle(Palette.onSurfaceVariant)

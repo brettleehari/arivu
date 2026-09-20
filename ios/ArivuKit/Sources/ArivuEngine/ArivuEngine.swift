@@ -88,6 +88,51 @@ public struct SamplingParameters: Equatable, Sendable {
     }
 }
 
+/// The model card, as the file states it. Nothing here is authored; see `arivu_model_info`.
+public struct ModelInfo: Equatable, Sendable {
+    public let description: String     // llama's own summary, e.g. "qwen3 0.6B Q4_K - Medium"
+    public let architecture: String
+    public let name: String
+    public let parameters: UInt64
+    public let sizeBytes: UInt64
+    public let layers: Int32
+    public let heads: Int32
+    public let kvHeads: Int32
+    public let embeddingWidth: Int32
+    public let keyLength: Int32
+    public let valueLength: Int32
+    public let trainedContext: Int32
+    public let vocabulary: Int32
+
+    init(_ raw: arivu_model_info) {
+        // C fixed-size char arrays import as tuples; rebinding is the only way to read them.
+        var r = raw
+        self.description  = withUnsafePointer(to: &r.description)  { $0.withMemoryRebound(to: CChar.self, capacity: 128) { String(cString: $0) } }
+        self.architecture = withUnsafePointer(to: &r.architecture) { $0.withMemoryRebound(to: CChar.self, capacity: 32)  { String(cString: $0) } }
+        self.name         = withUnsafePointer(to: &r.name)         { $0.withMemoryRebound(to: CChar.self, capacity: 96)  { String(cString: $0) } }
+        self.parameters = raw.parameters
+        self.sizeBytes = raw.size_bytes
+        self.layers = raw.n_layer
+        self.heads = raw.n_head
+        self.kvHeads = raw.n_head_kv
+        self.embeddingWidth = raw.n_embd
+        self.keyLength = raw.key_length
+        self.valueLength = raw.value_length
+        self.trainedContext = raw.n_ctx_train
+        self.vocabulary = raw.n_vocab
+    }
+
+    /// Bytes of KV cache per token at the given precision, from this model's own shape.
+    /// The profile predicts the same number; a mismatch means the profile is stale.
+    public func kvBytesPerToken(q8_0: Bool) -> UInt64 {
+        arivu_kv_bytes_per_token(layers, kvHeads, keyLength, valueLength, q8_0)
+    }
+
+    /// Grouped-query attention: fewer KV heads than attention heads. This ratio is the single
+    /// reason the cache is small enough for a phone.
+    public var queriesPerKVHead: Int32 { kvHeads > 0 ? heads / kvHeads : 0 }
+}
+
 /// Where the GGUF bytes are. iOS: the app bundle file, offset 0, whole length.
 public struct ModelWindow: Sendable {
     public let fileDescriptor: Int32
@@ -134,6 +179,17 @@ public final class ArivuEngine: @unchecked Sendable {
     }
 
     public static var coreVersion: String { String(cString: arivu_version()) }
+
+    /// What the shipped GGUF says about itself. `nil` until a model is loaded — and the model is
+    /// loaded lazily on the first message (C1), so a page that shows this must be able to say
+    /// "not loaded yet" rather than force a 378 MB map just to fill a row.
+    public func modelInfo() async -> ModelInfo? {
+        await run {
+            var raw = arivu_model_info()
+            guard arivu_model_info_get(self.handle.raw, &raw) else { return nil }
+            return ModelInfo(raw)
+        }
+    }
 
     // MARK: - Model and context lifetime
 

@@ -17,7 +17,7 @@ import Testing
 @MainActor
 private final class Harness {
     let directory: URL
-    let repository: ChatRepository
+    let store: ConversationStore
     let controller: InferenceController
     let session: ChatSession
     private let modelFile: URL
@@ -29,17 +29,22 @@ private final class Harness {
         modelFile = directory.appendingPathComponent("model.gguf")
         try Data(repeating: 0x42, count: 4096).write(to: modelFile)
 
-        repository = ChatRepository(url: directory.appendingPathComponent("conversation.json"))
+        store = ConversationStore(directory: directory.appendingPathComponent("conversations",
+                                                                              isDirectory: true))
         let defaults = UserDefaults(suiteName: "arivu.chat.tests.\(UUID().uuidString)")!
         let flag = LoadedBeforeFlag(defaults: defaults)
         if loadedBefore { flag.set() }
         controller = InferenceController(modelSource: FileModelSource(url: modelFile),
                                          profile: profile,
                                          loadedBefore: flag)
-        session = ChatSession(repository: repository, controller: controller)
+        session = ChatSession(store: store, controller: controller)
     }
 
     deinit { try? FileManager.default.removeItem(at: directory) }
+
+    /// The file the session is currently writing to. Conversations are one file each (D-011), so
+    /// this follows whichever one is open rather than being fixed at construction.
+    var repository: ChatRepository { store.repository(for: session.currentID) }
 
     /// Waits for the session to stop generating, or gives up. Tests must never hang a whole run.
     func settle(timeout: TimeInterval = 5) async throws {
@@ -401,5 +406,110 @@ struct ChatSessionTests {
         if case .tooLong = h.session.notice {} else { Issue.record("expected a tooLong notice") }
         let retry = try #require(h.session.pendingRetry)
         #expect(retry.text == long.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    // MARK: - Conversations (D-011)
+
+    @Test("a new conversation is a new file, and the old one is still there")
+    func conversationsAreSeparateFiles() async throws {
+        arivu_stub_set_script("fine")
+        let h = try Harness()
+        await h.session.loadHistory()
+
+        h.session.send("first")
+        try await h.settle()
+        let first = h.session.currentID
+
+        h.session.newConversation()
+        #expect(h.session.currentID != first)
+        #expect(h.session.messages.isEmpty, "a new conversation starts empty")
+
+        h.session.send("second")
+        try await h.settle()
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        // Both exist, newest first, and neither has eaten the other.
+        h.session.refreshConversations()
+        #expect(h.session.conversations.count == 2)
+        #expect(h.session.conversations.first?.title == "second")
+        #expect(h.store.repository(for: first).load().first?.text == "first")
+    }
+
+    @Test("tapping New twice does not leave a trail of empty conversations")
+    func newIsIdempotentWhileEmpty() async throws {
+        let h = try Harness()
+        await h.session.loadHistory()
+        let id = h.session.currentID
+        h.session.newConversation()
+        h.session.newConversation()
+        #expect(h.session.currentID == id, "an empty conversation is already a new one")
+    }
+
+    @Test("opening another conversation shows its messages and leaves the first alone")
+    func openingSwitchesFiles() async throws {
+        arivu_stub_set_script("fine")
+        let h = try Harness()
+        await h.session.loadHistory()
+        h.session.send("first")
+        try await h.settle()
+        let first = h.session.currentID
+
+        h.session.newConversation()
+        h.session.send("second")
+        try await h.settle()
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        h.session.open(first)
+        #expect(h.session.currentID == first)
+        #expect(h.session.messages.first?.text == "first")
+    }
+
+    /// spine: C3 — the first way a user has ever had to take their own text off the device.
+    @Test("deleting a conversation removes its file")
+    func deleteRemovesTheFile() async throws {
+        arivu_stub_set_script("fine")
+        let h = try Harness()
+        await h.session.loadHistory()
+        h.session.send("secret")
+        try await h.settle()
+        try await Task.sleep(nanoseconds: 200_000_000)
+        let id = h.session.currentID
+
+        h.session.delete(id)
+        #expect(h.store.repository(for: id).load().isEmpty, "the text is gone from disk")
+        #expect(h.session.conversations.contains { $0.id == id } == false)
+        #expect(h.session.messages.isEmpty, "deleting what is on screen leaves an empty one open")
+    }
+
+    @Test("the single conversation from before D-011 becomes the first in the list")
+    func legacyConversationMigrates() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("arivu-migrate-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let legacy = directory.appendingPathComponent("conversation.json")
+        ChatRepository(url: legacy).save([
+            Message(id: "u", fromUser: true, text: "from before", createdAt: 1),
+            Message(id: "r", fromUser: false, text: "a reply", createdAt: 2, stop: .endOfTurn),
+        ])
+
+        let store = ConversationStore(directory: directory.appendingPathComponent("conversations"))
+        let id = try #require(store.migrateLegacyConversation(at: legacy))
+        #expect(store.repository(for: id).load().first?.text == "from before")
+        #expect(FileManager.default.fileExists(atPath: legacy.path) == false, "moved, not copied")
+        #expect(store.list().first?.title == "from before")
+    }
+
+    @Test("a conversation is titled by the first line the user wrote")
+    func titleComesFromTheFirstUserLine() {
+        #expect(ConversationStore.title(from: [
+            Message(id: "u", fromUser: true, text: "  Rewrite this\nand the rest  ", createdAt: 1),
+        ]) == "Rewrite this")
+        let long = String(repeating: "word ", count: 40)
+        let title = ConversationStore.title(from: [Message(id: "u", fromUser: true, text: long, createdAt: 1)])
+        #expect(title.count <= 61 && title.hasSuffix("…"))
+        // A conversation with no user message yet has no title to show.
+        #expect(ConversationStore.title(from: []) == "")
     }
 }

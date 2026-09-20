@@ -76,6 +76,22 @@ public enum StringKey: String, CaseIterable, Sendable {
     case learn_speed_title, learn_speed_body
     case learn_speed_threads, learn_speed_backend, learn_speed_backend_value
     case learn_engine_core
+    case learn_card_title, learn_card_body, learn_card_unloaded
+    case learn_card_params, learn_card_layers, learn_card_heads, learn_card_kv_heads
+    case learn_card_sharing, learn_card_head_dim, learn_card_embd, learn_card_vocab
+    case learn_card_trained_ctx, learn_card_kv_cost, learn_card_arch
+    case learn_billions, learn_sharing_value
+    case learn_metal_title, learn_metal_body
+    case learn_speed_measured_title, learn_speed_measured_body, learn_speed_none
+    case learn_speed_ttft, learn_speed_read, learn_speed_write
+    case learn_speed_tokens_in, learn_speed_tokens_out
+    case learn_tps, learn_ms
+    case about_build
+
+    // Conversations (D-011)
+    case conversations_title, conversations_new, conversations_empty, conversations_untitled
+    case conversations_delete, conversations_count_one, conversations_count_many
+    case a11y_conversations
 }
 
 public enum Strings {

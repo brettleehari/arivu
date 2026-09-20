@@ -28,9 +28,15 @@ struct ArivuApp: App {
 
     @StateObject private var session: ChatSession = {
         let controller = InferenceController(modelSource: BundleModelSource())
-        let repository = ChatRepository(url: (try? ChatRepository.defaultURL())
-            ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(Policy.conversationFileName))
-        return ChatSession(repository: repository, controller: controller)
+        let directory = (try? ConversationStore.defaultDirectory())
+            ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("conversations",
+                                                                                   isDirectory: true)
+        let store = ConversationStore(directory: directory)
+        // The one conversation from before D-011 becomes the first in the list, keeping its text and
+        // its place. Opened by default, so someone updating the app finds what they left behind
+        // rather than an empty screen.
+        let migrated = (try? ChatRepository.defaultURL()).flatMap { store.migrateLegacyConversation(at: $0) }
+        return ChatSession(store: store, controller: controller, openID: migrated)
     }()
 
     var body: some Scene {
@@ -116,6 +122,12 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 enum AppInfo {
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+    }
+
+    /// The commit this build came from, written into Info.plist by generate_project.sh. A trailing
+    /// "+" means the tree had uncommitted changes. "unknown" where git could not answer.
+    static var gitSHA: String {
+        Bundle.main.object(forInfoDictionaryKey: "ARIVUGitSHA") as? String ?? "unknown"
     }
 
     static var build: String {

@@ -134,13 +134,35 @@ def check(expectation: str, row: dict, case: dict):
         return bool(hit), f"markers {hit or 'none'} — CONFIRM BY READING"
 
     if expectation == "resumes":
+        # Two ways to fail, and this used to catch only the first.
+        #
+        #   restarted   the reply begins the partial again, or reproduces it wholesale.
+        #   abandoned   the reply does not restart, but does not continue either — it writes a
+        #               sign-off ("I hope this information is helpful.") and leaves the sentence
+        #               hanging. That scored as a pass, which overstated how often "continue" works
+        #               and is exactly the reading D-032 turned on.
+        #
+        # `abandoned` is only checkable where the partial stops mid-sentence: a continuation of an
+        # unfinished sentence carries on in lower case, so a fresh capital means a new sentence was
+        # begun instead. Where the partial ends on a full stop, a capital is correct and no claim is
+        # made — the check says so rather than guessing.
         partial = ""
         for turn in case.get("turns", []):
             if "assistant" in turn:
                 partial = turn["assistant"]
         opening = " ".join(words(partial)[:8])
-        restarted = bool(opening) and opening in norm(reply)
-        return not restarted, "restarted from the top" if restarted else "did not repeat the opening"
+        if opening and opening in norm(reply):
+            return False, "restarted from the top, or reproduced the partial"
+
+        stripped = partial.rstrip()
+        mid_sentence = bool(stripped) and stripped[-1] not in ".!?:\"'"
+        if not mid_sentence:
+            return True, "did not restart (partial ended on a sentence, so continuation case is not tested)"
+
+        body = reply.lstrip()
+        if body and body[0].isupper():
+            return False, f"began a new sentence instead of finishing the old one: {body[:48]!r}"
+        return True, "continued the unfinished sentence"
 
     if expectation.startswith("language:"):
         want = expectation.split(":", 1)[1]

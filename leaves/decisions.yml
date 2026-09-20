@@ -1111,11 +1111,89 @@
   raised_by: [Design]
   context: >
     strings.xml stopped_max_tokens: "This reply reached its length limit. Send “continue” to get more."
-    (Policy.MAX_REPLY_TOKENS = 768). No evidence yet that 0.6B resumes rather than restarts on "continue".
-  options: [keep the instruction, neutral label without an instruction]
-  recommendation: keep, and add one "continue" case to W04 to check it resumes (Decisions Leaf).
-  implemented_provisionally: yes
-  if_rejected: one string change.
+    (Policy.MAX_REPLY_TOKENS = 768).
+
+    The original entry said "no evidence yet that 0.6B resumes rather than restarts". There is now.
+    The W04 case this entry asked for exists (tools/eval/cases.yml, slice `continue`) and was run on
+    the host against the shipped GGUF and shipped sampling, 10 seeds per shape:
+
+      partial cut mid-word                 continued  0/10
+      partial cut mid-sentence             continued  0/10
+      partial cut at a sentence end                  not testable (see below)
+
+    Not once in twenty generations did it continue an unfinished sentence.
+
+    Those numbers are the second reading. The first said 3/10 and 7/10, and it was wrong: grade.py's
+    `resumes` check asked only whether the first eight words of the partial were repeated, which let
+    two real failures through. A reply that writes a sign-off — "I hope this information is helpful."
+    — and leaves the sentence hanging scored as a pass. So did a reply that restarted the letter
+    BODY without the "Dear Parents," salutation, because the salutation was inside the eight words
+    being looked for. The check now also fails a reply that begins a new sentence where the partial
+    stopped mid-sentence, and re-grading the same run gave 0/10 and 0/10. The check is tightened in
+    this change; the earlier figures should not be quoted.
+
+    Where the partial happens to end on a full stop the question does not arise, so nothing is
+    claimed for that shape rather than counting it as a win. That matters, because
+    max_reply_tokens is a TOKEN count: the cut lands mid-sentence or mid-word by definition, and the
+    one shape that scores well is the one that never needed help.
+
+    At one seed the model reproduced the whole partial back verbatim, truncated word and all —
+    "…because the coach compa." — and stopped.
+
+    The cause is not the copy. Asking for "continue" asks the model to work out, semantically, that it
+    should resume its own truncated sentence. That is a reasoning task, and not one a 0.6B model does
+    reliably. No wording makes it one.
+
+    There is a mechanism that asks it nothing. Build the prompt so that it ENDS with the partial reply
+    — no new user turn, no fresh assistant opening — and the model is not resuming, it is still
+    writing. Probed the same way, 10 seeds per shape:
+
+      prefix continuation, every shape     resumed 30/30, never once restarted
+
+    One caveat, found by reading the output rather than the count: re-tokenising the partial does not
+    always reproduce the tokens it was generated as, so a cut inside a word can join badly — "…the
+    coach compa" continued to "compaled". Trimming the partial back to the last whitespace and letting
+    the model re-emit the whole word removes it: 10/10 clean.
+
+    Cost: the shared prompt builder refuses a trailing assistant turn today — core/src/prompt.cpp
+    returns ARIVU_PROMPT_INVALID, Swift throws .invalidHistory, Kotlin `require`s it. A continuation
+    mode is a new capability in the builder and by C11 belongs in the core once, not in two shells.
+    Cheap at runtime: engine.cpp already reuses the shared KV prefix, so continuing re-decodes almost
+    nothing.
+  options:
+    - "Continue by prefix, from a Continue action; partial trimmed to the last whitespace (recommended)"
+    - "Keep the instruction and the typed word, now knowing it never continued in 20 attempts"
+    - "Neutral label without an instruction: say the reply stopped, offer nothing"
+    - "Continue by prefix, still triggered by the user typing the word"
+  recommendation: >
+    Option 1. The evidence this entry asked for came back against the mechanism, not the copy, so
+    changing the sentence cannot fix it.
+
+    Continuing by prefix removes the failure rather than reducing it: there is no restart to avoid,
+    because the model is never asked to resume — it is mid-sentence in its own output and keeps going.
+    30/30 against 0/20 is not a tuning difference; it is a different mechanism.
+
+    Making it an action rather than a typed word follows D-060, decided the same day for the same
+    reason: the app knows what to do, so it should not need the user to type a magic word to trigger
+    it. It also deletes a string rather than adding one — "Send “continue” to get more" stops being an
+    instruction and becomes a label beside a button.
+
+    Option 4 is the fallback if a Continue control is rejected: keep the typed word as the trigger,
+    change what it does. Worse to use, all of the correctness.
+
+    Option 2 should not be chosen quietly. It means shipping an instruction that fails most of the
+    time in the shape that actually occurs, and C5 is a commitment not to do that.
+
+    One constraint if option 1 is accepted: trim the partial to the last whitespace before
+    continuing, or mid-word joins produce non-words. The second constraint originally recorded here
+    — tightening grade.py's `resumes` check — is done in this change, which is how the 0/20 above
+    came to be known.
+  implemented_provisionally: >
+    the instruction is, and has shipped in strings.xml since 0.1. The mechanism it describes has now
+    been measured and does not work; nothing of option 1 is built.
+  if_rejected: >
+    options 2 and 3 are a string change. Option 1 is a continuation mode in the core prompt builder
+    plus its two platform mirrors, a Continue action in both chat screens, and the copy change.
   cross_platform: >
     Both platforms — the string is shared copy, and the reply cap it describes is a profile field
     (max_reply_tokens), not a platform constant. D-043 is the one thing that could change it on iOS,

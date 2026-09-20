@@ -1890,6 +1890,17 @@ items:
     guess: true
     deps: [W120]
 
+  - id: W140
+    title: "Show the exact prompt between the question and the answer, so context stops being invisible"
+    slice: MVP
+    platform: ios
+    spine: [C5, C7]
+    owner: Hari
+    status: done
+    verified: "iphone — PromptTranscriptTests builds a prompt with the real PromptBuilder and requires the rebuilt text to be byte-identical, including the truncated-history case; on the phone from f808f43+"
+    decisions: [D-061, D-063]
+    estimate_days: 0.5
+    deps: []
   - id: W138
     title: "EngineWrapperTests.handleCannotLeak is intermittently red — a global counter read across deferred deallocation"
     slice: MVP

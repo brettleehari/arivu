@@ -7,7 +7,7 @@ generated_for: 2026-09-20
 
 # Sequencing Leaf
 
-Today **2026-09-20** (Sunday) · slice **all** · platform **all** · done 47/140 · builders 1 + Hari
+Today **2026-09-20** (Sunday) · slice **all** · platform **all** · done 48/141 · builders 1 + Hari
 
 Done means verified to the stated level, never more. **Nothing has run on a physical Android phone or on any iPhone.** Emulator runs are functional only; the 94 iOS tests ran on macOS, not on iOS.
 
@@ -473,7 +473,12 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W89 iOS step 5 — generate and open the Xcode project (ARIVU_REPO | Engineering | ios | build — tools/ios/generate_project.sh produces ios/Arivu.xcodeproj with both targets, the ArivuKit package, the XCFramework reference and both script phases; project.yml fixed for EXCLUDED_ARCHS, Accelerate and the ArivuTests host relationship. ARIVU_REPORT_EMAIL deliberately unset: that is D-010, and tools/ios/check_release.sh refuses the placeholder so nothing can ship with it |
 | W90 iOS step 6 — first Simulator build: meet the compiler with ~ | Engineering | ios | simulator — xcodebuild -sdk iphonesimulator BUILD SUCCEEDED; the app launches and renders the empty state. Four defects found only by compiling: proc_pid_rusage is macOS-only, EXCLUDED_ARCHS missing, Accelerate unlinked, the gate refused an unmeasured device |
 | W91 iOS step 7 — run ArivuTests on the Simulator (model in the b | Engineering | ios | simulator — 10 of 10 on the iPhone 17 Simulator, 1 known issue (the D-010 placeholder). Model in the bundle at 378 MB, privacy manifest, licences folder reference and copy catalogue all confirmed |
+| W140 Show the exact prompt between the question and the answer, s | Hari | ios | iphone — PromptTranscriptTests builds a prompt with the real PromptBuilder and requires the rebuilt text to be byte-identical, including the truncated-history case; on the phone from f808f43+ |
 | W137 D-063: replace the system prompt so C5's hedge actually fire | Hari | both | host — tools/eval/sweep.cpp re-run across Qwen3 0.6B/1.7B/4B after the change: off-task corrections 1/6 -> 5/6, hedges 1/6 -> 3/6, on-task output unchanged. Byte-identical on both platforms (ProfileParityTest); 57 Android tests and 61+20+25 iOS tests pass |
+
+## Graph warnings
+
+- W140 claims `iphone` — a physical-handset level. Sequencing has no evidence any handset exists; confirm before this ships in the report
 
 ## Graph
 
@@ -617,6 +622,7 @@ flowchart LR
   W122["W122 Submit to the App Store with Manually re…"]:::hari
   W123["W123 MILESTONE — App Store release release th…"]:::hari
   W124["W124 External TestFlight round with Beta App…"]:::hari
+  W140["W140 Show the exact prompt between the questi…"]:::done
   W138["W138 EngineWrapperTests.handleCannotLeak is i…"]:::hari
   W139["W139 Android does not draw the per-reply stat…"]:::hari
   W137["W137 D-063: replace the system prompt so C5's…"]:::done

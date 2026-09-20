@@ -51,10 +51,23 @@ if ! xcrun devicectl device install app --device "$DEVICE" "$APP" | grep -E "App
   echo "install failed" >&2; exit 1
 fi
 
+LAUNCHED=""
 if [[ "${1:-}" != "--no-launch" ]]; then
   # A running app keeps the old binary until it is replaced, so launch rather than assume.
-  xcrun devicectl device process launch --device "$DEVICE" \
-    "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" 2>&1 \
-    | grep -iE "Launched|NSLocalizedFailureReason" | head -2 || true
+  OUT="$(xcrun devicectl device process launch --device "$DEVICE" \
+    "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Info.plist")" 2>&1 || true)"
+  echo "$OUT" | grep -iE "Launched|NSLocalizedFailureReason" | head -2 || true
+  echo "$OUT" | grep -qi "Launched application" && LAUNCHED=yes
 fi
-echo "== $SHA is on the device"
+
+# The install is what "on the device" means, and it succeeded or the script already exited. Whether
+# the app actually came up is a separate fact, and a locked phone is the ordinary way it does not —
+# so say which happened. This script has lied once already (it used to print success after failing
+# to install at all); it does not get to do it quietly in a second place.
+if [[ "${1:-}" == "--no-launch" ]]; then
+  echo "== $SHA is on the device (not launched, as asked)"
+elif [[ -n "$LAUNCHED" ]]; then
+  echo "== $SHA is on the device and running"
+else
+  echo "== $SHA is on the device, but did NOT launch — unlock the phone and open Arivu"
+fi

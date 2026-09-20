@@ -73,6 +73,9 @@ struct ChatView: View {
                 LazyVStack(alignment: .leading, spacing: 8) {
                     ForEach(session.messages) { message in
                         if message.id == session.contextStartID { ContextDivider() }
+                        // Between the question and the answer, because that is where the question
+                        // "how did six words become 196 tokens?" is actually asked.
+                        PromptDisclosure(reply: message, messages: session.messages)
                         MessageBubble(
                             message: message,
                             streaming: session.generating && message.id == session.messages.last?.id && !message.fromUser,
@@ -331,6 +334,68 @@ private struct MessageBubble: View {
 
     private var isErrorLabel: Bool {
         message.stop == .error || message.stop == .contextFull || message.stop == .lowMemory
+    }
+}
+
+/// The exact text handed to the model, between the question and the answer.
+///
+/// Arivu is an appliance and a way to understand the appliance, and this is the second one doing
+/// the work the first cannot. A user typed six words and the line under the reply said 196 tokens
+/// in; nothing in the app accounted for the other 190. They are the system prompt, the template's
+/// role markers and the conversation so far — re-read in full on every single turn, because the
+/// model keeps nothing between them. That is the one fact about a chat model that everything else
+/// about context, memory and speed follows from, and no amount of prose teaches it as well as
+/// showing the bytes.
+///
+/// Apple's rules, applied: collapsed by default and captioned, so the chat stays a chat for
+/// everyone who did not ask (C1, C8) — `DisclosureGroup` is the system's own control for exactly
+/// this, and brings its chevron, its animation and its VoiceOver "expanded/collapsed" for free.
+/// The text inside is monospaced, because it is a format and not a sentence, and selectable,
+/// because someone who wants this will want to paste it somewhere.
+private struct PromptDisclosure: View {
+    let reply: Message
+    let messages: [Message]
+    @State private var expanded = false
+
+    var body: some View {
+        // User messages have no prompt of their own, and a reply still being written has not
+        // recorded one yet. Both are simply absent rather than shown as empty.
+        if !reply.fromUser, let stats = reply.stats {
+            DisclosureGroup(isExpanded: $expanded) {
+                VStack(alignment: .leading, spacing: 8) {
+                    switch PromptTranscript.rebuild(reply: reply, in: messages) {
+                    case .success(let text):
+                        Text(Strings.string(.prompt_disclosure_body))
+                            .font(.footnote)
+                            .foregroundStyle(Palette.onSurfaceVariant)
+                        Text(text)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(Palette.onSurface)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 8))
+                    case .failure(let reason):
+                        // Never an approximation. A page whose whole claim is "this is exactly what
+                        // went in" has nothing to offer if it starts guessing (spine: C6).
+                        Text(Strings.string(reason == .systemPromptChanged
+                                            ? .prompt_disclosure_changed : .prompt_disclosure_unknown))
+                            .font(.footnote)
+                            .foregroundStyle(Palette.onSurfaceVariant)
+                    }
+                }
+                .padding(.top, 6)
+            } label: {
+                Text(Strings.string(.prompt_disclosure_label, Int(stats.promptTokens)))
+                    .font(.caption)
+                    .foregroundStyle(Palette.onSurfaceVariant)
+            }
+            .tint(Palette.onSurfaceVariant)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Palette.surfaceVariant.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityHint(Strings.string(.a11y_prompt_disclosure))
+        }
     }
 }
 

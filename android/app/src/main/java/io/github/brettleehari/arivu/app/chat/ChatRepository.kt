@@ -38,6 +38,10 @@ data class ReplyStats(
     val promptTokens: Int,
     val generatedTokens: Int,
     val decodeMs: Double,
+    /** Id of the oldest turn the model could see, so the exact prompt can be rebuilt rather than stored twice. */
+    val contextFirstID: String? = null,
+    /** FNV-1a of the system prompt in force when this reply was written; 0 means not recorded. */
+    val systemPromptHash: Long = 0,
 )
 
 private fun corruptPrefix(file: File) = file.name + ".corrupt-"

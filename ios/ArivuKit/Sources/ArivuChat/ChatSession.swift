@@ -254,11 +254,17 @@ public final class ChatSession: ObservableObject {
             await runGeneration(replyID: replyID,
                                 userID: userID,
                                 prompt: text,
-                                maxNewTokens: controller.maxReplyTokens(promptTokens: promptTokens))
+                                maxNewTokens: controller.maxReplyTokens(promptTokens: promptTokens),
+                                // Where the model's window starts, kept as an id: it is the one
+                                // input to the prompt that cannot be derived later, because
+                                // PromptBuilder drops old turns to fit. Everything else the
+                                // disclosure needs it can rebuild (PromptTranscript).
+                                contextFirstID: history[firstIncluded].id)
         }
     }
 
-    private func runGeneration(replyID: String, userID: String, prompt: String, maxNewTokens: Int32) async {
+    private func runGeneration(replyID: String, userID: String, prompt: String,
+                               maxNewTokens: Int32, contextFirstID: String) async {
         var stop: Stop = .error
         var reply: ReplyStats?
         var lastSave = Date()
@@ -283,7 +289,9 @@ public final class ChatSession: ObservableObject {
                         // rate to quote for zero tokens (spine: C5, C6).
                         reply = ReplyStats(promptTokens: stats.promptTokens,
                                            generatedTokens: stats.generated,
-                                           decodeMs: stats.decodeMs)
+                                           decodeMs: stats.decodeMs,
+                                           contextFirstID: contextFirstID,
+                                           systemPromptHash: PromptTranscript.hash(Policy.systemPrompt))
                     }
                 }
             }

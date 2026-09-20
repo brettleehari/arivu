@@ -45,10 +45,11 @@ struct ConversationTests {
         ChatRepository(url: file).save([
             Message(id: "a", fromUser: true, text: "hi", createdAt: 7),
             Message(id: "b", fromUser: false, text: "there", createdAt: 8, stop: .endOfTurn,
-                    stats: ReplyStats(promptTokens: 12, generatedTokens: 34, decodeMs: 500)),
+                    stats: ReplyStats(promptTokens: 12, generatedTokens: 34, decodeMs: 500,
+                                      contextFirstID: "a", systemPromptHash: 99)),
         ])
         let json = try String(contentsOf: file, encoding: .utf8)
-        #expect(json == #"{"messages":[{"createdAt":7,"fromUser":true,"id":"a","reported":false,"stats":null,"stop":null,"text":"hi"},{"createdAt":8,"fromUser":false,"id":"b","reported":false,"stats":{"decodeMs":500,"generatedTokens":34,"promptTokens":12},"stop":"END_OF_TURN","text":"there"}"#
+        #expect(json == #"{"messages":[{"createdAt":7,"fromUser":true,"id":"a","reported":false,"stats":null,"stop":null,"text":"hi"},{"createdAt":8,"fromUser":false,"id":"b","reported":false,"stats":{"contextFirstID":"a","decodeMs":500,"generatedTokens":34,"promptTokens":12,"systemPromptHash":99},"stop":"END_OF_TURN","text":"there"}"#
                      + #"],"version":1}"#)
 
         // The four things that would actually break the other platform.

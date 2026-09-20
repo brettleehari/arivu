@@ -31,6 +31,9 @@ public enum StringKey: String, CaseIterable, Sendable {
     case a11y_copy_message, a11y_report_reply, a11y_stop, a11y_expanded, a11y_collapsed
     /// What the reply cost, under the reply. Explained on the learning page, not here.
     case chat_stats, a11y_chat_stats
+    /// The exact text handed to the model, between the question and the answer.
+    case prompt_disclosure_label, prompt_disclosure_body, a11y_prompt_disclosure
+    case prompt_disclosure_changed, prompt_disclosure_unknown
 
     // About
     case about_title, about_what_title, about_what_body, about_good_title, about_good_body

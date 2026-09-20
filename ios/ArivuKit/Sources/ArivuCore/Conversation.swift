@@ -24,22 +24,37 @@ public enum Stop: String, Codable, Sendable, CaseIterable {
     case backgrounded = "BACKGROUNDED"
 }
 
-/// What one reply cost, kept with the reply. spine: C5 — the learning page used to show these for
-/// the last reply only, which meant the numbers described a reply that was already scrolled away.
-/// They belong to the message they measure, so they are stored on it and survive a restart.
+/// What one reply read, and what it cost — kept with the reply. spine: C5 — the learning page used
+/// to show these for the last reply only, which meant the numbers described a reply that was
+/// already scrolled away. They belong to the message they measure, so they are stored on it and
+/// survive a restart.
 ///
 /// Raw measurements only: tokens in, tokens out, and the milliseconds spent writing. The rate is
 /// derived at the point of display, so a saved conversation never carries a number that disagrees
 /// with the two it was computed from.
+///
+/// The last two fields are not measurements; they are what `PromptTranscript` needs to rebuild the
+/// exact prompt without storing a second copy of it. See PromptTranscript.swift for why.
 public struct ReplyStats: Codable, Equatable, Sendable {
     public var promptTokens: Int32
     public var generatedTokens: Int32
     public var decodeMs: Double
+    /// Id of the oldest turn the model could see — `BuiltPrompt.firstIncluded`, resolved to an id
+    /// because an index into a list that keeps growing means nothing once it has grown.
+    public var contextFirstID: String?
+    /// FNV-1a of the system prompt in force when this reply was written. Zero means "not recorded".
+    public var systemPromptHash: Int64
 
-    public init(promptTokens: Int32, generatedTokens: Int32, decodeMs: Double) {
+    public init(promptTokens: Int32,
+                generatedTokens: Int32,
+                decodeMs: Double,
+                contextFirstID: String? = nil,
+                systemPromptHash: Int64 = 0) {
         self.promptTokens = promptTokens
         self.generatedTokens = generatedTokens
         self.decodeMs = decodeMs
+        self.contextFirstID = contextFirstID
+        self.systemPromptHash = systemPromptHash
     }
 
     /// Tokens per second while writing. Zero when there is nothing to divide by, never infinity.

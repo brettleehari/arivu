@@ -85,6 +85,13 @@
 /* Under a reply. Middle dots, the separator iOS uses in its own metadata lines. */
 "chat_stats" = "%1$@ in · %2$@ out · %3$@ tok/s";
 "a11y_chat_stats" = "%1$@ tokens in, %2$@ tokens out, %3$@ tokens a second";
+
+/* Between the question and the answer: the exact bytes the model was given. */
+"prompt_disclosure_label" = "What Arivu read · %1$d tokens";
+"prompt_disclosure_body" = "You typed one message. This is everything that went in with it. Arivu keeps nothing between replies, so the instructions it is given and the conversation so far are sent again in full every time — which is why a short question can still be hundreds of tokens, and why a long conversation gets slower. The <|im_start|> marks are how the model is told who is speaking. They are part of the format, not something you wrote.";
+"prompt_disclosure_changed" = "Arivu's instructions changed in an app update after this reply was written, so the exact text it read can no longer be shown. Newer replies will show theirs.";
+"prompt_disclosure_unknown" = "This reply was written before Arivu started recording what it read, so the exact text cannot be shown.";
+"a11y_prompt_disclosure" = "Shows the exact text the model was given for this reply";
 "a11y_report_reply" = "Report this reply";
 "a11y_stop" = "Stop writing the reply";
 "a11y_expanded" = "Open";
@@ -257,7 +264,7 @@
 "learn_speed_measured_title" = "The line under each reply";
 "learn_speed_measured_body" = "Under every reply Arivu prints what that reply cost: 24 in · 143 out · 9.4 tok/s. Speed is counted in tokens a second rather than words, because a token is what the model actually handles — roughly three quarters of a word. Reading and writing are not the same speed, and the reason is worth knowing. Reading is fast because your whole message is taken in at once. Writing is slower because each token depends on the one before it, so they cannot be done together. That is also why the wait before the first word is mostly reading.";
 "learn_speed_tokens_in" = "in";
-"learn_speed_tokens_in_body" = "Tokens Arivu read before writing anything: your message, and as much of the conversation before it as still fits.";
+"learn_speed_tokens_in_body" = "Tokens Arivu read before writing anything: the instructions it is given, your message, and as much of the conversation before it as still fits. This is usually far more than you typed. Tap \"What Arivu read\" above any reply to see the exact text.";
 "learn_speed_tokens_out" = "out";
 "learn_speed_tokens_out_body" = "Tokens Arivu wrote in the reply.";
 "learn_speed_write" = "tok/s";

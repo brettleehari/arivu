@@ -2294,3 +2294,70 @@
   if_rejected: >
     nothing to undo; option 1 is a few lines in each chat state machine. Choosing option 2 instead
     costs a copy key, its two platform strings, an accessibility label and a check_copy.py entry.
+
+- id: D-061
+  title: A learning page — the model card, inside About rather than on the one screen
+  raised_at: 2026-09-20
+  sla_expires_at: 2026-09-22
+  spine: [C1, C4, C5, C8]
+  platform: both
+  adjudication: human
+  status: resolved_human
+  decided_at: 2026-09-20
+  decided_by: Hari
+  blocks_release: false
+  raised_by: [Engineering]
+  related: [D-017, D-053, D-038]
+  context: >
+    Arivu is two products in one binary, and the second one had nowhere to live. The first is an
+    appliance nobody has to understand — install, type, done (C1, C8). The second is a way to
+    understand what an appliance like this actually is: which model, how big, how much it can read,
+    why it fits a phone, what it costs to run.
+
+    Those pull in opposite directions on the same screen, which is why the answer is not a screen.
+    The chat stays exactly as it was; the page is one push inside About, where nobody meets it by
+    accident and wanting it is an explicit act. No model picker, no parameters, nothing settable —
+    C8 and R3/R5 are untouched, because everything on it is read-only.
+
+    It is also the honest version of something Arivu already promises. C5 commits to being honest
+    about what Arivu is, and today that is three sentences in About. This is the same commitment
+    with the arithmetic attached. C4 makes the same argument from the other end: the licences are
+    already in the app, and a fork needs the numbers as much as the texts.
+
+    On not copying the obvious thing: PocketPal has a far richer version of this — benchmark cards,
+    model settings, cache types, GPU layers. It shows "Cache Types: f16/f16" to people who already
+    know what that means, which teaches nobody anything. The difference here is that each section
+    says what the number IS and why THIS number was chosen, and the value follows the prose. That is
+    a learning page; the other is a spec sheet, and a spec sheet is what an appliance must not need.
+  options:
+    - "A learning page inside About, read-only, values read from the profile (chosen)"
+    - "Nothing: About's three sentences are the whole of C5"
+    - "On the chat screen or a tab, as other local-model apps do"
+  recommendation: >
+    Option 1, and the constraint that makes it worth having: not one number on the page is typed in.
+    Every figure is read from the shipped profile or from the device at that moment. A page of
+    hand-written numbers is true the day it is written and quietly wrong after the next profile
+    change — which, for a page whose entire purpose is to teach, is worse than not having one. It
+    also means the 1.7B swap (D-004) updates this page by itself.
+
+    Option 3 is refused. Putting it on the chat screen is how an appliance becomes a platform, and
+    it is the exact surface that separates Arivu from what already exists.
+  resolution: >
+    Built on iOS and on the device. About gains a "How Arivu works" push; the page is four sections
+    — the model, how much it can read at once, why it fits, how it runs — each with an explanation
+    followed by its figures, read from Profile.compact, DeviceMemory and the linked core.
+
+    Apple's rules applied rather than cited: an inset-grouped List because that is what iOS uses for
+    structured facts; LabeledContent rather than an HStack, so label and value inherit Dynamic Type,
+    alignment and a VoiceOver reading that pairs them; monospaced digits so numbers do not jitter;
+    a push with the system's back, not a modal, because this is a place you go rather than a thing
+    that interrupts you; and no decorative icons, since Arivu's own idiom is already "a word, not a
+    gear" and a page about honesty is the wrong place to start drawing chips and brains.
+
+    OUTSTANDING: Android has no equivalent yet, so the 31 new copy keys exist on one platform only.
+    That is a presentation gap, not a capability one — C11 is about what a device can carry — but
+    D-053 wants one catalogue across both, and tools/check_copy.py (W77) will fail on this the day it
+    exists. The Android page and the mirrored strings are the follow-up.
+  implemented_provisionally: "no — built, decided, and on a device"
+  if_rejected: >
+    delete LearnView.swift, the About link and 31 copy keys. Nothing else depends on it.

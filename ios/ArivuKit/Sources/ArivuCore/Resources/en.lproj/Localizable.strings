@@ -180,3 +180,50 @@
 "gate_total_ram" = "This phone has %1$@ of memory. Arivu needs at least %2$@.";
 /* %1$@ = free storage now, %2$@ = storage Arivu needs; both formatted like "268 MB" */
 "gate_storage" = "This phone has %1$@ of free storage. Arivu needs at least %2$@.";
+
+/* ---------------------------------------------------------------------------------------------
+   How Arivu works — the learning page (leaves/design.md §8a).
+
+   Arivu is two things at once: an appliance you do not have to understand, and a way to understand
+   what an appliance like this actually is. The chat screen serves the first. This page serves the
+   second, one tap inside About, where nobody meets it by accident.
+
+   Every number on it is read from the shipped profile and from the phone at that moment. Nothing is
+   typed in here, so it cannot go stale when the profile changes — which is the difference between a
+   page that teaches and a page that used to be true.
+   --------------------------------------------------------------------------------------------- */
+"about_learn_link" = "How Arivu works";
+"learn_title" = "How Arivu works";
+"learn_intro_body" = "Arivu runs a language model on this phone. Nothing is sent anywhere. These are the real numbers it is running with right now.";
+
+"learn_model_title" = "The model";
+"learn_model_body" = "A language model is a file of numbers, called weights, that turns text you give it into text it predicts should follow. Arivu ships one and never downloads another. Smaller models need less memory and answer faster; they also know less, which is why Arivu asks you to bring your own text rather than asking it for facts.";
+"learn_model_name" = "Model";
+"learn_model_quant" = "Precision";
+"learn_model_quant_value" = "Q4_K_M — about 4 bits per weight";
+"learn_model_size" = "Size on disk";
+"learn_model_licence" = "Licence";
+"learn_model_licence_value" = "Apache-2.0, weights included";
+
+"learn_context_title" = "How much it can read at once";
+"learn_context_body" = "The model reads in tokens, not words — roughly three tokens for every four words. Everything it can see at once, your text and its reply together, has to fit in the context. When a conversation grows past it, Arivu shows a line above the oldest message it can still see, rather than quietly forgetting.";
+"learn_context_window" = "Context";
+"learn_context_reply" = "Longest reply";
+"learn_context_reserve" = "Held back for the reply";
+"learn_tokens_value" = "%1$d tokens";
+"learn_tokens_approx" = "%1$d tokens, about %2$d words";
+
+"learn_memory_title" = "Why it fits";
+"learn_memory_body" = "The weights are mapped straight from the app, not copied into memory, so the phone can drop them and read them back at any time. That half is nearly free. What actually counts against Arivu is its working memory: the notes it keeps about the conversation so far, plus scratch space. Keeping those small is the whole reason a model like this fits a phone at all.";
+"learn_memory_weights" = "Weights, shared with the system";
+"learn_memory_working" = "Working memory";
+"learn_memory_peak" = "Most it should ever need";
+"learn_memory_now" = "Using right now";
+"learn_memory_unmeasured" = "not measured";
+
+"learn_speed_title" = "How it runs";
+"learn_speed_body" = "Arivu runs on the processor, not the graphics chip. On a phone the two share one pool of memory, and moving the model to the graphics chip would turn memory the system can reclaim into memory it cannot — which is the trade that lets Arivu run on a cheap phone at all. It uses the fast cores only; filling the slower ones makes replies arrive later, not sooner.";
+"learn_speed_threads" = "Cores used";
+"learn_speed_backend" = "Runs on";
+"learn_speed_backend_value" = "Processor only";
+"learn_engine_core" = "Engine";

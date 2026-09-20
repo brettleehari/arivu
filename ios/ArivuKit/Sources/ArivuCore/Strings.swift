@@ -61,6 +61,21 @@ public enum StringKey: String, CaseIterable, Sendable {
     // The gate
     case incompatible_title, incompatible_body, incompatible_remove_ios
     case gate_total_ram, gate_storage
+
+    // How Arivu works — the learning page (leaves/design.md §8a)
+    case about_learn_link, learn_title, learn_intro_body
+    case learn_model_title, learn_model_body
+    case learn_model_name, learn_model_quant, learn_model_quant_value
+    case learn_model_size, learn_model_licence, learn_model_licence_value
+    case learn_context_title, learn_context_body
+    case learn_context_window, learn_context_reply, learn_context_reserve
+    case learn_tokens_value, learn_tokens_approx
+    case learn_memory_title, learn_memory_body
+    case learn_memory_weights, learn_memory_working, learn_memory_peak
+    case learn_memory_now, learn_memory_unmeasured
+    case learn_speed_title, learn_speed_body
+    case learn_speed_threads, learn_speed_backend, learn_speed_backend_value
+    case learn_engine_core
 }
 
 public enum Strings {

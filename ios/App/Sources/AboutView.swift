@@ -30,6 +30,18 @@ struct AboutView: View {
                 }
                 if openRow == Self.privacyKey { PrivacyPolicy() }
 
+                // A push, not a disclosure row: this is a place you go, with the system's own back
+                // (leaves/design.md §8a). It sits after "private" and before "report" so the page
+                // reads as what Arivu is, then how it works, then what to do when it is wrong.
+                NavigationLink {
+                    LearnView()
+                } label: {
+                    Text(Strings.string(.about_learn_link))
+                        .font(.body)
+                        .foregroundStyle(Palette.primary)
+                }
+                .frame(minHeight: Metrics.minTouchTarget)
+
                 AboutSection(title: .about_report_title, text: .about_report_body)
                 Button(Strings.string(.about_report_button)) {
                     reportPresentation = ReportPresentation(payload: ReportPayload.build(

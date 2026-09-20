@@ -156,6 +156,11 @@ public final class ChatSession: ObservableObject {
 
     /// spine: C3 — the first way a user has ever had to take their own text off the device.
     public func delete(_ id: String) {
+        // Deleting the conversation currently being written into stops the writing first. Without
+        // this the generation keeps running against a conversation that no longer exists, and its
+        // final save lands in whichever conversation was opened in its place — a reply appearing in
+        // a thread that never asked for it (spine: C7, C10).
+        if id == currentID && generating { stop() }
         store.delete(id)
         if id == currentID {
             let next = store.list().first?.id ?? store.create()
@@ -255,6 +260,7 @@ public final class ChatSession: ObservableObject {
 
     private func runGeneration(replyID: String, userID: String, prompt: String, maxNewTokens: Int32) async {
         var stop: Stop = .error
+        var reply: ReplyStats?
         var lastSave = Date()
         do {
             for try await event in controller.generate(prompt: prompt, maxNewTokens: maxNewTokens) {
@@ -270,7 +276,15 @@ public final class ChatSession: ObservableObject {
                     }
                 case .done(let stats):
                     stop = resolveStop(stats.stop, cancelCause: controller.cancelBox.cause)
-                    if stats.generated > 0 { lastStats = stats }
+                    if stats.generated > 0 {
+                        lastStats = stats
+                        // The numbers belong to this reply, so they are stored on it and shown
+                        // under it. A cancelled reply that wrote nothing gets none: there is no
+                        // rate to quote for zero tokens (spine: C5, C6).
+                        reply = ReplyStats(promptTokens: stats.promptTokens,
+                                           generatedTokens: stats.generated,
+                                           decodeMs: stats.decodeMs)
+                    }
                 }
             }
         } catch {
@@ -289,6 +303,7 @@ public final class ChatSession: ObservableObject {
 
         updateMessage(replyID) {
             $0.stop = stop
+            $0.stats = reply
             $0.text = String($0.text.reversed().drop { $0.isWhitespace }.reversed())
         }
         generating = false

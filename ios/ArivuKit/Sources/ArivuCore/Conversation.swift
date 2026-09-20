@@ -24,6 +24,32 @@ public enum Stop: String, Codable, Sendable, CaseIterable {
     case backgrounded = "BACKGROUNDED"
 }
 
+/// What one reply cost, kept with the reply. spine: C5 — the learning page used to show these for
+/// the last reply only, which meant the numbers described a reply that was already scrolled away.
+/// They belong to the message they measure, so they are stored on it and survive a restart.
+///
+/// Raw measurements only: tokens in, tokens out, and the milliseconds spent writing. The rate is
+/// derived at the point of display, so a saved conversation never carries a number that disagrees
+/// with the two it was computed from.
+public struct ReplyStats: Codable, Equatable, Sendable {
+    public var promptTokens: Int32
+    public var generatedTokens: Int32
+    public var decodeMs: Double
+
+    public init(promptTokens: Int32, generatedTokens: Int32, decodeMs: Double) {
+        self.promptTokens = promptTokens
+        self.generatedTokens = generatedTokens
+        self.decodeMs = decodeMs
+    }
+
+    /// Tokens per second while writing. Zero when there is nothing to divide by, never infinity.
+    public var tokensPerSecond: Double {
+        decodeMs > 0 ? Double(generatedTokens) * 1000 / decodeMs : 0
+    }
+
+    public var seconds: Double { decodeMs / 1000 }
+}
+
 public struct Message: Codable, Equatable, Identifiable, Sendable {
     public let id: String
     public let fromUser: Bool
@@ -33,25 +59,30 @@ public struct Message: Codable, Equatable, Identifiable, Sendable {
     public var stop: Stop?
     /// The user flagged this reply with Report. Kept on the phone; the report itself goes by Mail. spine: C9
     public var reported: Bool
+    /// Null on the user's own messages, while streaming, and on every reply written by a build from
+    /// before this field existed. The chat shows the line only when it has one to show.
+    public var stats: ReplyStats?
 
     public init(id: String = UUID().uuidString,
                 fromUser: Bool,
                 text: String,
                 createdAt: Int64 = Message.now(),
                 stop: Stop? = nil,
-                reported: Bool = false) {
+                reported: Bool = false,
+                stats: ReplyStats? = nil) {
         self.id = id
         self.fromUser = fromUser
         self.text = text
         self.createdAt = createdAt
         self.stop = stop
         self.reported = reported
+        self.stats = stats
     }
 
     /// Milliseconds since the epoch, like Kotlin's `System.currentTimeMillis()`.
     public static func now() -> Int64 { Int64(Date().timeIntervalSince1970 * 1000) }
 
-    private enum CodingKeys: String, CodingKey { case id, fromUser, text, createdAt, stop, reported }
+    private enum CodingKeys: String, CodingKey { case id, fromUser, text, createdAt, stop, reported, stats }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -63,6 +94,9 @@ public struct Message: Codable, Equatable, Identifiable, Sendable {
         // `ignoreUnknownKeys` does the same for fields; this does it for values.
         stop = (try? c.decode(String.self, forKey: .stop)).flatMap(Stop.init(rawValue:))
         reported = (try? c.decode(Bool.self, forKey: .reported)) ?? false
+        // Absent in files written before this field existed, and absent is the normal case for a
+        // user's message. Either way the chat simply has no line to draw.
+        stats = try? c.decodeIfPresent(ReplyStats.self, forKey: .stats)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -74,6 +108,7 @@ public struct Message: Codable, Equatable, Identifiable, Sendable {
         // encodeDefaults = true on the Kotlin side: the key is present even when the value is null.
         if let stop { try c.encode(stop, forKey: .stop) } else { try c.encodeNil(forKey: .stop) }
         try c.encode(reported, forKey: .reported)
+        if let stats { try c.encode(stats, forKey: .stats) } else { try c.encodeNil(forKey: .stats) }
     }
 }
 

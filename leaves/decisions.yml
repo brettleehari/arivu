@@ -2425,11 +2425,39 @@
   spine: [C5, C9, C11]
   platform: both
   adjudication: human
-  status: pending
-  blocks_release: true
+  status: resolved_human
+  decided_at: 2026-09-20
+  decided_by: Hari
+  blocks_release: false
   blocks_release_scope: both
   raised_by: [Engineering]
   related: [D-017, D-026, D-007, D-004]
+  resolution: >
+    Option 1. The revised wording is the shipped system prompt on both platforms as of 2026-09-20,
+    with the C9 safety sentences kept unchanged on the end — the sweep candidate omitted those to
+    keep the two harnesses comparable, and shipping without them would have been a safety
+    regression smuggled in behind a quality fix.
+
+    Policy.systemPrompt and Policy.SYSTEM_PROMPT are 840 characters, byte-identical, and
+    ProfileParityTest.theSystemPromptIsByteIdenticalOnBothPlatforms passes against the new text.
+
+    RE-RUN AFTER THE CHANGE, all three models, same cases, same seed (tools/eval/sweep.cpp, where
+    the old wording is kept as the `previous/*` harnesses so the comparison stays runnable):
+
+      off-task, corrected       before 1/6    after 5/6
+      off-task, hedged          before 1/6    after 3/6
+      rewrite-polite tokens     6 / 7 / 9     6 / 7 / 7   (0.6B / 1.7B / 4B)
+
+    On-task output is unchanged — rewrite-polite is byte-identical on 0.6B and 1.7B, and 4B got
+    two tokens shorter. The cost lands only where it was meant to: the two off-task cases grew by
+    about 30 tokens each.
+
+    The false premise that started this now gets "iPhones are generally not considered airgapped
+    devices" on 1.7B instead of the sentence back verbatim.
+
+    What is still true is what the context section already said: the model remains factually wrong
+    about the 2019 final. It now says so. That is the whole of what C5 asks for and the limit of
+    what a prompt can buy.
   context: >
     Policy.SYSTEM_PROMPT already instructs the model to hedge: "If asked for facts, news, figures or
     advice, say you may be wrong and suggest checking a trusted source." leaves/NOTES.md recorded
@@ -2497,5 +2525,4 @@
     ProfileParityTest enforces that, so both change together or the build fails — which is the
     check working. And the new wording is longer, so it costs a few more tokens of context: worth
     measuring against n_ctx before it ships, though at 2048 the margin is wide.
-  implemented_provisionally: "no — the revised prompt exists only in tools/eval/sweep.cpp as a tested candidate"
-  if_rejected: "nothing to undo; the sweep and its evidence stay as the record of what was measured."
+  verified: "host — tools/eval/sweep.cpp across Qwen3 0.6B/1.7B/4B, and the parity and copy tests on both platforms"

@@ -18,6 +18,26 @@ data class Message(
     val stop: Stop? = null,
     /** The user flagged this reply with Report (kept on the phone; the report itself goes by their email app). spine: C9 */
     val reported: Boolean = false,
+    /**
+     * What this reply cost. Null on user messages, while streaming, and in files written before the
+     * field existed. Written by iOS today and read by both: the conversation file is one schema
+     * across platforms (MULTIPLATFORM.md appendix), so the field lands here at the same time even
+     * though the Android UI does not draw it yet. Without it an Android save would silently drop
+     * what an iOS save wrote, which is exactly the drift the shared schema exists to prevent.
+     */
+    val stats: ReplyStats? = null,
+)
+
+/**
+ * Raw measurements only: tokens in, tokens out, milliseconds spent writing. The rate is derived at
+ * the point of display, so a saved conversation never carries a number that disagrees with the two
+ * it was computed from. Field names and order match ios/ArivuKit/Sources/ArivuCore/Conversation.swift.
+ */
+@Serializable
+data class ReplyStats(
+    val promptTokens: Int,
+    val generatedTokens: Int,
+    val decodeMs: Double,
 )
 
 private fun corruptPrefix(file: File) = file.name + ".corrupt-"

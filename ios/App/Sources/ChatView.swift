@@ -274,6 +274,13 @@ private struct MessageBubble: View {
                         .foregroundStyle(Palette.onSurfaceVariant)
                 }
 
+                // What this reply cost. Its own line, like the stop label and the reported label
+                // above it, and NOT squeezed onto the Copy row: that row is already two buttons
+                // wide, and at an accessibility text size the three of them would fight for a
+                // bubble that cannot grow. A line that truncates to "24 in · 143 o…" is worse
+                // than a line that costs 12 points.
+                if let stats = message.stats, !streaming { StatsLine(stats: stats) }
+
                 if !message.text.isEmpty && !streaming {
                     HStack(spacing: 4) {
                         Spacer(minLength: 0)
@@ -324,6 +331,39 @@ private struct MessageBubble: View {
 
     private var isErrorLabel: Bool {
         message.stop == .error || message.stop == .contextFull || message.stop == .lowMemory
+    }
+}
+
+/// Tokens in, tokens out, and how fast the reply was written — under the reply it describes.
+///
+/// This used to live on the learning page as "your last reply", where it described a reply the
+/// reader had navigated away from. Here it is attached to the thing it measures, which is the only
+/// place a per-reply number is honest (spine: C5).
+///
+/// Apple's rules, applied: `.caption2` and a muted colour so it recedes below even the Copy row;
+/// monospaced digits so the figures do not jitter as a conversation scrolls; and one combined
+/// VoiceOver phrase, because "24" "143" "9.4" read out as three loose numbers is noise. Middle dots
+/// rather than slashes or pipes — that is the separator iOS itself uses in a metadata line.
+private struct StatsLine: View {
+    let stats: ReplyStats
+
+    var body: some View {
+        Text(Strings.string(.chat_stats,
+                            "\(stats.promptTokens)",
+                            "\(stats.generatedTokens)",
+                            Self.rate(stats.tokensPerSecond)))
+            .font(.caption2.monospacedDigit())
+            .foregroundStyle(Palette.onSurfaceVariant.opacity(0.7))
+            .accessibilityLabel(Strings.string(.a11y_chat_stats,
+                                               "\(stats.promptTokens)",
+                                               "\(stats.generatedTokens)",
+                                               Self.rate(stats.tokensPerSecond)))
+    }
+
+    /// One decimal below 10 tokens a second, none above it. A phone writing at 84.7 does not need
+    /// the .7, and one at 4 does — the digit carries information exactly where the number is small.
+    private static func rate(_ value: Double) -> String {
+        String(format: value < 10 ? "%.1f" : "%.0f", value)
     }
 }
 

@@ -28,3 +28,9 @@ target_link_libraries(apk_window_check PRIVATE arivu_core)
 # with no platform SDK. It is a QUALITY harness; nothing it prints is a speed measurement.
 add_executable(arivu_eval ../eval/eval.cpp)
 target_link_libraries(arivu_eval PRIVATE arivu_core)
+
+# The model x harness bake-off (tools/eval/sweep.cpp). Same reason as arivu_eval: the real engine,
+# the real core, no platform SDK. Where arivu_eval holds the harness fixed and varies the model,
+# this varies both — which is how D-063 was found.
+add_executable(arivu_sweep ../eval/sweep.cpp)
+target_link_libraries(arivu_sweep PRIVATE arivu_core)

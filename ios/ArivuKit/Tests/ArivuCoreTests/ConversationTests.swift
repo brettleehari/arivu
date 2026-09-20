@@ -44,14 +44,17 @@ struct ConversationTests {
         let file = dir.appendingPathComponent("conversation.json")
         ChatRepository(url: file).save([
             Message(id: "a", fromUser: true, text: "hi", createdAt: 7),
-            Message(id: "b", fromUser: false, text: "there", createdAt: 8, stop: .endOfTurn),
+            Message(id: "b", fromUser: false, text: "there", createdAt: 8, stop: .endOfTurn,
+                    stats: ReplyStats(promptTokens: 12, generatedTokens: 34, decodeMs: 500)),
         ])
         let json = try String(contentsOf: file, encoding: .utf8)
-        #expect(json == #"{"messages":[{"createdAt":7,"fromUser":true,"id":"a","reported":false,"stop":null,"text":"hi"},{"createdAt":8,"fromUser":false,"id":"b","reported":false,"stop":"END_OF_TURN","text":"there"}],"version":1}"#)
+        #expect(json == #"{"messages":[{"createdAt":7,"fromUser":true,"id":"a","reported":false,"stats":null,"stop":null,"text":"hi"},{"createdAt":8,"fromUser":false,"id":"b","reported":false,"stats":{"decodeMs":500,"generatedTokens":34,"promptTokens":12},"stop":"END_OF_TURN","text":"there"}"#
+                     + #"],"version":1}"#)
 
-        // The three things that would actually break the other platform.
+        // The four things that would actually break the other platform.
         #expect(json.contains(#""stop":null"#), "kotlinx writes stop even when it is null")
         #expect(json.contains(#""reported":false"#), "kotlinx writes reported even when it is false")
+        #expect(json.contains(#""stats":null"#), "kotlinx writes stats even when it is null")
         #expect(json.contains(#""version":1"#))
     }
 

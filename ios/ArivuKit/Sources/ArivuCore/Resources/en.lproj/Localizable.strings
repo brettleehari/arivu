@@ -82,6 +82,9 @@
 "a11y_writing" = "Arivu is writing";
 "a11y_reply_done" = "Reply finished";
 "a11y_copy_message" = "Copy this message";
+/* Under a reply. Middle dots, the separator iOS uses in its own metadata lines. */
+"chat_stats" = "%1$@ in · %2$@ out · %3$@ tok/s";
+"a11y_chat_stats" = "%1$@ tokens in, %2$@ tokens out, %3$@ tokens a second";
 "a11y_report_reply" = "Report this reply";
 "a11y_stop" = "Stop writing the reply";
 "a11y_expanded" = "Open";
@@ -251,16 +254,14 @@
 "learn_metal_body" = "On a phone the processor and the graphics chip share one pool of memory. Moving the model to the graphics chip would not make it use less — it would change memory the system can take back at any moment into memory it cannot. Arivu maps the model straight from the app, so the phone can drop it under pressure and read it back from storage. That is what lets it run on a phone with little to spare, and it is the property offloading would spend. On a phone with memory to spare the trade is worth making, and it is a property of the phone rather than of Arivu, which is why it is a setting nobody has to see.";
 
 /* Tokens per second, explained rather than displayed. */
-"learn_speed_measured_title" = "Your last reply";
-"learn_speed_measured_body" = "Speed is counted in tokens a second, not words. Two numbers matter and they are not the same. Reading is how fast Arivu takes in what you wrote, and it is fast because the whole message is processed at once. Writing is how fast the reply appears, and it is slower because each word depends on the one before it, so they cannot be done together. The wait before the first word is mostly reading.";
-"learn_speed_none" = "Send a message and these will appear.";
-"learn_speed_ttft" = "Wait before the first word";
-"learn_speed_read" = "Reading";
-"learn_speed_write" = "Writing";
-"learn_speed_tokens_in" = "Words read";
-"learn_speed_tokens_out" = "Words written";
-"learn_tps" = "%1$@ tokens/sec";
-"learn_ms" = "%1$@ seconds";
+"learn_speed_measured_title" = "The line under each reply";
+"learn_speed_measured_body" = "Under every reply Arivu prints what that reply cost: 24 in · 143 out · 9.4 tok/s. Speed is counted in tokens a second rather than words, because a token is what the model actually handles — roughly three quarters of a word. Reading and writing are not the same speed, and the reason is worth knowing. Reading is fast because your whole message is taken in at once. Writing is slower because each token depends on the one before it, so they cannot be done together. That is also why the wait before the first word is mostly reading.";
+"learn_speed_tokens_in" = "in";
+"learn_speed_tokens_in_body" = "Tokens Arivu read before writing anything: your message, and as much of the conversation before it as still fits.";
+"learn_speed_tokens_out" = "out";
+"learn_speed_tokens_out_body" = "Tokens Arivu wrote in the reply.";
+"learn_speed_write" = "tok/s";
+"learn_speed_write_body" = "How fast the reply was written. It drops as a conversation grows, because every new token has more to look back over.";
 
 /* The build, so two installs can be told apart. */
 "about_build" = "Build %1$@";
@@ -273,4 +274,6 @@
 "conversations_delete" = "Delete";
 "conversations_count_one" = "1 message";
 "conversations_count_many" = "%1$d messages";
+/* How many, and how long ago. The middle dot is the separator iOS uses in its own lists. */
+"conversations_subtitle" = "%1$@ · %2$@";
 "a11y_conversations" = "Conversations";

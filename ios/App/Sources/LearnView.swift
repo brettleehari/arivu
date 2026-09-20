@@ -117,20 +117,18 @@ struct LearnView: View {
                 Text(Strings.string(.learn_metal_title)).foregroundStyle(Palette.onSurfaceVariant)
             }
 
-            // Measured, not promised. Two rates, because reading and writing are not the same
-            // thing and conflating them is how "tokens per second" becomes meaningless.
+            // This section used to print the last reply's measurements, and that was the wrong
+            // place for them. The numbers describe ONE reply, so by the time you had navigated
+            // here to read them they described a reply you could no longer see. They now sit under
+            // the reply they measure, in the chat, and this section explains what they mean —
+            // which is the job a learning page can do that a chat line cannot.
+            //
+            // So this is the one section on the page with no live figures in it, deliberately. The
+            // rows are definitions, in the order the line prints them.
             section(.learn_speed_measured_title, .learn_speed_measured_body) {
-                if let s = session.lastStats {
-                    row(.learn_speed_ttft, Strings.string(.learn_ms, String(format: "%.1f", s.firstTokenMs / 1000)))
-                    row(.learn_speed_read, Strings.string(.learn_tps, String(format: "%.0f", s.prefillTokensPerSecond)))
-                    row(.learn_speed_write, Strings.string(.learn_tps, String(format: "%.1f", s.decodeTokensPerSecond)))
-                    row(.learn_speed_tokens_in, Strings.string(.learn_tokens_value, Int(s.promptTokens)))
-                    row(.learn_speed_tokens_out, Strings.string(.learn_tokens_value, Int(s.generated)))
-                } else {
-                    Text(Strings.string(.learn_speed_none))
-                        .font(.footnote)
-                        .foregroundStyle(Palette.onSurfaceVariant)
-                }
+                definition(.learn_speed_tokens_in, .learn_speed_tokens_in_body)
+                definition(.learn_speed_tokens_out, .learn_speed_tokens_out_body)
+                definition(.learn_speed_write, .learn_speed_write_body)
             }
         }
         .listStyle(.insetGrouped)
@@ -154,6 +152,22 @@ struct LearnView: View {
             Text(Strings.string(title))
                 .foregroundStyle(Palette.onSurfaceVariant)
         }
+    }
+
+    /// A term and what it means. NOT `row`: that one right-aligns a monospaced figure, which is
+    /// right for "2048 tokens" and wrong for a sentence — a wrapped paragraph pushed to the trailing
+    /// edge is unreadable. A definition is prose, so it reads left to right under its term.
+    private func definition(_ term: StringKey, _ meaning: StringKey) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(Strings.string(term))
+                .font(.body)
+                .foregroundStyle(Palette.onSurface)
+            Text(Strings.string(meaning))
+                .font(.footnote)
+                .foregroundStyle(Palette.onSurfaceVariant)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 
     /// `LabeledContent`, not an HStack with a Spacer. It is the control iOS uses for exactly this,

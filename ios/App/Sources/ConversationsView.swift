@@ -10,11 +10,22 @@
 // to type. C1 says one tap and it works, so the app opens into the chat and the list is behind the
 // back button — present, not in the way.
 //
-// Swipe-to-delete rather than an Edit button: it is the gesture iOS users already have for a list
-// row, it needs no chrome, and the destructive role gets the system's colour and confirmation
-// behaviour without Arivu choosing either.
+// DELETING. There are three ways in, and that is deliberate rather than indecisive. iOS teaches
+// deletion by gesture, and the gesture is genuinely the fastest way — but a gesture is invisible,
+// and a person who does not already know it is there has no way to discover it. So:
 //
-// spine: C1, C3, C8
+//   swipe         the system gesture, for the people who have it in their hands already.
+//   long press    a context menu, which is how iOS lets you ask a row what it can do.
+//   Edit          a visible button in the toolbar. This is the one that matters. It is the only
+//                 affordance a person can SEE, and Mail, Notes and Files all put it in the same
+//                 place, so it is already familiar even to someone meeting this screen first.
+//
+// All three call the same `session.delete(_:)`. Nothing here confirms first: the destructive role
+// gives the system's red, iOS does not confirm a single-row delete anywhere else, and a confirmation
+// sheet on every delete is the kind of chrome C8 exists to refuse. What protects the user is that
+// the button says Delete and is red, not that Arivu asks twice.
+//
+// spine: C1, C3, C8, C10
 
 import ArivuChat
 import ArivuCore
@@ -32,7 +43,15 @@ struct ConversationsView: View {
                     .foregroundStyle(Palette.onSurfaceVariant)
             }
             ForEach(session.conversations) { conversation in
-                row(conversation).tag(conversation.id)
+                row(conversation)
+                    .tag(conversation.id)
+                    // Long press. `.destructive` is what turns the label red and puts it last in
+                    // the menu — Arivu picks neither colour nor position.
+                    .contextMenu {
+                        Button(Strings.string(.conversations_delete), role: .destructive) {
+                            session.delete(conversation.id)
+                        }
+                    }
             }
             .onDelete { offsets in
                 for index in offsets { session.delete(session.conversations[index].id) }
@@ -43,6 +62,11 @@ struct ConversationsView: View {
         .background(Palette.surface)
         .navigationTitle(Strings.string(.conversations_title))
         .toolbar {
+            // The visible one. `EditButton` is the system's own: it says Edit, becomes Done, and
+            // drives the same `.onDelete` the swipe does, so there is one delete path and not two.
+            ToolbarItem(placement: .topBarLeading) {
+                EditButton().disabled(session.conversations.isEmpty)
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(Strings.string(.conversations_new)) { session.newConversation() }
                     .disabled(session.messages.isEmpty)
@@ -57,11 +81,16 @@ struct ConversationsView: View {
                 .font(.body)
                 .foregroundStyle(Palette.onSurface)
                 .lineLimit(1)
-            // Relative dates ("Yesterday", "Last week") rather than a timestamp: what a person needs
-            // from this row is which conversation, not when precisely. The system formats it in the
-            // reader's own language and calendar, which hand-built strings would not.
-            Text(Date(timeIntervalSince1970: TimeInterval(conversation.updatedAt) / 1000),
-                 format: .relative(presentation: .named))
+            // How much is in it, and how long ago. Relative dates ("Yesterday", "Last week") rather
+            // than a timestamp: what a person needs from this row is which conversation, not when
+            // precisely. `.formatted` keeps the system doing it, in the reader's own language and
+            // calendar, which a hand-built string would not.
+            Text(Strings.string(.conversations_subtitle,
+                                Strings.string(conversation.messageCount == 1
+                                               ? .conversations_count_one : .conversations_count_many,
+                                               conversation.messageCount),
+                                Date(timeIntervalSince1970: TimeInterval(conversation.updatedAt) / 1000)
+                                    .formatted(.relative(presentation: .named))))
                 .font(.caption)
                 .foregroundStyle(Palette.onSurfaceVariant)
         }

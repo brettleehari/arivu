@@ -6,6 +6,12 @@ This product bundles the Qwen3-0.6B model weights, Copyright 2024 Alibaba Cloud,
 as the Q4_K_M GGUF quantization published by Unsloth (huggingface.co/unsloth/Qwen3-0.6B-GGUF), renamed
 qwen3-0.6b-q4_k_m.gguf.so for packaging and otherwise unmodified by Arivu.
 
+This file is the notice for the Android package, and app/src/main/assets/licenses/NOTICE.txt is the
+copy that ships inside it; LicensesTest holds the two byte-identical. iOS bundles a different model
+and links different libraries, so it carries its own at ios/App/Resources/licenses/NOTICE.txt. The
+model named above is the one in the APK, which is still 0.6B: D-004 moved iPhone to 1.7B and left
+Android where it is, so a single sentence here cannot be true of both.
+
 This product includes llama.cpp and ggml, Copyright (c) 2023-2026 The ggml authors, MIT License, with
 modifications by Arivu (tools/llama/patches). They contain:
   - YaRN RoPE scaling, Copyright (c) 2023 Jeffrey Quesnelle and Bowen Peng, MIT License

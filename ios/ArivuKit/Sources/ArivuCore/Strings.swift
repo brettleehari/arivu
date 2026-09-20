@@ -29,6 +29,8 @@ public enum StringKey: String, CaseIterable, Sendable {
     // VoiceOver
     case a11y_from_user, a11y_from_arivu, a11y_writing, a11y_reply_done
     case a11y_copy_message, a11y_report_reply, a11y_stop, a11y_expanded, a11y_collapsed
+    /// What the reply cost, under the reply. Explained on the learning page, not here.
+    case chat_stats, a11y_chat_stats
 
     // About
     case about_title, about_what_title, about_what_body, about_good_title, about_good_body
@@ -82,15 +84,19 @@ public enum StringKey: String, CaseIterable, Sendable {
     case learn_card_trained_ctx, learn_card_kv_cost, learn_card_arch
     case learn_billions, learn_sharing_value
     case learn_metal_title, learn_metal_body
-    case learn_speed_measured_title, learn_speed_measured_body, learn_speed_none
-    case learn_speed_ttft, learn_speed_read, learn_speed_write
-    case learn_speed_tokens_in, learn_speed_tokens_out
-    case learn_tps, learn_ms
+    case learn_speed_measured_title, learn_speed_measured_body
+    // The three parts of the line the chat prints under each reply, and what each one means.
+    // `learn_speed_ttft`, `learn_speed_read`, `learn_speed_none`, `learn_tps` and `learn_ms` were
+    // removed with the live figures: the catalogue is not allowed to carry a string nothing reaches.
+    case learn_speed_tokens_in, learn_speed_tokens_in_body
+    case learn_speed_tokens_out, learn_speed_tokens_out_body
+    case learn_speed_write, learn_speed_write_body
     case about_build
 
     // Conversations (D-011)
     case conversations_title, conversations_new, conversations_empty, conversations_untitled
     case conversations_delete, conversations_count_one, conversations_count_many
+    case conversations_subtitle
     case a11y_conversations
 }
 

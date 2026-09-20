@@ -1890,14 +1890,36 @@ items:
     guess: true
     deps: [W120]
 
+  - id: W138
+    title: "EngineWrapperTests.handleCannotLeak is intermittently red — a global counter read across deferred deallocation"
+    slice: MVP
+    platform: ios
+    spine: [C6]
+    owner: Hari
+    status: todo
+    needs: "seen once in seven full `swift test` runs and never in isolation, so it is a race, not a leak. The test reads arivu_stub_live_engines() as a delta around a `do` scope, but `arivu_stub_reset()` runs in the suite's per-test init while the previous test's ArivuEngine may not have been deallocated yet — its deinit then decrements a counter that has already been zeroed. A test that fails one time in seven is a test people learn to re-run, which is how a real leak gets through it"
+    decisions: []
+    estimate_days: 0.25
+    deps: []
+  - id: W139
+    title: "Android does not draw the per-reply stats its conversation file now carries"
+    slice: MVP
+    platform: android
+    spine: [C5, C11]
+    owner: Hari
+    status: todo
+    needs: "the `stats` field is in ChatRepository.Message so an Android save cannot silently drop what an iOS save wrote, but nothing on Android writes or shows it. Until it does, the same conversation tells the user what a reply cost on one phone and not on the other — a capability difference with no measurement behind it, which is what C11 forbids. Pairs with the Android learning page (D-061 is iOS-only so far)"
+    decisions: [D-061, D-063]
+    estimate_days: 0.5
+    deps: []
   - id: W137
     title: "D-063: replace the system prompt so C5's hedge actually fires; re-run the sweep to confirm"
     slice: MVP
     platform: both
     spine: [C5, C9, C11]
     owner: Hari
-    status: todo
-    needs: "measured, not proposed — tools/eval/sweep.cpp across Qwen3 0.6B/1.7B/4B shows the hedge firing in 1 of 15 generations under the shipped prompt, and a revised wording fixing it at no cost to on-task work. Release-blocking on both stores: an app that invents a cricket score with no caveat is the thing C5 exists to prevent"
+    status: done
+    verified: "host — tools/eval/sweep.cpp re-run across Qwen3 0.6B/1.7B/4B after the change: off-task corrections 1/6 -> 5/6, hedges 1/6 -> 3/6, on-task output unchanged. Byte-identical on both platforms (ProfileParityTest); 57 Android tests and 61+20+25 iOS tests pass"
     decisions: [D-063]
     estimate_days: 0.25
     deps: []

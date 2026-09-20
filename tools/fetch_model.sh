@@ -3,9 +3,9 @@
 # changing it is a Spine-level decision (see leaves/decisions.yml D-001 area "Model").
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-URL="https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q4_K_M.gguf"
-SHA="ac2d97712095a558e31573f62f466a3f9d93990898b0ec79d7c974c1780d524a"
-OUT="$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf"
+URL="https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf"
+SHA="b139949c5bd74937ad8ed8c8cf3d9ffb1e99c866c823204dc42c0d91fa181897"
+OUT="$ROOT/models/Qwen3-1.7B-Q4_K_M.gguf"
 mkdir -p "$ROOT/models"
 [[ -f "$OUT" ]] || curl -fL --progress-bar -o "$OUT" "$URL"
 echo "$SHA  $OUT" | shasum -a 256 -c

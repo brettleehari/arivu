@@ -232,7 +232,7 @@ struct PolicyTests {
     /// no alignment rule and no offset arithmetic.
     @Test("the model is a plain bundle file")
     func modelFileName() {
-        #expect(Policy.modelFileName == "qwen3-0.6b-q4_k_m.gguf")
+        #expect(Policy.modelFileName == "qwen3-1.7b-q4_k_m.gguf")
         #expect(!Policy.modelFileName.hasSuffix(".so"))
     }
 

@@ -2,8 +2,8 @@ Arivu
 Copyright 2026 The Arivu authors
 Licensed under the Apache License, Version 2.0.
 
-This product bundles the Qwen3-0.6B model weights, Copyright 2024 Alibaba Cloud, Apache License 2.0,
-as the Q4_K_M GGUF quantization published by Unsloth (huggingface.co/unsloth/Qwen3-0.6B-GGUF), renamed
+This product bundles the Qwen3-1.7B model weights, Copyright 2024 Alibaba Cloud, Apache License 2.0,
+as the Q4_K_M GGUF quantization published by Unsloth (huggingface.co/unsloth/Qwen3-1.7B-GGUF), renamed
 qwen3-0.6b-q4_k_m.gguf.so for packaging and otherwise unmodified by Arivu.
 
 This product includes llama.cpp and ggml, Copyright (c) 2023-2026 The ggml authors, MIT License, with

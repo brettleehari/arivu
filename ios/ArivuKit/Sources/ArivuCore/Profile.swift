@@ -77,9 +77,9 @@ public struct Profile: Equatable, Sendable {
     /// if these drift again. They had drifted — see the note on `kvBytesPerToken`.
     public static let compact = Profile(
         id: "compact",
-        modelID: "qwen3-0.6b-q4km",
+        modelID: "qwen3-1.7b-q4km",
         // tools/fetch_model.sh, sha256-pinned. Not rounded: the parity test compares literals.
-        modelBytes: 396_705_472,
+        modelBytes: 1_107_409_472,
         nCtx: Policy.nCtx,
         nBatch: Policy.nBatch,
         nThreads: 4,
@@ -87,18 +87,13 @@ public struct Profile: Equatable, Sendable {
         repack: Policy.repackWeights,
         replyReserveTokens: Policy.replyReserveTokens,
         maxReplyTokens: Policy.maxReplyTokens,
-        // Qwen3-0.6B: 28 layers x 8 KV heads x 128 head dim, K and V, at q8_0's 34 bytes per 32
-        // values = 1.0625 B/value  ->  28*8*128*2*1.0625 = 60928 B per token (119 MiB at 2048 ctx).
-        //
-        // This was 57_344 — which is that same expression *without* the 1.0625, i.e. the number of
-        // KV values per token rather than the bytes q8_0 actually spends on them. It understated the
-        // KV cache by 7.3 MB at 2048 ctx, and no parity test covered this field.
+        // 28 layers x 8 KV heads x (128 key + 128 value) at q8_0's 1.0625 B/value = 60928 B/token.
+        // UNCHANGED by the 1.7B swap: 1.7B has the same depth and head shape and is merely wider,
+        // and width does not enter the KV cache. That is what makes the bigger model affordable.
         kvBytesPerToken: 60_928,
-        // 27 MiB. Host-measured with n_outputs_max = 1 (leaves/NOTES.md "Host verification, round 2":
-        // 26.59 MiB). The emulator reading behind the old 29_452_206 was 28.09 MiB (D-028); the two
-        // measurements disagree and picking the shipped one is a decision, so this takes the core's
-        // value and the disagreement is recorded rather than split.
-        computeBufferBytes: 28_311_552,
+        // Measured via arivu_compute_buffer_kib: 51292 KiB for 1.7B against 28764 KiB for 0.6B.
+        // The one part of the footprint the bigger model genuinely costs — it nearly doubles.
+        computeBufferBytes: 52_523_008,
         // 160 MiB, provisional: ART/Compose/allocator remainder from the emulator dry run. The W02
         // test-phone numbers replace it, in core/src/profile.cpp first.
         runtimeOverheadBytes: 167_772_160,

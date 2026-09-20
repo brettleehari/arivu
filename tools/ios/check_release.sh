@@ -29,7 +29,7 @@ EMAIL="$(/usr/libexec/PlistBuddy -c 'Print :ARIVUReportEmail' "$PLIST" 2>/dev/nu
 [[ -n "$EMAIL" ]] || fail "ARIVUReportEmail is not set; the in-app Report has nowhere to go (spine: C9)"
 [[ "$EMAIL" != *example.invalid* ]] || fail "ARIVUReportEmail is still the placeholder ($EMAIL). Decide D-010."
 
-MODEL="${TARGET_BUILD_DIR:-}/${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}/qwen3-0.6b-q4_k_m.gguf"
+MODEL="${TARGET_BUILD_DIR:-}/${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}/qwen3-1.7b-q4_k_m.gguf"
 [[ -f "$MODEL" ]] || fail "the model is not in the bundle; the app would open into a chat that cannot answer (spine: C1)"
 
 MANIFEST="${TARGET_BUILD_DIR:-}/${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}/PrivacyInfo.xcprivacy"

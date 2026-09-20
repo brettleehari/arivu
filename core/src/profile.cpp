@@ -64,8 +64,8 @@ arivu_sampling_params arivu_default_sampling_params(void) {
 arivu_profile arivu_default_profile(void) {
     arivu_profile p;
     p.id          = "compact";
-    p.model_id    = "qwen3-0.6b-q4km";
-    p.model_bytes = 396705472ull;   // tools/fetch_model.sh, sha256-pinned
+    p.model_id    = "qwen3-1.7b-q4km";
+    p.model_bytes = 1107409472ull;  // tools/fetch_model.sh, sha256-pinned
 
     // Every one of these is a decision already made (spine: C8): leaves/BRIEF.md "Context",
     // decisions.yml D-007 and D-015, Policy.kt.
@@ -78,11 +78,19 @@ arivu_profile arivu_default_profile(void) {
     p.reply_reserve_tokens = 512;
     p.max_reply_tokens     = 768;
 
-    // Qwen3-0.6B: 28 layers x 8 KV heads x 128 head dim, K and V, at q8_0's 34 bytes per 32
-    // values = 1.0625 B/value  ->  28*8*128*2*1.0625 = 60928 B per token (119 MiB at 2048 ctx).
+    // 28 layers x 8 KV heads x (128 key + 128 value) at q8_0's 34 bytes per 32 values
+    // = 1.0625 B/value -> 60928 B per token, 119 MiB at 2048 ctx.
+    //
+    // UNCHANGED BY THE 1.7B SWAP, and that is the whole reason the swap is affordable: 1.7B has the
+    // same 28 layers, 8 KV heads and 128 head dim as 0.6B. It is wider (n_embd 2048 against 1024),
+    // and width does not enter the KV cache. Read from the file by arivu_model_info_get and checked
+    // against this number rather than trusted.
     p.kv_bytes_per_token = 60928ull;
-    // Measured, leaves/NOTES.md "Host verification, round 2": 26.59 MiB with n_outputs_max = 1.
-    p.compute_buffer_bytes = 27ull * kMiB;
+    // Measured on the host with n_outputs_max = 1, via arivu_compute_buffer_kib: 51292 KiB for 1.7B
+    // against 28764 KiB for 0.6B. It nearly doubles, which is the one part of the footprint the
+    // bigger model does cost. 0.6B's figure was recorded here as 27 MiB and measured 28.09 on both
+    // host and emulator; this one is the measurement, not a rounding of it.
+    p.compute_buffer_bytes = 52523008ull;
     // Provisional. The emulator dry run in leaves/NOTES.md peaked at 695 MB with weights, KV and
     // compute buffer accounting for ~543 MB; the remainder is ART, Compose and the allocator.
     // W02 on the test phone replaces this number.

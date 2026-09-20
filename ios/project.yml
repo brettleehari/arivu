@@ -126,9 +126,9 @@ targets:
         # Copying it is a build phase so a fresh clone fails loudly rather than shipping without it.
         script: "\"$SRCROOT/../tools/ios/copy_model.sh\""
         inputFiles:
-          - $(SRCROOT)/../models/Qwen3-0.6B-Q4_K_M.gguf
+          - $(SRCROOT)/../models/Qwen3-1.7B-Q4_K_M.gguf
         outputFiles:
-          - $(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/qwen3-0.6b-q4_k_m.gguf
+          - $(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/qwen3-1.7b-q4_k_m.gguf
         basedOnDependencyAnalysis: true
     postBuildScripts:
       - name: Refuse to ship a placeholder or a bundle with no model

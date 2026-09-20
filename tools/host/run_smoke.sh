@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD="${BUILD_DIR:-$ROOT/build/host}"
 CMAKE="${CMAKE:-$(command -v cmake || echo "$HOME/Library/Android/sdk/cmake/4.1.2/bin/cmake")}"
-MODEL="${MODEL:-$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf}"
+MODEL="${MODEL:-$ROOT/models/Qwen3-1.7B-Q4_K_M.gguf}"
 EXTRA=()
 if [[ "$(uname)" == "Darwin" ]]; then
   # Some Command Line Tools installs ship an incomplete libc++ header dir; pin the SDK's.

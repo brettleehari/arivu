@@ -51,7 +51,7 @@ public enum Policy {
     /// The model in the app bundle. No `.so` suffix and no alignment dance: D-013 is Android-only
     /// complexity that disappears because an iOS app bundle is a directory, not a zip
     /// (leaves/architecture/ios-port.md). Offset 0, whole file.
-    public static let modelResourceName = "qwen3-0.6b-q4_k_m"
+    public static let modelResourceName = "qwen3-1.7b-q4_k_m"
     public static let modelResourceExtension = "gguf"
     public static var modelFileName: String { "\(modelResourceName).\(modelResourceExtension)" }
 

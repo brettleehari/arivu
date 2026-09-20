@@ -2361,3 +2361,59 @@
   implemented_provisionally: "no — built, decided, and on a device"
   if_rejected: >
     delete LearnView.swift, the About link and 31 copy keys. Nothing else depends on it.
+
+- id: D-062
+  title: M3 is stated against the peak, which counts memory the system can take back
+  raised_at: 2026-09-20
+  sla_expires_at: 2026-09-22
+  spine: [C2, C11]
+  platform: both
+  adjudication: human
+  status: pending
+  blocks_release: false
+  raised_by: [Engineering]
+  related: [D-004, D-047, D-051]
+  context: >
+    M3 reads "peak working set <= 800 MB". The 1.7B swap does not meet it — peak is about 1,452 MB —
+    and the reason exposes a flaw in the metric rather than in the model.
+
+    Measured, both models, 2048 context:
+
+      Qwen3-0.6B   mapped  379 MB   charged footprint 307 MB   peak   719 MB
+      Qwen3-1.7B   mapped 1107 MB   charged footprint 329 MB   peak  1452 MB
+
+    Nearly three times the model, and the charged footprint rose 22 MB. Everything else is mapped:
+    clean, file-backed, never written, and reclaimable by the kernel at any moment. Architecture
+    B23 spends a whole argument establishing that this half is very nearly free — jetsam charges
+    phys_footprint, which excludes it — and arivu_profile_fits already applies the ceiling to the
+    footprint rather than the peak, for exactly that reason.
+
+    M3 is the one place the two halves are still added together. Enforced literally it refuses a
+    model whose real cost went up by 22 MB, on a phone that would never notice.
+
+    It is not a number to delete either. Mapped weights are free against jetsam and NOT free against
+    physical memory: they compete for page cache, and a model larger than the device can keep
+    resident thrashes against flash and decode collapses. That is a real ceiling — it is simply a
+    different one from the ceiling M3's number was chosen for.
+  options:
+    - "Restate M3 as two numbers: a charged-footprint budget that kills, and a mapped budget that slows (recommended)"
+    - "Keep M3 as one peak figure and raise it to fit 1.7B"
+    - "Keep M3 at 800 MB, which refuses 1.7B on every device"
+  recommendation: >
+    Option 1. The two halves fail differently and should be budgeted differently: exceeding the
+    charged figure gets the app killed with no warning, exceeding the mapped figure makes it slow.
+    One number cannot express both, and collapsing them is what produced a metric that now blocks a
+    change it has no argument against.
+
+    The charged budget can be set today from measurement. The mapped one cannot: it depends on what
+    the device can hold resident, which is W02 and W93 territory, so it should be stated as a
+    fraction of device memory rather than an absolute — which also makes it a profile question,
+    where C11 says it belongs.
+
+    Until this is decided, core/tests and GateAndProfileTests assert the charged figure and RECORD
+    the peak — the Swift one as a withKnownIssue naming this entry — so the gap is visible in every
+    run rather than silently deleted.
+  implemented_provisionally: >
+    the tests are written that way now; SPINE.md still says 800 MB against the peak
+  if_rejected: >
+    option 3 reverts the 1.7B swap. Option 2 is one number in SPINE.md and two test constants.

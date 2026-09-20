@@ -19,7 +19,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD="${BUILD_DIR:-$ROOT/build/host}"
 OUT="${OUT_DIR:-$ROOT/build/eval}"
 CMAKE="${CMAKE:-$(command -v cmake || echo "$HOME/Library/Android/sdk/cmake/4.1.2/bin/cmake")}"
-MODEL="${MODEL:-$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf}"
+MODEL="${MODEL:-$ROOT/models/Qwen3-1.7B-Q4_K_M.gguf}"
 CASES="${CASES:-$ROOT/tools/eval/cases.yml}"
 
 # Pick an interpreter that is (a) the right architecture and (b) has PyYAML. Not the shebang: the

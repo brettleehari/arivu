@@ -18,9 +18,9 @@ set -euo pipefail
 
 ROOT="${SRCROOT:-$(cd "$(dirname "$0")/../.." && pwd)/ios}/.."
 ROOT="$(cd "$ROOT" && pwd)"
-SOURCE="${ARIVU_MODEL:-$ROOT/models/Qwen3-0.6B-Q4_K_M.gguf}"
+SOURCE="${ARIVU_MODEL:-$ROOT/models/Qwen3-1.7B-Q4_K_M.gguf}"
 DEST_DIR="${BUILT_PRODUCTS_DIR:-$ROOT/build/ios/bundle}/${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}"
-DEST="$DEST_DIR/qwen3-0.6b-q4_k_m.gguf"
+DEST="$DEST_DIR/qwen3-1.7b-q4_k_m.gguf"
 
 if [[ ! -f "$SOURCE" ]]; then
   echo "error: $SOURCE is missing. Run tools/fetch_model.sh (about 400 MB, sha256-verified)." >&2

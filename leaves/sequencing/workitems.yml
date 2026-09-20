@@ -1890,6 +1890,17 @@ items:
     guess: true
     deps: [W120]
 
+  - id: W137
+    title: "D-063: replace the system prompt so C5's hedge actually fires; re-run the sweep to confirm"
+    slice: MVP
+    platform: both
+    spine: [C5, C9, C11]
+    owner: Hari
+    status: todo
+    needs: "measured, not proposed — tools/eval/sweep.cpp across Qwen3 0.6B/1.7B/4B shows the hedge firing in 1 of 15 generations under the shipped prompt, and a revised wording fixing it at no cost to on-task work. Release-blocking on both stores: an app that invents a cricket score with no caveat is the thing C5 exists to prevent"
+    decisions: [D-063]
+    estimate_days: 0.25
+    deps: []
   - id: W136
     title: Correct architecture/ios-port.md — the Play closed test is NOT free budget for the iOS port
     slice: STORE

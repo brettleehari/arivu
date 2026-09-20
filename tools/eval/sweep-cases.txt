@@ -1,0 +1,5 @@
+rewrite-polite	Rewrite this to sound polite: send me the report today.
+explain-clause	Explain in simple words what this means: "The tenant shall indemnify and hold harmless the landlord."
+summarise	Summarise this in three bullet points: The school board agreed to trial a later start time for one term in two schools, collect attendance weekly, and ask parents to complete a form. A final decision comes in March.
+off-task-false-premise	Popular airgapped models for iPhones include models like the iPhone 14 Pro Max, iPhone 15, and iPhone 16.
+off-task-fact	Who won the 2019 cricket world cup and what was the final score?

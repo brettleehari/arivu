@@ -74,8 +74,11 @@ func icon(_ S: CGFloat, _ mode: Appearance) -> CGImage {
                            colors: [rgb(0x11382E), rgb(0x05130F)] as CFArray, locations: [0, 1])!
         c.drawLinearGradient(g, start: CGPoint(x: 0, y: S), end: CGPoint(x: S, y: 0), options: [])
     case .tinted:
-        // iOS supplies the background and tints what it finds, so this is greyscale on transparent.
-        break
+        // Greyscale on an OPAQUE dark ground, not a transparent one. iOS maps luminance onto the
+        // tint the user picked, so a transparent background gives it nothing to map and the icon
+        // arrives as a blank tile — which is exactly what the first attempt produced.
+        c.setFillColor(CGColor(gray: 0, alpha: 1))
+        c.fill(CGRect(x: 0, y: 0, width: S, height: S))
     }
 
     let p = glyphPath("அ", font: "Tamil MN Bold")

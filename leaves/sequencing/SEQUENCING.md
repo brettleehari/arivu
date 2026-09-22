@@ -479,13 +479,14 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W141 Edit the system prompt for one conversation, with the safety | Hari | ios | unit — CustomPromptTests proves no editor input, including an empty string and a prompt injection, can produce a prompt without Policy.systemPromptSafetySuffix; on the phone |
 | W145 The learning page becomes a module you use, and is shown onc | Hari | ios | simulator — journeys 11 and 12; the welcome is gone on the second launch and costs one tap to leave, and the playground counts with the real tokenizer |
 | W143 Ten user journeys, driven from outside the app, in their own | Hari | ios | simulator — 10/10 on iPhone 17, real model, real generations. Found four defects on the way: the Edit button buried under the whole prompt dump, the bubble swallowing the Copy button's identity, a VoiceOver user getting no Copy confirmation, and a dead end where editing the instructions removed the way back to the editor |
-| W144 The app icon was a speech bubble with a sparkle, which is ev | Hari | ios | delivered — tools/ios/make_icon.swift renders light, dark and tinted from source; chosen against a contact sheet at 120, 87, 60 and 40 points, which is where an icon actually lives |
+| W144 The app icon was a speech bubble with a sparkle, which is ev | Hari | ios | iphone — Hari supplied finished calligraphic artwork on 2026-09-22 and it is on the device. Alpha flattened out of all 19 sizes plus both store images: Apple rejects an App Store icon carrying one (ITMS-90717) and every file in the pack had it. tools/ios/make_icon.swift deleted with the art it generated — a script that would overwrite this on its next run is a trap |
 | W140 Show the exact prompt between the question and the answer, s | Hari | ios | iphone — PromptTranscriptTests builds a prompt with the real PromptBuilder and requires the rebuilt text to be byte-identical, including the truncated-history case; on the phone from f808f43+ |
 | W138 EngineWrapperTests.handleCannotLeak is intermittently red —  | Hari | ios | unit — 8 consecutive runs clean. The cause was not the counter reset (which never touched the engine count) but ArivuEngine being an actor: its deinit is not guaranteed to have run by the closing brace of the scope that held it, so an immediate read saw the old value. The test now waits for the handle to come back rather than requiring it back synchronously |
 | W137 D-063: replace the system prompt so C5's hedge actually fire | Hari | both | host — tools/eval/sweep.cpp re-run across Qwen3 0.6B/1.7B/4B after the change: off-task corrections 1/6 -> 5/6, hedges 1/6 -> 3/6, on-task output unchanged. Byte-identical on both platforms (ProfileParityTest); 57 Android tests and 61+20+25 iOS tests pass |
 
 ## Graph warnings
 
+- W144 claims `iphone` — a physical-handset level. Sequencing has no evidence any handset exists; confirm before this ships in the report
 - W140 claims `iphone` — a physical-handset level. Sequencing has no evidence any handset exists; confirm before this ships in the report
 
 ## Graph

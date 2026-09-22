@@ -1930,7 +1930,7 @@ items:
     spine: [C4]
     owner: Hari
     status: done
-    verified: "delivered — tools/ios/make_icon.swift renders light, dark and tinted from source; chosen against a contact sheet at 120, 87, 60 and 40 points, which is where an icon actually lives"
+    verified: "iphone — Hari supplied finished calligraphic artwork on 2026-09-22 and it is on the device. Alpha flattened out of all 19 sizes plus both store images: Apple rejects an App Store icon carrying one (ITMS-90717) and every file in the pack had it. tools/ios/make_icon.swift deleted with the art it generated — a script that would overwrite this on its next run is a trap"
     decisions: []
     estimate_days: 0.25
     deps: []

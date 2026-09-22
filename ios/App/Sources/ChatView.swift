@@ -43,6 +43,7 @@ struct ChatView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     // A word, not a gear: there are no settings to put behind one (C8).
                     NavigationLink(Strings.string(.about)) { AboutView(session: session) }
+                        .accessibilityIdentifier(A11y.about)
                 }
             }
         }
@@ -128,6 +129,7 @@ struct ChatView: View {
                         .stroke(Palette.outline, lineWidth: 1))
                 // Return inserts a newline (pasted text has paragraphs); ⌘Return sends.
                 .onSubmit { /* nothing: Return is a newline */ }
+                .accessibilityIdentifier(A11y.input)
 
             sendOrStop
         }
@@ -156,11 +158,13 @@ struct ChatView: View {
     private var sendOrStop: some View {
         if session.generating {
             Button(Strings.string(.stop)) { session.stop() }
+                .accessibilityIdentifier(A11y.stop)
                 .buttonStyle(.bordered)
                 .frame(minWidth: Metrics.sendSlotWidth, minHeight: Metrics.sendSlotHeight)
                 .accessibilityLabel(Strings.string(.a11y_stop))
         } else {
             Button(Strings.string(.send)) { send() }
+                .accessibilityIdentifier(A11y.send)
                 .buttonStyle(.borderedProminent)
                 .frame(minWidth: Metrics.sendSlotWidth, minHeight: Metrics.sendSlotHeight)
                 .disabled(input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !session.loaded)
@@ -300,6 +304,7 @@ private struct MessageBubble: View {
                                 .frame(minHeight: Metrics.minTouchTarget)
                         }
                         Button(copied ? Strings.string(.copied) : Strings.string(.copy), action: onCopy)
+                            .accessibilityIdentifier(A11y.copy)
                             .accessibilityLabel(Strings.string(.a11y_copy_message))
                             .frame(minHeight: Metrics.minTouchTarget)
                     }
@@ -388,6 +393,7 @@ private struct PromptDisclosure: View {
                         // The lever, next to the thing it moves. Someone reading the exact bytes
                         // is exactly the person who wants to know what happens if they differ.
                         Button(Strings.string(.prompt_edit_open), action: onEdit)
+                            .accessibilityIdentifier(A11y.editInstructions)
                             .font(.footnote)
                             .buttonStyle(.plain)
                             .foregroundStyle(Palette.primary)
@@ -419,6 +425,7 @@ private struct PromptDisclosure: View {
                 .foregroundStyle(Palette.onSurfaceVariant)
             }
             .tint(Palette.onSurfaceVariant)
+            .accessibilityIdentifier(A11y.promptDisclosure)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Palette.surfaceVariant.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))

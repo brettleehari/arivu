@@ -65,10 +65,13 @@ struct ConversationsView: View {
             // The visible one. `EditButton` is the system's own: it says Edit, becomes Done, and
             // drives the same `.onDelete` the swipe does, so there is one delete path and not two.
             ToolbarItem(placement: .topBarLeading) {
-                EditButton().disabled(session.conversations.isEmpty)
+                EditButton()
+                    .accessibilityIdentifier(A11y.editConversations)
+                    .disabled(session.conversations.isEmpty)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button(Strings.string(.conversations_new)) { session.newConversation() }
+                    .accessibilityIdentifier(A11y.newConversation)
                     .disabled(session.messages.isEmpty)
             }
         }

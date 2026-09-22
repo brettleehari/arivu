@@ -43,6 +43,7 @@ struct AboutView: View {
                         .font(.body)
                         .foregroundStyle(Palette.primary)
                 }
+                .accessibilityIdentifier(A11y.learn)
                 .frame(minHeight: Metrics.minTouchTarget)
 
                 AboutSection(title: .about_report_title, text: .about_report_body)

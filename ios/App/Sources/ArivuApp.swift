@@ -31,6 +31,16 @@ struct ArivuApp: App {
         let directory = (try? ConversationStore.defaultDirectory())
             ?? URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("conversations",
                                                                                    isDirectory: true)
+        // The journey suite (App/UITests) asks for a clean device, so each of the ten starts where
+        // a new user starts rather than in whatever the previous one left behind. DEBUG only, and
+        // driven by a launch argument the app itself can never set: there is no path from a user's
+        // phone to this, and none from a Release build at all.
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ArivuUITestReset") {
+            try? FileManager.default.removeItem(at: directory)
+            (try? ChatRepository.defaultURL()).map { try? FileManager.default.removeItem(at: $0) }
+        }
+        #endif
         let store = ConversationStore(directory: directory)
         // The one conversation from before D-011 becomes the first in the list, keeping its text and
         // its place. Opened by default, so someone updating the app finds what they left behind

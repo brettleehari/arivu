@@ -1,0 +1,269 @@
+// Ten journeys, driven from outside the app exactly as a person drives it (W143).
+//
+// WHY THESE AND NOT MORE UNIT TESTS. The ArivuKit suites know that `delete(_:)` removes a
+// conversation. They cannot know whether anybody can FIND the way to delete one — that question
+// only exists on the other side of the glass, and it is the question "the navigation needs smooth
+// UX" is actually asking. A journey here fails if a control is unreachable, unlabelled, or behind a
+// gesture with no visible affordance, which is precisely the class of defect no unit test can see.
+//
+// THEY ARE SLOW AND THAT IS NOT A BUG. Several of them wait on a real reply from a real 1.7B model
+// running on the Simulator's CPU. Mocking that away would mean testing a different app: the whole
+// point of C1 is that the thing works end to end with nothing behind it, and a journey that stubs
+// the model has stopped testing C1. They run in their own scheme, not in the unit-test loop.
+//
+// WHAT THEY MAY AND MAY NOT ASSERT. Controls are addressed by accessibility identifier (A11y), so
+// rewording a button does not break a test that is not about wording. Where a journey IS about what
+// a person reads, it asks the catalogue for the same string the app used, rather than keeping a
+// second copy of the copy.
+//
+// spine: C1, C7, C8, C10
+
+import XCTest
+
+final class Journeys: XCTestCase {
+    private var app: XCUIApplication!
+
+    /// Long enough for a cold model map plus a short reply on Simulator hardware. Generous on
+    /// purpose: a flaky timeout teaches people to re-run tests, which is how a real failure gets
+    /// through one.
+    private let replyTimeout: TimeInterval = 180
+    private let uiTimeout: TimeInterval = 20
+
+    override func setUp() {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        // A clean device every time: journeys must not depend on what an earlier one left behind.
+        app.launchArguments += ["-ArivuUITestReset", "YES"]
+        app.launch()
+    }
+
+    // MARK: - helpers
+
+    private var input: XCUIElement { app.textFields["chat.input"].firstMatch }
+    private var send: XCUIElement { app.buttons["chat.send"].firstMatch }
+
+    private func type(_ text: String) {
+        XCTAssertTrue(input.waitForExistence(timeout: uiTimeout), "the input never appeared")
+        input.tap()
+        input.typeText(text)
+    }
+
+    /// Send and wait for a settled reply. A reply is settled when the Copy button for it exists,
+    /// which is the same signal a user gets: the row of actions appears when the writing stops.
+    @discardableResult
+    private func sendAndWait(_ text: String, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        type(text)
+        XCTAssertTrue(send.isEnabled, "Send was disabled with text in the box", file: file, line: line)
+        send.tap()
+        let copy = app.buttons["chat.copy"].firstMatch
+        let ok = copy.waitForExistence(timeout: replyTimeout)
+        XCTAssertTrue(ok, "no reply settled within \(replyTimeout)s", file: file, line: line)
+        return ok
+    }
+
+    /// Poll until an element is gone. `expectation(for:evaluatedWith:)` would read better, but it
+    /// captures the test case across an isolation boundary and Swift 6 refuses it.
+    private func waitUntilGone(_ element: XCUIElement, timeout: TimeInterval = 20) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if !element.exists { return true }
+            _ = XCTWaiter.wait(for: [XCTestExpectation(description: "tick")], timeout: 0.25)
+        }
+        return !element.exists
+    }
+
+    /// The way back to the conversation list on iPhone. Deliberately looked up the way a person
+    /// finds it — the leading navigation control — rather than by identifier, because whether it is
+    /// findable at all is part of what this suite is for.
+    private func backToConversations() {
+        let bar = app.navigationBars.firstMatch
+        let back = bar.buttons.element(boundBy: 0)
+        XCTAssertTrue(back.waitForExistence(timeout: uiTimeout), "no way back to the conversations")
+        back.tap()
+    }
+
+    // MARK: - 1. first run
+
+    func test01_firstRunSendsAndAnswers() {
+        XCTAssertTrue(input.waitForExistence(timeout: uiTimeout),
+                      "the app did not open into a chat — C1 says one tap and it works")
+        XCTAssertFalse(send.isEnabled, "Send should be disabled with an empty box")
+        sendAndWait("Rewrite this politely: send me the report today")
+        // The per-reply cost line, which is the thing that made the numbers honest.
+        let stats = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "tok/s"))
+        XCTAssertGreaterThan(stats.count, 0, "no per-reply stats line under the reply")
+    }
+
+    // MARK: - 2. see what the model was actually given
+
+    func test02_promptDisclosureShowsTheRealPrompt() {
+        sendAndWait("Say hello")
+        let disclosure = app.buttons["chat.promptDisclosure"].firstMatch
+        XCTAssertTrue(disclosure.waitForExistence(timeout: uiTimeout),
+                      "no way to see what was sent to the model")
+        disclosure.tap()
+        let chatml = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS %@", "<|im_start|>"))
+        XCTAssertTrue(chatml.firstMatch.waitForExistence(timeout: uiTimeout),
+                      "the disclosure opened but did not show the prompt")
+    }
+
+    // MARK: - 3. edit the instructions
+
+    func test03_editingInstructionsChangesTheConversation() {
+        sendAndWait("Say hello")
+        app.buttons["chat.promptDisclosure"].firstMatch.tap()
+        let edit = app.buttons["chat.editInstructions"].firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: uiTimeout), "no way in to the instructions")
+        edit.tap()
+
+        let field = app.textViews["promptEditor.field"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: uiTimeout), "the editor did not open")
+        field.tap()
+        field.typeText(" Always answer in exactly three words.")
+
+        let save = app.buttons["promptEditor.save"].firstMatch
+        XCTAssertTrue(save.isEnabled, "Save was disabled after an edit")
+        save.tap()
+
+        // The conversation now says it is not running the app's own wording.
+        let badge = app.staticTexts["Edited instructions"].firstMatch
+        XCTAssertTrue(badge.waitForExistence(timeout: uiTimeout),
+                      "an edited conversation does not say so")
+    }
+
+    // MARK: - 4. put the instructions back
+
+    func test04_resettingInstructionsClearsTheBadge() {
+        sendAndWait("Say hello")
+        app.buttons["chat.promptDisclosure"].firstMatch.tap()
+        app.buttons["chat.editInstructions"].firstMatch.tap()
+        let field = app.textViews["promptEditor.field"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: uiTimeout))
+        field.tap()
+        field.typeText(" Be a pirate.")
+        app.buttons["promptEditor.save"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Edited instructions"].firstMatch
+                        .waitForExistence(timeout: uiTimeout))
+
+        // Back in, reset, save. The badge must go: there is no state to get stuck in.
+        app.buttons["chat.editInstructions"].firstMatch.tap()
+        let reset = app.buttons["promptEditor.reset"].firstMatch
+        XCTAssertTrue(reset.waitForExistence(timeout: uiTimeout), "no way back to the standard wording")
+        reset.tap()
+        app.buttons["promptEditor.save"].firstMatch.tap()
+
+        XCTAssertTrue(waitUntilGone(app.staticTexts["Edited instructions"].firstMatch),
+                      "the badge survived a reset — the standard wording must leave no trace")
+    }
+
+    // MARK: - 5. start a second conversation
+
+    func test05_newConversationStartsEmpty() {
+        sendAndWait("First conversation")
+        backToConversations()
+        let new = app.buttons["conversations.new"].firstMatch
+        XCTAssertTrue(new.waitForExistence(timeout: uiTimeout), "no way to start a conversation")
+        XCTAssertTrue(new.isEnabled, "New conversation was disabled with a non-empty conversation")
+        new.tap()
+        XCTAssertTrue(input.waitForExistence(timeout: uiTimeout),
+                      "a new conversation did not land in the chat")
+        XCTAssertEqual(app.buttons.matching(identifier: "chat.copy").count, 0,
+                       "the new conversation was not empty")
+    }
+
+    // MARK: - 6. move between conversations
+
+    func test06_switchingConversationsKeepsBothTexts() {
+        sendAndWait("Remember apricot")
+        backToConversations()
+        app.buttons["conversations.new"].firstMatch.tap()
+        sendAndWait("Remember blackcurrant")
+
+        backToConversations()
+        let rows = app.cells.count
+        XCTAssertGreaterThanOrEqual(rows, 2, "both conversations should be listed")
+
+        // Open the older one and check its words came back (spine: C7).
+        let apricot = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "apricot")).firstMatch
+        XCTAssertTrue(apricot.waitForExistence(timeout: uiTimeout),
+                      "the first conversation is not findable by what was said in it")
+        apricot.tap()
+        XCTAssertTrue(app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "apricot")).firstMatch
+            .waitForExistence(timeout: uiTimeout), "the conversation did not reopen")
+    }
+
+    // MARK: - 7. delete one, visibly
+
+    func test07_deletingAConversationIsDiscoverable() {
+        sendAndWait("Delete me")
+        backToConversations()
+        let before = app.cells.count
+
+        // Via the VISIBLE control, not the swipe. A gesture nobody can see is not an affordance.
+        let edit = app.buttons["conversations.edit"].firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: uiTimeout),
+                      "there is no visible way to delete a conversation")
+        edit.tap()
+        let remove = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH[c] %@", "Delete")).firstMatch
+        XCTAssertTrue(remove.waitForExistence(timeout: uiTimeout), "Edit revealed no delete control")
+        remove.tap()
+        let confirm = app.buttons["Delete"].firstMatch
+        if confirm.waitForExistence(timeout: 3) { confirm.tap() }
+        XCTAssertLessThan(app.cells.count, max(before, 1) + 1)
+    }
+
+    // MARK: - 8. take the words away
+
+    func test08_copyConfirmsItself() {
+        sendAndWait("Say hello")
+        let copy = app.buttons["chat.copy"].firstMatch
+        copy.tap()
+        // iOS confirms nothing, so Arivu confirms itself (leaves/design.md §4).
+        let copied = app.buttons["Copied"].firstMatch
+        XCTAssertTrue(copied.waitForExistence(timeout: uiTimeout),
+                      "Copy gave no feedback that anything happened")
+    }
+
+    // MARK: - 9. stop it
+
+    func test09_stopWorksMidReply() {
+        type("Write a very long and detailed essay about the history of tea")
+        send.tap()
+        let stop = app.buttons["chat.stop"].firstMatch
+        XCTAssertTrue(stop.waitForExistence(timeout: replyTimeout),
+                      "Stop never appeared — C10 says it works at any moment")
+        stop.tap()
+        // The bubble gains the label that says who stopped it.
+        let stopped = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "stopped")).firstMatch
+        XCTAssertTrue(stopped.waitForExistence(timeout: uiTimeout),
+                      "a stopped reply does not say it was stopped")
+    }
+
+    // MARK: - 10. learn what it is
+
+    func test10_learningPageIsReachableAndReadsLive() {
+        sendAndWait("Say hello")  // so the model is mapped and the card can be read
+        let about = app.buttons["chat.about"].firstMatch
+        XCTAssertTrue(about.waitForExistence(timeout: uiTimeout), "no way to About")
+        about.tap()
+        let learn = app.buttons["about.learn"].firstMatch
+        XCTAssertTrue(learn.waitForExistence(timeout: uiTimeout), "no way to the learning page")
+        learn.tap()
+
+        // A real figure read from the model, not a typed-in one.
+        let qwen = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "Qwen")).firstMatch
+        XCTAssertTrue(qwen.waitForExistence(timeout: uiTimeout),
+                      "the model card did not render a model name")
+        // And the way to the instructions from here.
+        let editHere = app.buttons.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "Edit these instructions")).firstMatch
+        XCTAssertTrue(editHere.waitForExistence(timeout: uiTimeout),
+                      "the learning page does not offer the instructions it describes")
+    }
+}

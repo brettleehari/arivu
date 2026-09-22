@@ -392,9 +392,44 @@
     contact email; the in-app privacy policy's Contact section shows this address (design.md About). With
     D-021 the reports now include the reply text, so the mailbox receives user text: retention is D-023.
   options:
-    - one dedicated mailbox for reports, Play contact and privacy contact (GTM recommendation)
-    - separate addresses for reports and public contact
-  recommendation: one dedicated, monitored mailbox used in all three places.
+    - "A new dedicated Gmail, e.g. arivu.app@gmail.com, used in all three places (recommended)"
+    - "A domain bought now, with hello@ and privacy@ on it"
+    - "An alias on the existing personal address (hariprasadsudharsan+arivu@gmail.com)"
+    - "Separate addresses for reports and for the public contact"
+  recommendation: >
+    Option 1, and the reason is a constraint nobody has written down yet: THE ADDRESS CAN NEVER BE
+    RETIRED. It is compiled into every build that ships — Info.plist on iOS, gradle.properties on
+    Android — and into the privacy policy text inside the app. Someone running the first release in
+    three years' time will mail whatever is chosen this week. It can be supplemented later, never
+    withdrawn. So the only real question is which address can be guaranteed to still accept mail in
+    2030, and a Google account Hari owns outright beats a domain whose renewal can lapse and beats
+    any address attached to an employer.
+
+    Option 3 is refused: the public contact is published on both store listings and scraped within
+    days. A "+arivu" alias is the personal address with a suffix — anyone who receives one reply
+    has it. Once it is in a listing it cannot be taken back, and it is Hari's own mailbox for life.
+
+    Option 2 is not wrong and costs about £10 a year. Take it if a domain is wanted eventually,
+    because the published address is the expensive thing to change, not the cheap thing. But note
+    it does NOT unblock anything else on its own: D-022 needs a privacy policy at a public URL, and
+    GitHub Pages under the brettleehari namespace already serves that for free, which is the same
+    namespace D-001 chose the package name from. A domain is a preference here, not a dependency.
+
+    Option 4 is refused at this scale: two addresses means two placeholders in two listings and two
+    inboxes to watch for a product with no users yet. One mailbox, three uses, one gate.
+
+    WHAT THE CHOICE ACTUALLY COSTS, once made. The mailbox receives user text — D-021 puts the
+    reply text in the report — so it is in scope for D-023 (retention) and D-025 (the data-safety
+    form says reports are user-initiated and not collected). It must be monitored: Apple Guideline
+    1.2 asks for "timely responses to concerns" and a dead contact address is a review failure, not
+    a nicety. Turn on a filter and a label before the first upload, not after.
+
+    TO UNBLOCK, three places take the value and two scripts stop failing:
+      ARIVU_REPORT_EMAIL        -> ios/project.yml, into Info.plist
+      arivu.reportEmail         -> android/gradle.properties
+      the privacy policy's Contact section, in both copy catalogues
+    tools/release_check.sh step 1 and tools/ios/check_release.sh step 8 both refuse
+    report@example.invalid today, which is why this blocks every archive on both stores.
   implemented_provisionally: "no (placeholder)"
   if_rejected: n/a — any real address unblocks; separate addresses mean two placeholders to fill (listing, policy).
   merged_from: ["iOS Engineering D-049 (where the report address lives on iOS)"]

@@ -160,6 +160,21 @@ targets:
         # the privacy manifest parses, the app launches into a chat and nothing else).
         GENERATE_INFOPLIST_FILE: YES
 
+  # The ten journeys (W143). A separate target because a UI test drives the app from outside, as a
+  # user does: it cannot reach into ChatSession, and that is the point — everything these find is
+  # something a person could hit. They are slow (each reply is a real generation on a real model),
+  # so they are their own scheme and are not in the unit-test loop.
+  ArivuUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: App/UITests
+    dependencies:
+      - target: Arivu
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+
 schemes:
   Arivu:
     build:
@@ -171,5 +186,15 @@ schemes:
       config: Debug
       targets:
         - ArivuTests
+
+  ArivuJourneys:
+    build:
+      targets:
+        Arivu: all
+        ArivuUITests: [test]
+    test:
+      config: Debug
+      targets:
+        - ArivuUITests
     archive:
       config: Release

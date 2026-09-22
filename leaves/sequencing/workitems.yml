@@ -1901,6 +1901,28 @@ items:
     decisions: [D-064]
     estimate_days: 0.5
     deps: []
+  - id: W143
+    title: "Ten user journeys, driven from outside the app, in their own scheme"
+    slice: MVP
+    platform: ios
+    spine: [C1, C7, C8, C10]
+    owner: Hari
+    status: in_progress
+    needs: "the unit suites know delete(_:) removes a conversation; they cannot know whether anyone can find the way to delete one. That question only exists on the other side of the glass, and it is the one 'the navigation needs smooth UX' is actually asking. Real model, real generations, no stubs — a journey that mocks the model has stopped testing C1"
+    decisions: [D-011, D-061, D-064]
+    estimate_days: 0.5
+    deps: []
+  - id: W144
+    title: "The app icon was a speech bubble with a sparkle, which is every LLM app on both stores"
+    slice: MVP
+    platform: ios
+    spine: [C4]
+    owner: Hari
+    status: done
+    verified: "delivered — tools/ios/make_icon.swift renders light, dark and tinted from source; chosen against a contact sheet at 120, 87, 60 and 40 points, which is where an icon actually lives"
+    decisions: []
+    estimate_days: 0.25
+    deps: []
   - id: W142
     title: "D-064 is iOS-only, which is a live C11 violation until Android has the same editor"
     slice: MVP

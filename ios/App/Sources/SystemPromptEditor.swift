@@ -38,6 +38,7 @@ struct SystemPromptEditor: View {
             Form {
                 Section {
                     TextEditor(text: $draft)
+                        .accessibilityIdentifier(A11y.promptField)
                         .font(.body)
                         .frame(minHeight: 200)
                         .overlay(alignment: .bottomTrailing) {
@@ -73,6 +74,7 @@ struct SystemPromptEditor: View {
                     Button(Strings.string(.prompt_edit_reset)) {
                         draft = Policy.systemPromptBody
                     }
+                    .accessibilityIdentifier(A11y.promptReset)
                     .disabled(isStandard)
                 }
             }
@@ -89,6 +91,7 @@ struct SystemPromptEditor: View {
                         session.setCustomPrompt(isStandard ? nil : draft)
                         dismiss()
                     }
+                    .accessibilityIdentifier(A11y.promptSave)
                     .disabled(!changed || overLimit)
                 }
             }

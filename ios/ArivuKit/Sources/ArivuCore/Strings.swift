@@ -38,6 +38,12 @@ public enum StringKey: String, CaseIterable, Sendable {
     case prompt_edit_open, prompt_edit_nav_title, prompt_edit_title, prompt_edit_body
     case prompt_edit_fixed_title, prompt_edit_fixed_body, prompt_edit_reset, prompt_edit_save
     case prompt_edit_chars
+    /// The interactive section (D-065): type something, watch it become tokens.
+    case learn_try_title, learn_try_body, learn_try_hint, learn_try_count, learn_try_counting
+    case learn_try_result, learn_try_unknown
+    case learn_try_key_system, learn_try_key_yours, learn_try_key_reply, a11y_learn_budget
+    /// The welcome, shown once before the first chat (D-065).
+    case welcome_title, welcome_body, welcome_start, welcome_later
     case learn_prompt_title, learn_prompt_body, learn_prompt_state
     case learn_prompt_standard, learn_prompt_edited
 

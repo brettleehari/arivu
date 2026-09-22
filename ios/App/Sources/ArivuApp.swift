@@ -26,6 +26,11 @@ struct ArivuApp: App {
     /// Evaluated once, before anything is loaded, and cached after the first pass.
     private let gate: GateResult = CompatibilityGate.check(appVersion: AppInfo.version)
 
+    private let welcomeSeen = WelcomeSeenFlag()
+    /// Read ONCE into state, not on every redraw: setting the flag must dismiss the welcome, and a
+    /// view that re-reads the flag would race its own dismissal.
+    @State private var showWelcome: Bool
+
     @StateObject private var session: ChatSession = {
         let controller = InferenceController(modelSource: BundleModelSource())
         let directory = (try? ConversationStore.defaultDirectory())
@@ -49,12 +54,29 @@ struct ArivuApp: App {
         return ChatSession(store: store, controller: controller, openID: migrated)
     }()
 
+    init() {
+        let seen = WelcomeSeenFlag()
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ArivuUITestReset") { seen.reset() }
+        #endif
+        _showWelcome = State(initialValue: !seen.value)
+    }
+
     var body: some Scene {
         WindowGroup {
             Group {
                 switch gate {
                 case .pass:
-                    ChatView(session: session)
+                    // Once, before the first conversation (D-065). Not a sheet: a sheet can be
+                    // dragged half-down and left there, and this is the first thing anyone sees.
+                    if showWelcome {
+                        WelcomeView(session: session) {
+                            welcomeSeen.set()
+                            showWelcome = false
+                        }
+                    } else {
+                        ChatView(session: session)
+                    }
                 case .fail(let failure):
                     // spine: C6, R8 — it explains and stops. There is no "continue anyway", and on
                     // iOS there is no button at all: an app cannot delete itself.

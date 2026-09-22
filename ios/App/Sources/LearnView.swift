@@ -81,6 +81,12 @@ struct LearnView: View {
                 }
             }
 
+            // The one section you do rather than read (D-065). It sits directly before the context
+            // section because it is the thing that makes that section mean anything.
+            section(.learn_try_title, .learn_try_body) {
+                TokenPlayground(session: session)
+            }
+
             section(.learn_context_title, .learn_context_body) {
                 // Three tokens per four words is the rule of thumb the body explains; it is shown as
                 // "about", never as a precise count, because it is not one.

@@ -2638,3 +2638,79 @@
     build, by construction and under test. The editable part is scoped to one conversation and
     resets.
   verified: "unit — CustomPromptTests (7 cases) and PromptTranscriptTests; swift-macos, the full ArivuKit suite; 57 Android tests still green with the mirrored schema field"
+
+- id: D-065
+  title: The learning page is shown once before the first chat, and gains the one section you do rather than read
+  raised_at: 2026-09-22
+  spine: [C1, C5, C8]
+  platform: ios
+  adjudication: human
+  status: resolved_human
+  decided_at: 2026-09-22
+  decided_by: Hari
+  blocks_release: false
+  raised_by: [Hari]
+  related: [D-061, D-064, D-063]
+  context: >
+    Asked for directly: "do not bury it under about instead show it when someone first time opens
+    the app", with the learning page made "a learning module with some interactiveness".
+
+    D-061 put that page one push inside About on an argument that was right and is still right for
+    every session after the first: wanting it should be an explicit act, and a page nobody meets by
+    accident is a page nobody has to dismiss. What that argument cannot cover is the first run,
+    where nobody knows there is anything to want. Someone opens Arivu, types, and meets a small
+    model that is bad at facts — with no idea that it is running on their phone, that it is small
+    BECAUSE it runs on their phone, or that a page explaining all of that exists two taps away.
+    The product is two things and only one of them was reachable.
+
+    Against that: C1 is "one tap and it works", and it has meant from the first line of the Spine
+    that nothing stands between the icon and a place to type. A page in front of the chat is the
+    thing every other app does and the reason nobody reads any of it.
+  options:
+    - "Once before the first chat, one tap out, learning page keeps its home under About (recommended)"
+    - "Leave it under About and do nothing"
+    - "A dismissible banner on the chat screen pointing at it"
+    - "A multi-page onboarding carousel"
+  recommendation: >
+    Option 1, with the compromise made exact, because that is what keeps C1 true rather than merely
+    claimed:
+
+    ONCE. A flag set on dismissal, the same shape as LoadedBeforeFlag. Not a setting, not a "show
+    tips at startup", and there is no screen anywhere that can turn it back on.
+
+    ONE TAP. "Start using Arivu" is a single primary action that lands in the chat. That is the tap
+    C1 promises; this screen spends it on a sentence instead of on nothing.
+
+    NOTHING IS ASKED FOR. No name, no account, no permission, no choice that can be got wrong. The
+    reason most onboarding is hated is that it is a form.
+
+    IT ADDS A DOOR RATHER THAN MOVING ONE. About -> How Arivu works still exists and is still where
+    the page lives. The second button on the welcome goes straight there.
+
+    Option 3 is refused: a banner on the chat screen is permanent chrome on the one screen C8 says
+    stays one screen, and a banner is a thing people stop seeing by the second day.
+
+    Option 4 is refused outright, and is the failure mode to watch for. If a second page is ever
+    added to this screen, the compromise has been lost.
+  resolution: >
+    Option 1, implemented. Plus the interactive section the page was missing.
+
+    TRY IT. The page could say "a token is about three quarters of a word" and be believed or not.
+    It now hands over a text field and counts what you type with THE REAL TOKENIZER — the same
+    `countTokens` the prompt builder uses — beside a bar showing the whole 2048-token context with
+    the instructions, your text and the reply reserve as real segments of it. The number a person
+    watches being computed is the number the app actually uses.
+
+    It counts on a tap, not on every keystroke, and that is a decision rather than laziness:
+    counting maps the model, so per-keystroke counting would mean a learning page that loads a
+    gigabyte because somebody typed a letter, and would teach them something untrue about what this
+    costs.
+
+    WHAT THIS COSTS. C1 now has an exception with a flag behind it, and the honest way to say that
+    is that the first tap of a first run opens a page rather than a chat. Two journeys hold the
+    compromise: one asserts the welcome is gone on the second launch and that leaving it costs
+    exactly one tap, the other that the playground answers with the real tokenizer.
+
+    Android has neither the page nor the welcome (W142 territory), which widens the C11 gap rather
+    than closing it.
+  verified: "simulator — journeys 11 and 12 on iPhone 17, real model, real tokenizer"

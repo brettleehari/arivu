@@ -217,6 +217,26 @@ public final class ChatSession: ObservableObject {
         persist()
     }
 
+    // MARK: - The token playground (D-065)
+
+    /// Count tokens in arbitrary text with the REAL tokenizer, for the learning page.
+    ///
+    /// It goes through the same `InferenceController.countTokens` the prompt builder uses, which
+    /// means it maps the model if the model is not mapped — a second or two on a cold start. That
+    /// cost is why the playground counts on a tap rather than on every keystroke: a learning page
+    /// that silently loads a gigabyte because someone typed a letter has taught them something
+    /// untrue about what this costs.
+    public func countTokens(_ text: String) async -> Int32? {
+        try? await controller.countTokens(text)
+    }
+
+    /// What the conversation's own instructions cost, in tokens. The figure the context budget is
+    /// actually spending before the user has written anything.
+    public func systemPromptTokens() async -> Int32? {
+        try? await controller.countTokens(PromptBuilder.system(effectiveSystemPrompt)
+                                          + PromptBuilder.assistantOpen)
+    }
+
     public func refreshConversations() {
         conversations = store.list()
     }

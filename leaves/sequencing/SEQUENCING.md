@@ -7,7 +7,7 @@ generated_for: 2026-09-22
 
 # Sequencing Leaf
 
-Today **2026-09-22** (Tuesday) · slice **all** · platform **all** · done 51/145 · builders 1 + Hari
+Today **2026-09-22** (Tuesday) · slice **all** · platform **all** · done 53/146 · builders 1 + Hari
 
 Done means verified to the stated level, never more. **Nothing has run on a physical Android phone or on any iPhone.** Emulator runs are functional only; the 94 iOS tests ran on macOS, not on iOS.
 
@@ -252,7 +252,6 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | W118 | MVP | D-043: what happens to a reply when the user backgrounds the app on iOS (C10 on two platforms) | 0.25d | before the first TestFlight build goes to anyone outside the team | D-043 D-044 | iOS gives roughly 30 seconds; a full reply takes about 96. Recommended — stop and keep the partial reply, exactly as process death already does on Android. The alternative is a shorter reply cap on iOS, which is a platform-shaped limit and  |
 | W116 | STORE | D-040 + D-041 + D-038: what iOS is for (a Spine sentence), the launch shape, and ratifying profiles as the C11 mechanism | 0.5d |  | D-040 D-041 D-038 | D-041 is the one that decides this calendar: Apple has no 12-tester gate, so iOS CAN ship first. GTM recommends coupling the ANNOUNCEMENT, not the release — submit with "Manually release this version" and release the day Play goes live; if  |
 | W121 | STORE | Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-050..D-059) | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 |  |
-| W138 | MVP | EngineWrapperTests.handleCannotLeak is intermittently red — a global counter read across deferred deallocation | 0.25d |  |  | seen once in seven full `swift test` runs and never in isolation, so it is a race, not a leak. The test reads arivu_stub_live_engines() as a delta around a `do` scope, but `arivu_stub_reset()` runs in the suite's per-test init while the pre |
 
 **Engineering**
 
@@ -315,20 +314,19 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | 27 | W49 D-018 final: confirm Google-generated key (A) or switch to own key via | android | 0.25d | before the first Open testing or Production release (locks then) | D-018 | W48 | 2026-10-05 → 2026-10-05 |
 | 28 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, agr | ios | 0.25d |  | D-001 D-020 | W110 | 2026-10-05 → 2026-10-05 |
 | 29 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048, D-05 | ios | 0.25d |  | D-044 D-045 D-047 D-048 D-050 D-051 D-052 D-053 D-054 D-055 D-056 D-057 D-058 D-059 | ready | 2026-10-05 → 2026-10-05 |
-| 30 | W138 EngineWrapperTests.handleCannotLeak is intermittently red — a global c | ios | 0.25d |  |  | ready | 2026-10-06 → 2026-10-06 |
-| 31 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-07 → 2026-10-07 |
-| 32 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-07 → 2026-10-17 |
-| 33 | W122 Submit to the App Store with "Manually release this version"; wait for | ios | ~0.5d + 2d elapsed |  | D-041 D-024 D-025 D-039 D-059 | W120, W108, W105, W106, W107, W39, W59, W65, W109, W116 | 2026-10-12 → 2026-10-14 |
-| 34 | W123 MILESTONE — App Store release (release the held build) | ios | 0.25d |  | D-041 D-059 D-029 | W122 | 2026-10-14 → 2026-10-14 |
-| 35 | W58 Apply for production access (form answers from the closed test) and wa | android | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-20 → 2026-10-27 |
-| 36 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, PH) | android | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-27 → 2026-10-29 |
-| 37 | W63 Wave B (ID, BR) then Wave C, by country | android | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-29 → 2026-11-05 |
+| 30 | W120 MILESTONE — first TestFlight build (internal testers, team only, no Be | ios | 0.25d |  | D-046 D-041 | W119, W96, W118 | 2026-10-07 → 2026-10-07 |
+| 31 | W124 External TestFlight round with Beta App Review and the same tester que | ios | ~0.5d + 10d elapsed |  | D-041 | W120 | 2026-10-07 → 2026-10-17 |
+| 32 | W122 Submit to the App Store with "Manually release this version"; wait for | ios | ~0.5d + 2d elapsed |  | D-041 D-024 D-025 D-039 D-059 | W120, W108, W105, W106, W107, W39, W59, W65, W109, W116 | 2026-10-12 → 2026-10-14 |
+| 33 | W123 MILESTONE — App Store release (release the held build) | ios | 0.25d |  | D-041 D-059 D-029 | W122 | 2026-10-14 → 2026-10-14 |
+| 34 | W58 Apply for production access (form answers from the closed test) and wa | android | ~0.25d + 7d elapsed |  | D-020 | W57 | 2026-10-20 → 2026-10-27 |
+| 35 | W19 MILESTONE — Play production release, Wave A (NG, GH, KE, UG, ZA, PH) | android | ~0.25d + 2d elapsed |  | D-018 D-020 D-029 | W58, W62, W49, W50, W08, W10, W54, W55, W34 | 2026-10-27 → 2026-10-29 |
+| 36 | W63 Wave B (ID, BR) then Wave C, by country | android | ~0.25d + 7d elapsed |  | D-029 D-014 D-017 | W19, W65, W34 | 2026-10-29 → 2026-11-05 |
 
-Hari effort still open: 12.5 days (8.25 of it not iOS).
+Hari effort still open: 12.25 days (8.25 of it not iOS).
 
 ## Open items no milestone requires
 
-W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W142 (Hari, android), W138 (Hari, ios), W139 (Hari, android), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
+W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM, android), W63 (Hari, android), W64 (Compliance, android), W67 (Engineering, both), W68 (Engineering, both), W69 (Engineering, both), W70 (Engineering, both), W71 (Engineering, both), W72 (Engineering, android), W73 (Engineering, both), W74 (Engineering, both), W75 (Engineering, ios), W77 (Engineering, both), W79 (Engineering, android), W80 (Engineering, ios), W81 (Design, both), W83 (Engineering, android), W84 (Engineering, android), W117 (Engineering, both), W95 (Design, ios), W97 (Engineering, ios), W99 (Design, ios), W100 (Design, ios), W103 (Compliance, ios), W121 (Hari, ios), W124 (Hari, ios), W142 (Hari, android), W139 (Hari, android), W136 (Architecture, ios). Scheduled after milestone work; soft dependencies are dotted in the graph.
 
 ## Schedule (simulated)
 
@@ -387,7 +385,6 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W113 App Store Connect record — bundle id io.github.brettleehari.arivu, | Hari | ios | STORE | 0.25d |  | 2026-10-05 | 2026-10-05 |
 | W121 Stamp the iOS non-blocking decisions (D-044, D-045, D-047, D-048,  | Hari | ios | STORE | 0.25d |  | 2026-10-05 | 2026-10-05 |
 | W92 iOS step 8 — put it on a physical iPhone (SE 2020 / iPhone 11 clas | Engineering | ios | BENCH | ~0.5d | iphone→W111 | 2026-10-05 | 2026-10-05 |
-| W138 EngineWrapperTests.handleCannotLeak is intermittently red — a glob | Hari | ios | MVP | 0.25d |  | 2026-10-06 | 2026-10-06 |
 | W119 First signed device archive — Release configuration, distribution  | Engineering | ios | STORE | ~0.5d |  | 2026-10-06 | 2026-10-06 |
 | W96 iOS step 12 — pre-submission gate: tools/ios_release_check.sh agai | Compliance | ios | STORE | 0.5d |  | 2026-10-06 | 2026-10-06 |
 | W120 MILESTONE — first TestFlight build (internal testers, team only, n | Hari | ios | STORE | 0.25d |  | 2026-10-07 | 2026-10-07 |
@@ -480,9 +477,11 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 | W90 iOS step 6 — first Simulator build: meet the compiler with ~ | Engineering | ios | simulator — xcodebuild -sdk iphonesimulator BUILD SUCCEEDED; the app launches and renders the empty state. Four defects found only by compiling: proc_pid_rusage is macOS-only, EXCLUDED_ARCHS missing, Accelerate unlinked, the gate refused an unmeasured device |
 | W91 iOS step 7 — run ArivuTests on the Simulator (model in the b | Engineering | ios | simulator — 10 of 10 on the iPhone 17 Simulator, 1 known issue (the D-010 placeholder). Model in the bundle at 378 MB, privacy manifest, licences folder reference and copy catalogue all confirmed |
 | W141 Edit the system prompt for one conversation, with the safety | Hari | ios | unit — CustomPromptTests proves no editor input, including an empty string and a prompt injection, can produce a prompt without Policy.systemPromptSafetySuffix; on the phone |
+| W145 The learning page becomes a module you use, and is shown onc | Hari | ios | simulator — journeys 11 and 12; the welcome is gone on the second launch and costs one tap to leave, and the playground counts with the real tokenizer |
 | W143 Ten user journeys, driven from outside the app, in their own | Hari | ios | simulator — 10/10 on iPhone 17, real model, real generations. Found four defects on the way: the Edit button buried under the whole prompt dump, the bubble swallowing the Copy button's identity, a VoiceOver user getting no Copy confirmation, and a dead end where editing the instructions removed the way back to the editor |
 | W144 The app icon was a speech bubble with a sparkle, which is ev | Hari | ios | delivered — tools/ios/make_icon.swift renders light, dark and tinted from source; chosen against a contact sheet at 120, 87, 60 and 40 points, which is where an icon actually lives |
 | W140 Show the exact prompt between the question and the answer, s | Hari | ios | iphone — PromptTranscriptTests builds a prompt with the real PromptBuilder and requires the rebuilt text to be byte-identical, including the truncated-history case; on the phone from f808f43+ |
+| W138 EngineWrapperTests.handleCannotLeak is intermittently red —  | Hari | ios | unit — 8 consecutive runs clean. The cause was not the counter reset (which never touched the engine count) but ArivuEngine being an actor: its deinit is not guaranteed to have run by the closing brace of the scope that held it, so an immediate read saw the old value. The test now waits for the handle to come back rather than requiring it back synchronously |
 | W137 D-063: replace the system prompt so C5's hedge actually fire | Hari | both | host — tools/eval/sweep.cpp re-run across Qwen3 0.6B/1.7B/4B after the change: off-task corrections 1/6 -> 5/6, hedges 1/6 -> 3/6, on-task output unchanged. Byte-identical on both platforms (ProfileParityTest); 57 Android tests and 61+20+25 iOS tests pass |
 
 ## Graph warnings
@@ -632,11 +631,12 @@ flowchart LR
   W123["W123 MILESTONE — App Store release release th…"]:::hari
   W124["W124 External TestFlight round with Beta App…"]:::hari
   W141["W141 Edit the system prompt for one conversat…"]:::done
+  W145["W145 The learning page becomes a module you u…"]:::done
   W143["W143 Ten user journeys, driven from outside t…"]:::done
   W144["W144 The app icon was a speech bubble with a…"]:::done
   W142["W142 D-064 is iOS-only, which is a live C11 v…"]:::hari
   W140["W140 Show the exact prompt between the questi…"]:::done
-  W138["W138 EngineWrapperTests.handleCannotLeak is i…"]:::hari
+  W138["W138 EngineWrapperTests.handleCannotLeak is i…"]:::done
   W139["W139 Android does not draw the per-reply stat…"]:::hari
   W137["W137 D-063: replace the system prompt so C5's…"]:::done
   W136["W136 Correct architecture/ios-port.md — the P…"]:::todo

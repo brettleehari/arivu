@@ -36,8 +36,12 @@ struct EngineWrapperTests {
             #expect(arivu_stub_live_engines() == baseline + 1)
             _ = await engine.hasModel()
         }
-        // The engine is gone; its Handle's deinit ran.
-        #expect(arivu_stub_live_engines() == baseline)
+        // The engine is gone. NOT checked instantly: `ArivuEngine` is an actor, and an actor's
+        // deinit is not guaranteed to have run by the closing brace of the scope that held it — so
+        // an immediate read sometimes saw the old count and this test was red about one run in
+        // seven, never in isolation (W138). The invariant is that the handle IS given back, not
+        // that it is given back synchronously, so it waits for it.
+        #expect(liveEngines(settlingAt: baseline) == baseline)
 
         // A throwing load must not keep the handle alive either.
         arivu_stub_fail_next_load("stub: refused")
@@ -49,7 +53,19 @@ struct EngineWrapperTests {
             defer { open.close() }
             await #expect(throws: (any Error).self) { try await engine.loadModel(open.window) }
         }
-        #expect(arivu_stub_live_engines() == baseline)
+        #expect(liveEngines(settlingAt: baseline) == baseline)
+    }
+
+    /// Poll until the live count reaches `target`, or give up and return what it actually is so the
+    /// expectation reports the real number. A sleep would be a guess; this is a bound.
+    private func liveEngines(settlingAt target: Int32, timeout: TimeInterval = 3) -> Int32 {
+        let deadline = Date().addingTimeInterval(timeout)
+        var live = arivu_stub_live_engines()
+        while live != target && Date() < deadline {
+            usleep(20_000)
+            live = arivu_stub_live_engines()
+        }
+        return live
     }
 
     @Test("a model is loaded as fd + offset 0 + whole length")

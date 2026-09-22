@@ -111,6 +111,25 @@
 "learn_prompt_state" = "This conversation";
 "learn_prompt_standard" = "Standard wording";
 "learn_prompt_edited" = "Edited";
+
+/* The interactive section. The one part of the page you do rather than read. */
+"learn_try_title" = "Try it";
+"learn_try_body" = "Arivu does not read words. It reads tokens — pieces of words, usually about three quarters of one each, though a rare word can cost several and a common one costs a single token. Type anything below and count it with the same tokenizer Arivu itself uses. The bar underneath is the whole 2048 the model can hold at once, with what is already spoken for before you write a word.";
+"learn_try_hint" = "Type or paste anything";
+"learn_try_count" = "Count the tokens";
+"learn_try_counting" = "Counting\U2026";
+"learn_try_result" = "%1$d tokens \U00b7 %2$d words";
+"learn_try_unknown" = "not counted yet";
+"learn_try_key_system" = "Arivu's instructions";
+"learn_try_key_yours" = "Your text";
+"learn_try_key_reply" = "Kept free for the reply";
+"a11y_learn_budget" = "Context: %1$d tokens of instructions, %2$d of your text, %3$d kept free for the reply, out of %4$d";
+
+/* Shown once, before the first conversation. */
+"welcome_title" = "Arivu";
+"welcome_body" = "This is a language model running on your phone. Not a link to one somewhere else \U2014 the whole thing is in the app, which is why it works with the aeroplane mode on and why nothing you type ever leaves the device.\n\nIt is small enough to fit in a phone, so it is good with text you give it \U2014 rewriting, shortening, explaining, summarising, translating \U2014 and unreliable about facts. It will tell you when it might be wrong.\n\nHave a look at how it works, or start using it. This page is always here under About.";
+"welcome_start" = "Start using Arivu";
+"welcome_later" = "How it works";
 "a11y_report_reply" = "Report this reply";
 "a11y_stop" = "Stop writing the reply";
 "a11y_expanded" = "Open";

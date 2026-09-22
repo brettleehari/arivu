@@ -1901,6 +1901,17 @@ items:
     decisions: [D-064]
     estimate_days: 0.5
     deps: []
+  - id: W145
+    title: "The learning page becomes a module you use, and is shown once before the first chat"
+    slice: MVP
+    platform: ios
+    spine: [C1, C5, C8]
+    owner: Hari
+    status: done
+    verified: "simulator — journeys 11 and 12; the welcome is gone on the second launch and costs one tap to leave, and the playground counts with the real tokenizer"
+    decisions: [D-065]
+    estimate_days: 0.5
+    deps: []
   - id: W143
     title: "Ten user journeys, driven from outside the app, in their own scheme"
     slice: MVP
@@ -1951,8 +1962,9 @@ items:
     platform: ios
     spine: [C6]
     owner: Hari
-    status: todo
-    needs: "seen once in seven full `swift test` runs and never in isolation, so it is a race, not a leak. The test reads arivu_stub_live_engines() as a delta around a `do` scope, but `arivu_stub_reset()` runs in the suite's per-test init while the previous test's ArivuEngine may not have been deallocated yet — its deinit then decrements a counter that has already been zeroed. A test that fails one time in seven is a test people learn to re-run, which is how a real leak gets through it"
+    status: done
+    verified: "unit — 8 consecutive runs clean. The cause was not the counter reset (which never touched the engine count) but ArivuEngine being an actor: its deinit is not guaranteed to have run by the closing brace of the scope that held it, so an immediate read saw the old value. The test now waits for the handle to come back rather than requiring it back synchronously"
+    was: "seen once in seven full `swift test` runs and never in isolation, so it is a race, not a leak. The test reads arivu_stub_live_engines() as a delta around a `do` scope, but `arivu_stub_reset()` runs in the suite's per-test init while the previous test's ArivuEngine may not have been deallocated yet — its deinit then decrements a counter that has already been zeroed. A test that fails one time in seven is a test people learn to re-run, which is how a real leak gets through it"
     decisions: []
     estimate_days: 0.25
     deps: []

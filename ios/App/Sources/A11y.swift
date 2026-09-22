@@ -27,4 +27,10 @@ enum A11y {
     static let promptReset = "promptEditor.reset"
 
     static let learn = "about.learn"
+
+    static let playgroundField = "learn.playground.field"
+    static let playgroundCount = "learn.playground.count"
+
+    static let welcomeStart = "welcome.start"
+    static let welcomeLearn = "welcome.learn"
 }

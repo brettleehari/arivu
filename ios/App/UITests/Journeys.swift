@@ -33,8 +33,18 @@ final class Journeys: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         // A clean device every time: journeys must not depend on what an earlier one left behind.
+        // That also clears the welcome flag, so every journey starts where a new user starts —
+        // which is now the welcome, not the chat (D-065). The nine journeys that are about the
+        // chat step past it the way a person does, with one tap.
         app.launchArguments += ["-ArivuUITestReset", "YES"]
         app.launch()
+        dismissWelcome()
+    }
+
+    /// One tap, and it is gone. If this ever needs two, C1 has been lost.
+    private func dismissWelcome() {
+        let start = app.buttons["welcome.start"].firstMatch
+        if start.waitForExistence(timeout: uiTimeout) { start.tap() }
     }
 
     // MARK: - helpers
@@ -292,6 +302,57 @@ final class Journeys: XCTestCase {
             NSPredicate(format: "label CONTAINS[c] %@", "stopped")).firstMatch
         XCTAssertTrue(stopped.waitForExistence(timeout: uiTimeout),
                       "a stopped reply does not say it was stopped")
+    }
+
+    // MARK: - 11. the welcome, once and only once
+
+    func test11_welcomeAppearsOnceAndCostsOneTap() {
+        // setUp already dismissed it; prove it does not come back on a relaunch.
+        app.terminate()
+        app.launchArguments.removeAll { $0 == "-ArivuUITestReset" || $0 == "YES" }
+        app.launch()
+        XCTAssertTrue(input.waitForExistence(timeout: uiTimeout),
+                      "the second launch did not go straight to the chat")
+        XCTAssertFalse(app.buttons["welcome.start"].exists,
+                       "the welcome came back — it is meant to be seen once")
+
+        // And on a genuinely first run it IS there, with a way into the learning page beside it.
+        app.terminate()
+        app.launchArguments += ["-ArivuUITestReset", "YES"]
+        app.launch()
+        XCTAssertTrue(app.buttons["welcome.start"].waitForExistence(timeout: uiTimeout),
+                      "a first run did not show the welcome")
+        XCTAssertTrue(app.buttons["welcome.learn"].exists,
+                      "the welcome does not offer the learning page")
+        app.buttons["welcome.start"].tap()
+        XCTAssertTrue(input.waitForExistence(timeout: uiTimeout),
+                      "one tap did not land in the chat")
+    }
+
+    // MARK: - 12. count your own sentence
+
+    func test12_playgroundCountsWithTheRealTokenizer() {
+        app.buttons["chat.about"].firstMatch.tap()
+        let learn = app.buttons["about.learn"].firstMatch
+        XCTAssertTrue(learn.waitForExistence(timeout: uiTimeout))
+        learn.tap()
+
+        let field = app.textFields["learn.playground.field"].firstMatch
+        var scrolls = 0
+        while !field.exists && scrolls < 8 { app.swipeUp(); scrolls += 1 }
+        XCTAssertTrue(field.waitForExistence(timeout: uiTimeout), "no token playground on the page")
+        field.tap()
+        field.typeText("Arivu runs on your phone")
+
+        let count = app.buttons["learn.playground.count"].firstMatch
+        XCTAssertTrue(count.isEnabled, "Count was disabled with text in the box")
+        count.tap()
+
+        // The model has to map to answer, so this is allowed the same patience a reply gets.
+        let result = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "tokens")).firstMatch
+        XCTAssertTrue(result.waitForExistence(timeout: replyTimeout),
+                      "counting produced no answer")
     }
 
     // MARK: - 10. learn what it is

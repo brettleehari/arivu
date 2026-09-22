@@ -1907,8 +1907,8 @@ items:
     platform: ios
     spine: [C1, C7, C8, C10]
     owner: Hari
-    status: in_progress
-    needs: "the unit suites know delete(_:) removes a conversation; they cannot know whether anyone can find the way to delete one. That question only exists on the other side of the glass, and it is the one 'the navigation needs smooth UX' is actually asking. Real model, real generations, no stubs — a journey that mocks the model has stopped testing C1"
+    status: done
+    verified: "simulator — 10/10 on iPhone 17, real model, real generations. Found four defects on the way: the Edit button buried under the whole prompt dump, the bubble swallowing the Copy button's identity, a VoiceOver user getting no Copy confirmation, and a dead end where editing the instructions removed the way back to the editor"
     decisions: [D-011, D-061, D-064]
     estimate_days: 0.5
     deps: []

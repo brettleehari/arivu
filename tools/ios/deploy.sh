@@ -23,10 +23,19 @@ export ARIVU_GIT_SHA="$SHA"
 
 # Match the UDID by shape, not by column. Device names contain spaces — "Brettlee's iPhone" —
 # so positional awk picked the word "Pro" out of "iPhone 17 Pro Max" and tried to install to that.
+# `|| true` is doing real work here. With no phone plugged in, grep finds nothing and exits 1, and
+# under `set -e` a failing command substitution takes the whole script down AT THE ASSIGNMENT —
+# before the check below ever runs. So the script exited non-zero having printed nothing at all,
+# which is worse than the two earlier lies it told, because there was no message to disbelieve.
 DEVICE="${ARIVU_DEVICE:-$(xcrun devicectl list devices 2>/dev/null \
   | grep -E 'connected' | grep -E 'physical' \
-  | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}' | head -1)}"
-[[ -n "$DEVICE" ]] || { echo "no connected iPhone. Plug one in, or set ARIVU_DEVICE=<udid>." >&2; exit 1; }
+  | grep -oE '[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}' | head -1 || true)}"
+if [[ -z "$DEVICE" ]]; then
+  echo "no connected iPhone. Plug one in and unlock it, or set ARIVU_DEVICE=<udid>." >&2
+  echo "devices seen right now:" >&2
+  xcrun devicectl list devices 2>/dev/null | sed -n '1,12p' >&2 || true
+  exit 1
+fi
 
 [[ -d build/ios/ArivuCore.xcframework ]] || { echo "no ArivuCore.xcframework — run tools/ios/build_core.sh" >&2; exit 1; }
 

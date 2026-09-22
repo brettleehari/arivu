@@ -314,7 +314,13 @@ private struct MessageBubble: View {
                         }
                         Button(copied ? Strings.string(.copied) : Strings.string(.copy), action: onCopy)
                             .accessibilityIdentifier(A11y.copy)
-                            .accessibilityLabel(Strings.string(.a11y_copy_message))
+                            // The label has to move with the title. It was pinned to "Copy this
+                            // message" in both states, so the confirmation design.md §4 exists to
+                            // give — iOS confirms nothing, so Arivu confirms itself — reached
+                            // sighted users and nobody else. A VoiceOver user tapped Copy and was
+                            // told nothing had changed.
+                            .accessibilityLabel(copied ? Strings.string(.copied)
+                                                       : Strings.string(.a11y_copy_message))
                             .frame(minHeight: Metrics.minTouchTarget)
                     }
                     .font(.subheadline)
@@ -384,31 +390,15 @@ private struct PromptDisclosure: View {
         if !reply.fromUser, let stats = reply.stats {
             DisclosureGroup(isExpanded: $expanded) {
                 VStack(alignment: .leading, spacing: 8) {
-                    switch PromptTranscript.rebuild(reply: reply, in: messages,
-                                                    systemPrompt: systemPrompt) {
-                    case .success(let text):
+                    // Rebuilt once. The three parts below all describe the same answer and asking
+                    // twice would let them disagree.
+                    let rebuilt = PromptTranscript.rebuild(reply: reply, in: messages,
+                                                           systemPrompt: systemPrompt)
+                    switch rebuilt {
+                    case .success:
                         Text(Strings.string(.prompt_disclosure_body))
                             .font(.footnote)
                             .foregroundStyle(Palette.onSurfaceVariant)
-                        // ABOVE the text, not below it. It used to sit underneath, which read
-                        // nicely in the source — the lever next to the thing it moves — and was
-                        // wrong on a phone: the thing it moves is the whole system prompt plus the
-                        // whole conversation, several screens of monospaced text, and the button
-                        // was under all of it. Journey 3 could not find it either, which is the
-                        // same finding arriving twice.
-                        Button(Strings.string(.prompt_edit_open), action: onEdit)
-                            .accessibilityIdentifier(A11y.editInstructions)
-                            .font(.footnote)
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Palette.primary)
-                            .frame(minHeight: Metrics.minTouchTarget)
-                        Text(text)
-                            .font(.caption.monospaced())
-                            .foregroundStyle(Palette.onSurface)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(10)
-                            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 8))
                     case .failure(let reason):
                         // Never an approximation. A page whose whole claim is "this is exactly what
                         // went in" has nothing to offer if it starts guessing (spine: C6).
@@ -416,6 +406,29 @@ private struct PromptDisclosure: View {
                                             ? .prompt_disclosure_changed : .prompt_disclosure_unknown))
                             .font(.footnote)
                             .foregroundStyle(Palette.onSurfaceVariant)
+                    }
+
+                    // OUTSIDE the switch, and above the text. It used to live in the success branch
+                    // only, which produced a dead end nobody would have predicted: editing the
+                    // instructions makes every existing reply fail the hash check, so every
+                    // disclosure fell into the failure branch — and the way back to the editor
+                    // disappeared from the chat the moment you used it once. The branch that says
+                    // "the instructions changed" is exactly where someone wants to go and look.
+                    Button(Strings.string(.prompt_edit_open), action: onEdit)
+                        .accessibilityIdentifier(A11y.editInstructions)
+                        .font(.footnote)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Palette.primary)
+                        .frame(minHeight: Metrics.minTouchTarget)
+
+                    if case .success(let text) = rebuilt {
+                        Text(text)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(Palette.onSurface)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(10)
+                            .background(Palette.surface, in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
                 .padding(.top, 6)
@@ -434,9 +447,18 @@ private struct PromptDisclosure: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Palette.onSurfaceVariant)
-                // On the LABEL, not on the DisclosureGroup: an identifier on the group is inherited
-                // by every descendant that has one of its own, which silently renamed the Edit
-                // button inside it.
+                // COMBINED, then identified. Two things are going on here and both were bugs.
+                //
+                // The identifier is on the label rather than on the DisclosureGroup because an
+                // identifier on the group is inherited by every descendant that has one of its
+                // own, which silently renamed the Edit button inside it.
+                //
+                // And the label is combined because it gains a second child — the badge — the
+                // moment a conversation runs on edited wording, and that changed what the row
+                // exposed: addressable before the first edit, not afterwards. One label is also
+                // what it is to a reader, who sees "what Arivu read, and whose words those are"
+                // rather than two separate facts.
+                .accessibilityElement(children: .combine)
                 .accessibilityIdentifier(A11y.promptDisclosure)
             }
             .tint(Palette.onSurfaceVariant)

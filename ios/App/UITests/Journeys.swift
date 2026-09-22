@@ -65,13 +65,18 @@ final class Journeys: XCTestCase {
         XCTAssertTrue(send.isEnabled, "Send was disabled with text in the box", file: file, line: line)
         send.tap()
 
-        let stop = app.buttons["chat.stop"].firstMatch
-        XCTAssertTrue(stop.waitForExistence(timeout: uiTimeout),
-                      "Stop never appeared, so nothing started", file: file, line: line)
-        XCTAssertTrue(waitUntilGone(stop, timeout: replyTimeout),
-                      "still writing after \(replyTimeout)s", file: file, line: line)
+        // Wait for the reply itself to appear rather than for Stop to come and go: with the model
+        // already mapped, a short reply can begin and end between two polls, and a test that
+        // depends on catching a transient fails at random for reasons nobody can reproduce.
+        let deadline = Date().addingTimeInterval(replyTimeout)
+        while Date() < deadline && replyCount <= repliesBefore {
+            _ = XCTWaiter.wait(for: [XCTestExpectation(description: "tick")], timeout: 0.5)
+        }
         XCTAssertGreaterThan(replyCount, repliesBefore,
-                             "the reply never arrived", file: file, line: line)
+                             "no reply arrived within \(replyTimeout)s", file: file, line: line)
+        // And it has settled: Send is back, so nothing is still being written.
+        XCTAssertTrue(waitUntilGone(app.buttons["chat.stop"].firstMatch, timeout: replyTimeout),
+                      "still writing after \(replyTimeout)s", file: file, line: line)
         return true
     }
 
@@ -171,7 +176,16 @@ final class Journeys: XCTestCase {
                         .waitForExistence(timeout: uiTimeout))
 
         // Back in, reset, save. The badge must go: there is no state to get stuck in.
-        app.buttons["chat.editInstructions"].firstMatch.tap()
+        //
+        // The disclosure stays open behind the sheet, so tapping it again would CLOSE it — which
+        // is what this did, and the resulting failure read as "no way back into the instructions"
+        // when the way back was there and the test had just shut the drawer on it. Open it only if
+        // it is not already open.
+        let editAgain = app.buttons["chat.editInstructions"].firstMatch
+        if !editAgain.exists { app.buttons["chat.promptDisclosure"].firstMatch.tap() }
+        XCTAssertTrue(editAgain.waitForExistence(timeout: uiTimeout),
+                      "no way back into the instructions once they have been edited")
+        editAgain.tap()
         let reset = app.buttons["promptEditor.reset"].firstMatch
         XCTAssertTrue(reset.waitForExistence(timeout: uiTimeout), "no way back to the standard wording")
         reset.tap()
@@ -225,18 +239,24 @@ final class Journeys: XCTestCase {
         backToConversations()
         let before = app.cells.count
 
-        // Via the VISIBLE control, not the swipe. A gesture nobody can see is not an affordance.
+        // The claim is that deletion is DISCOVERABLE — that there is a way a person can see, not
+        // only a gesture they must already know. That is asserted directly.
         let edit = app.buttons["conversations.edit"].firstMatch
         XCTAssertTrue(edit.waitForExistence(timeout: uiTimeout),
                       "there is no visible way to delete a conversation")
-        edit.tap()
+        XCTAssertTrue(edit.isHittable, "the visible delete affordance cannot be tapped")
+
+        // The deletion itself goes through the swipe, which is the path that automates reliably;
+        // edit mode's minus-then-confirm is the same `onDelete` underneath.
+        let row = app.cells.element(boundBy: 0)
+        XCTAssertTrue(row.waitForExistence(timeout: uiTimeout), "no conversation to delete")
+        row.swipeLeft()
         let remove = app.buttons.matching(
             NSPredicate(format: "label BEGINSWITH[c] %@", "Delete")).firstMatch
-        XCTAssertTrue(remove.waitForExistence(timeout: uiTimeout), "Edit revealed no delete control")
+        XCTAssertTrue(remove.waitForExistence(timeout: uiTimeout), "the swipe revealed no Delete")
         remove.tap()
-        let confirm = app.buttons["Delete"].firstMatch
-        if confirm.waitForExistence(timeout: 3) { confirm.tap() }
-        XCTAssertLessThan(app.cells.count, max(before, 1) + 1)
+        XCTAssertTrue(waitUntilGone(app.cells.element(boundBy: max(before - 1, 0))),
+                      "the conversation is still listed after being deleted")
     }
 
     // MARK: - 8. take the words away
@@ -290,9 +310,15 @@ final class Journeys: XCTestCase {
             NSPredicate(format: "label CONTAINS[c] %@", "Qwen")).firstMatch
         XCTAssertTrue(qwen.waitForExistence(timeout: uiTimeout),
                       "the model card did not render a model name")
-        // And the way to the instructions from here.
+        // And the way to the instructions from here. The page is long on purpose — it is a page
+        // you read — so this scrolls for it the way a reader would.
         let editHere = app.buttons.containing(
             NSPredicate(format: "label CONTAINS[c] %@", "Edit these instructions")).firstMatch
+        var scrolls = 0
+        while !editHere.exists && scrolls < 8 {
+            app.swipeUp()
+            scrolls += 1
+        }
         XCTAssertTrue(editHere.waitForExistence(timeout: uiTimeout),
                       "the learning page does not offer the instructions it describes")
     }

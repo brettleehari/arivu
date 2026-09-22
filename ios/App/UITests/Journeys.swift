@@ -48,17 +48,37 @@ final class Journeys: XCTestCase {
         input.typeText(text)
     }
 
-    /// Send and wait for a settled reply. A reply is settled when the Copy button for it exists,
-    /// which is the same signal a user gets: the row of actions appears when the writing stops.
+    /// Send, and wait for the reply to SETTLE.
+    ///
+    /// This first waited for a Copy button to exist, which was wrong in a way that quietly broke
+    /// four journeys: the user's own message has a Copy button too, so the wait returned the
+    /// instant the sent message rendered and every assertion afterwards ran against a chat with no
+    /// reply in it. The tests were not failing because the app was broken; they were failing
+    /// because they never waited.
+    ///
+    /// The signal now is the one a person actually watches: Stop appears while Arivu writes and is
+    /// replaced by Send when it stops. Waiting for Stop to go is waiting for the reply.
     @discardableResult
     private func sendAndWait(_ text: String, file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let repliesBefore = replyCount
         type(text)
         XCTAssertTrue(send.isEnabled, "Send was disabled with text in the box", file: file, line: line)
         send.tap()
-        let copy = app.buttons["chat.copy"].firstMatch
-        let ok = copy.waitForExistence(timeout: replyTimeout)
-        XCTAssertTrue(ok, "no reply settled within \(replyTimeout)s", file: file, line: line)
-        return ok
+
+        let stop = app.buttons["chat.stop"].firstMatch
+        XCTAssertTrue(stop.waitForExistence(timeout: uiTimeout),
+                      "Stop never appeared, so nothing started", file: file, line: line)
+        XCTAssertTrue(waitUntilGone(stop, timeout: replyTimeout),
+                      "still writing after \(replyTimeout)s", file: file, line: line)
+        XCTAssertGreaterThan(replyCount, repliesBefore,
+                             "the reply never arrived", file: file, line: line)
+        return true
+    }
+
+    /// Replies on screen, counted by the disclosure each one carries. Only Arivu's messages have
+    /// one, so this counts replies and not turns.
+    private var replyCount: Int {
+        app.buttons.matching(identifier: "chat.promptDisclosure").count
     }
 
     /// Poll until an element is gone. `expectation(for:evaluatedWith:)` would read better, but it
@@ -90,8 +110,12 @@ final class Journeys: XCTestCase {
         XCTAssertFalse(send.isEnabled, "Send should be disabled with an empty box")
         sendAndWait("Rewrite this politely: send me the report today")
         // The per-reply cost line, which is the thing that made the numbers honest.
-        let stats = app.staticTexts.containing(NSPredicate(format: "label CONTAINS[c] %@", "tok/s"))
-        XCTAssertGreaterThan(stats.count, 0, "no per-reply stats line under the reply")
+        // The stats sit inside the reply's combined accessibility element, so they are read off
+        // the message rather than looked for as a label of their own. "tokens in" is the spoken
+        // form; "tok/s" is only what is printed.
+        let spoken = app.staticTexts.containing(
+            NSPredicate(format: "label CONTAINS[c] %@", "tokens in"))
+        XCTAssertGreaterThan(spoken.count, 0, "no per-reply stats under the reply")
     }
 
     // MARK: - 2. see what the model was actually given
@@ -168,8 +192,7 @@ final class Journeys: XCTestCase {
         new.tap()
         XCTAssertTrue(input.waitForExistence(timeout: uiTimeout),
                       "a new conversation did not land in the chat")
-        XCTAssertEqual(app.buttons.matching(identifier: "chat.copy").count, 0,
-                       "the new conversation was not empty")
+        XCTAssertEqual(replyCount, 0, "the new conversation was not empty")
     }
 
     // MARK: - 6. move between conversations
@@ -220,12 +243,19 @@ final class Journeys: XCTestCase {
 
     func test08_copyConfirmsItself() {
         sendAndWait("Say hello")
-        let copy = app.buttons["chat.copy"].firstMatch
+        let copy = app.buttons.matching(identifier: "chat.copy").element(boundBy: 1)
+        XCTAssertTrue(copy.waitForExistence(timeout: uiTimeout), "the reply has no Copy button")
         copy.tap()
-        // iOS confirms nothing, so Arivu confirms itself (leaves/design.md §4).
-        let copied = app.buttons["Copied"].firstMatch
-        XCTAssertTrue(copied.waitForExistence(timeout: uiTimeout),
-                      "Copy gave no feedback that anything happened")
+        // iOS confirms nothing, so Arivu confirms itself (leaves/design.md §4). The button keeps
+        // its identifier and changes its title, so this reads the title rather than hunting for a
+        // different control.
+        let deadline = Date().addingTimeInterval(uiTimeout)
+        var sawCopied = false
+        while Date() < deadline && !sawCopied {
+            sawCopied = copy.label.localizedCaseInsensitiveContains("copied")
+            _ = XCTWaiter.wait(for: [XCTestExpectation(description: "tick")], timeout: 0.2)
+        }
+        XCTAssertTrue(sawCopied, "Copy gave no feedback that anything happened")
     }
 
     // MARK: - 9. stop it

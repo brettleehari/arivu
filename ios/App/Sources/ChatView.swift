@@ -261,6 +261,12 @@ private struct MessageBubble: View {
         HStack {
             if message.fromUser { Spacer(minLength: Metrics.userBubbleLeadingInset) }
             VStack(alignment: .leading, spacing: 6) {
+                // The message is ONE accessibility element; the actions beneath it are not part of
+                // it. This used to combine the whole bubble, which read the Copy button's label
+                // into the message ("You wrote: Say hello, Copy this message") and made the bubble
+                // inherit the button's identifier — so a tap aimed at Copy landed on the message.
+                // Found by dumping what the app actually exposes rather than what it looked like.
+                VStack(alignment: .leading, spacing: 6) {
                 if message.text.isEmpty && streaming {
                     HStack(spacing: 8) {
                         ProgressView().accessibilityHidden(true)
@@ -293,6 +299,9 @@ private struct MessageBubble: View {
                 // bubble that cannot grow. A line that truncates to "24 in · 143 o…" is worse
                 // than a line that costs 12 points.
                 if let stats = message.stats, !streaming { StatsLine(stats: stats) }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityValue(streaming ? Strings.string(.a11y_writing) : "")
 
                 if !message.text.isEmpty && !streaming {
                     HStack(spacing: 4) {
@@ -321,8 +330,6 @@ private struct MessageBubble: View {
             .foregroundStyle(message.fromUser ? Palette.onPrimaryContainer : Palette.onSurfaceVariant)
             if !message.fromUser { Spacer(minLength: Metrics.replyBubbleTrailingInset) }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityValue(streaming ? Strings.string(.a11y_writing) : "")
     }
 
     /// While the model is being mapped the line is `state_starting`, or the first-run line, or —
@@ -383,6 +390,18 @@ private struct PromptDisclosure: View {
                         Text(Strings.string(.prompt_disclosure_body))
                             .font(.footnote)
                             .foregroundStyle(Palette.onSurfaceVariant)
+                        // ABOVE the text, not below it. It used to sit underneath, which read
+                        // nicely in the source — the lever next to the thing it moves — and was
+                        // wrong on a phone: the thing it moves is the whole system prompt plus the
+                        // whole conversation, several screens of monospaced text, and the button
+                        // was under all of it. Journey 3 could not find it either, which is the
+                        // same finding arriving twice.
+                        Button(Strings.string(.prompt_edit_open), action: onEdit)
+                            .accessibilityIdentifier(A11y.editInstructions)
+                            .font(.footnote)
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Palette.primary)
+                            .frame(minHeight: Metrics.minTouchTarget)
                         Text(text)
                             .font(.caption.monospaced())
                             .foregroundStyle(Palette.onSurface)
@@ -390,14 +409,6 @@ private struct PromptDisclosure: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(10)
                             .background(Palette.surface, in: RoundedRectangle(cornerRadius: 8))
-                        // The lever, next to the thing it moves. Someone reading the exact bytes
-                        // is exactly the person who wants to know what happens if they differ.
-                        Button(Strings.string(.prompt_edit_open), action: onEdit)
-                            .accessibilityIdentifier(A11y.editInstructions)
-                            .font(.footnote)
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Palette.primary)
-                            .frame(minHeight: Metrics.minTouchTarget)
                     case .failure(let reason):
                         // Never an approximation. A page whose whole claim is "this is exactly what
                         // went in" has nothing to offer if it starts guessing (spine: C6).
@@ -423,9 +434,12 @@ private struct PromptDisclosure: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Palette.onSurfaceVariant)
+                // On the LABEL, not on the DisclosureGroup: an identifier on the group is inherited
+                // by every descendant that has one of its own, which silently renamed the Edit
+                // button inside it.
+                .accessibilityIdentifier(A11y.promptDisclosure)
             }
             .tint(Palette.onSurfaceVariant)
-            .accessibilityIdentifier(A11y.promptDisclosure)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Palette.surfaceVariant.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))

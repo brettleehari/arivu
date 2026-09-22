@@ -5,5 +5,9 @@
     <color name="brand_green">#1F5C4A</color>
     <color name="brand_paper">#F5F1E6</color>
     <color name="brand_amber">#D98E04</color>
+    <!-- The icon's own field, sampled from the artwork rather than chosen near it. Used by the
+         adaptive icon's background layer and by the splash, so the launcher, the splash and the
+         first frame of the app are one continuous colour. -->
+    <color name="brand_maroon">#5D131F</color>
     <color name="window_background">#FBFAF7</color>
 </resources>

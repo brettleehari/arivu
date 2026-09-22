@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12+ system splash: the Arivu mark on brand green, same in light and dark (C1:
+    <!-- Android 12+ system splash: the Arivu mark on the icon's own maroon, same in light and dark (C1:
          the first thing a new user sees should look like the icon they tapped). -->
     <style name="Theme.Arivu" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
-        <item name="android:windowSplashScreenBackground">@color/brand_green</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenBackground">@color/brand_maroon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
     </style>
 </resources>

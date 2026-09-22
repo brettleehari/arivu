@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The adaptive icon (API 26+). Three layers, each of which has to be the right KIND of thing:
+
+     background  flat colour, sampled from the art (drawable/ic_launcher_background.xml)
+     foreground  the painted அ, raster, one per density in mipmap-*dpi
+     monochrome  a flat letterform for Android 13+ themed icons, generated from the font by
+                 tools/android/make_monochrome.swift — the painting cannot serve here, because a
+                 themed icon is tinted to one colour and a tinted painting is a smudge
+
+     Launchers older than API 26 get the square mipmap-*dpi/ic_launcher.png instead. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

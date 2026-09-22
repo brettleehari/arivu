@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Brand green field with a faint lighter top-left glow; flat enough to survive any OEM mask. -->
+<!-- The ground behind the mark, flat on purpose.
+
+     #5D131F is sampled from the artwork's own field, not chosen to be near it, so the foreground's
+     square and this meet with no seam. That matters more on Android than on iOS: the foreground
+     square is sized to the 66dp safe zone, so every OEM mask — circle, squircle, teardrop, whatever
+     Samsung is doing this year — cuts its corners and shows this through. Same colour, invisible
+     join, under any mask.
+
+     Flat rather than a gradient for the same reason: a gradient would have to line up with the
+     artwork's own shading through a crop nobody can predict. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:pathData="M0,0h108v108h-108z">
-        <aapt:attr name="android:fillColor">
-            <gradient android:type="linear"
-                android:startX="0" android:startY="0" android:endX="108" android:endY="108">
-                <item android:offset="0" android:color="#FF2A6E5A" />
-                <item android:offset="1" android:color="#FF1A4F40" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <path android:fillColor="#FF5D131F" android:pathData="M0,0h108v108h-108z" />
 </vector>

@@ -16,4 +16,4 @@ tools/host/run_smoke.sh   # the engine against the real model
 cd android && ./gradlew :app:testDebugUnitTest :app:bundleRelease && cd .. && tools/check_manifest.sh
 ```
 
-Licence: Apache-2.0. Model weights: Qwen3 0.6B, Apache-2.0. Runtime: llama.cpp, MIT.
+Licence: Apache-2.0. Model weights: Qwen3 1.7B (Q4_K_M, ~1.1 GB), Apache-2.0. Runtime: llama.cpp, MIT.

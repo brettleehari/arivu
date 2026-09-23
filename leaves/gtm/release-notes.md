@@ -8,16 +8,16 @@ scope: Google Play only — the App Store has no "What's New" field for a first 
 # Release notes — v0.1.0
 
 Play limit: 500 Unicode characters per language (verified 2026-09-15, Play Console Help answer 9859348).
-Count: **570 / 500** (Python `len()`, newlines counted as 1). Language: en-US (add en-GB with the same text if the listing adds it).
+Count: **474 / 500** (Python `len()`, newlines counted as 1). Language: en-US (add en-GB with the same text if the listing adds it).
 
 ```text
 First release of Arivu.
-• Explain, summarise, shorten, rewrite or draft text on your phone, with no internet.
+• Explain, summarise, shorten, rewrite or draft text, with no internet.
 • The AI model is inside the app. No account and no setup.
-• Several conversations, kept on the phone. Swipe or tap Edit to delete one.
+• Several conversations, kept on the phone. Swipe to delete one.
 • Every reply shows what it cost: words in, words out, speed.
-• Open any reply to read the exact text the model was given, and change the instructions it runs on.
-• "How Arivu works" explains the model, the memory limit and the speed, and lets you count tokens.
+• Open a reply to see the exact text the model was given.
+• "How Arivu works" explains the model, the memory limit and the speed.
 • Stop a reply at any time. Copy it. Report it if it is wrong.
 ```
 

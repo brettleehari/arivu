@@ -71,7 +71,7 @@ ARIVU_REAL_CORE=1 tools/ios/verify_macos.sh   # same, linked against the real co
 
 ```sh
 tools/llama/fetch_llama.sh         # pinned llama.cpp + patches → third_party/
-tools/fetch_model.sh               # Qwen3-0.6B Q4_K_M, sha256-verified → models/ (~400 MB)
+tools/fetch_model.sh               # Qwen3-1.7B Q4_K_M, sha256-verified → models/ (~1.1 GB)
 tools/ios/build_core.sh            # /core + llama.cpp → build/ios/ArivuCore.xcframework
 tools/ios/sync_licences.sh         # licence texts + the iOS index → ios/App/Resources/licenses/
 ARIVU_REPORT_EMAIL=you@example.com tools/ios/generate_project.sh
@@ -284,7 +284,7 @@ runner*, and the user is the one who assembles the product.
 | What PocketPal makes the user do | What Arivu does instead |
 |---|---|
 | **Onboarding: 7 screens** (splash, pals, offline, expectations, privacy, a topic picker, a model-tier picker) before the first chat | **No onboarding at all.** The launch screen, then the empty chat. That is the whole first run (C1) |
-| **Find a model**: a remote-fetched curated list, in-app Hugging Face search, a manual GGUF URL, or a local file import | **One model, in the app.** Qwen3-0.6B Q4_K_M, in the bundle, chosen once, recorded in `leaves/BRIEF.md` (R3) |
+| **Find a model**: a remote-fetched curated list, in-app Hugging Face search, a manual GGUF URL, or a local file import | **One model, in the app.** Qwen3-1.7B Q4_K_M, in the bundle, chosen once, recorded in `leaves/BRIEF.md` (R3) |
 | **Choose a quantization**: pick the GGUF file yourself from a repo's list, guided by "Memory tight" chips and a "may exceed available memory — continue?" dialog | **No quantization choice.** Q4_K_M, decided by a benchmark, not by the user (C8) |
 | **Download 0.7–2.7 GB** before the first reply (the "Balanced" default is 1.07 GB) | **Nothing is downloaded, ever.** The 400 MB is inside the install, which is why the app works in airplane mode on the day it arrives (C1, C2) |
 | **Per-model setup**: chat template (a dropdown of ~12, plus a raw Nunjucks editor), BOS token, EOS token, "add generation prompt", system prompt, stop words | **None of it.** The template, the tokens and the system prompt are part of the product, in `Policy.swift`, byte-identical to Android's (C8, C11) |
@@ -427,7 +427,7 @@ numbers; 10–12 are release material.
 
 1. **Install the toolchain.** Xcode 16 or later (Swift 6), then `brew install cmake xcodegen`.
    Confirm `xcrun --sdk iphoneos --show-sdk-path` prints something.
-2. **Fetch the inputs.** `tools/llama/fetch_llama.sh`, then `tools/fetch_model.sh` (~400 MB,
+2. **Fetch the inputs.** `tools/llama/fetch_llama.sh`, then `tools/fetch_model.sh` (~1.1 GB,
    sha256-verified). Run `tools/host/run_smoke.sh` — if the core is broken, find out before Xcode is
    involved.
 3. **Run the tests the normal way.** `cd ios/ArivuKit && swift test --no-parallel`. Expect the same

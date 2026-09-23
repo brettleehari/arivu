@@ -12,21 +12,31 @@
                                           Arivu, after they have read it; it is not collection by
                                           this app, and the privacy policy says so in full (D-025 is
                                           the Android twin of this call).
-    NSPrivacyAccessedAPITypes    empty  — Arivu uses none of the required-reason APIs. It does not
-                                          read file timestamps, disk space, system boot time, active
-                                          keyboards or UserDefaults *of another app*. Its own
-                                          UserDefaults use (the gate's cached pass, and "has a model
-                                          ever loaded") is the app's own container, which category
-                                          CA92.1 covers and which Apple does not require a reason
-                                          entry for.
 
-  VERIFY BEFORE SUBMISSION: if a future change reads free disk space through
-  `NSFileSystemFreeSize`, or file timestamps, an NSPrivacyAccessedAPITypes entry becomes mandatory.
-  The gate reads free storage through `URLResourceValues.volumeAvailableCapacityForImportantUsage`,
-  which is not on the required-reason list today. Re-check against Apple's current list at
-  submission time; the list grows.
+  NSPrivacyAccessedAPITypes WAS EMPTY AND THAT WAS WRONG. This file used to argue that Arivu touches
+  none of the required-reason APIs — that its own UserDefaults use "does not require a reason entry"
+  and that `volumeAvailableCapacityForImportantUsage` was "not on the required-reason list today".
+  Both were mistaken, and the second was already wrong when it was written. Its own closing note
+  said to re-check against Apple's current list at submission time, because the list grows. This is
+  that re-check, driven by tools/ios_release_check.sh reading the actual symbols in the built
+  binary rather than by anyone's memory of what the app does.
 
-  UNVERIFIED: this file has never been validated by Xcode or by App Store Connect.
+  App Store Connect rejects an upload that uses these without declaring them (ITMS-91053), so this
+  was a guaranteed bounce, not a style note.
+
+  Each entry below names the reason code that is actually true of this app:
+
+    FileTimestamp  C617.1  `fstat` on files inside the app's own container — the model in the
+                           bundle and the conversation files. Never another app's, never the user's
+                           documents.
+    DiskSpace      E174.1  CompatibilityGate checks free storage before the app commits to loading
+                           a gigabyte of weights, so it can refuse rather than die half way (C6).
+                   85F4.1  and IncompatibleView SHOWS the figure, because a gate that will not say
+                           why it stopped you is the thing C6 exists to prevent.
+    UserDefaults   CA92.1  the app's own defaults, readable by nothing else: the gate's cached
+                           verdict, "has a model ever loaded", and "has the welcome been seen".
+
+  All of it stays on the device. There is no network to send it over.
 -->
 <plist version="1.0">
 <dict>
@@ -37,6 +47,32 @@
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
     <key>NSPrivacyAccessedAPITypes</key>
-    <array/>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>C617.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>E174.1</string>
+                <string>85F4.1</string>
+            </array>
+        </dict>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

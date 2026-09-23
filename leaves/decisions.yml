@@ -380,7 +380,23 @@
   spine: [C9]
   platform: both
   adjudication: human
-  status: pending
+  status: resolved_human
+  decided_at: 2026-09-23
+  decided_by: Hari
+  resolution: >
+    arivu.ai.org@gmail.com — a dedicated account, per the recommendation, for all three uses:
+    the in-app Report destination, the public store contact and the privacy contact.
+
+    Wired into ios/App/Support/Info.plist (ARIVUReportEmail), android/gradle.properties
+    (arivu.reportEmail) and, through AppInfo.reportEmail, the privacy policy's Contact line on
+    both platforms. The in-app privacy text takes it as a parameter, so there is one source.
+
+    ONE TRAP FOUND ON THE WAY IN. AppInfo.reportEmail had the placeholder as its Swift FALLBACK,
+    and a Swift string literal is compiled into the executable — which step 8 of the release gate
+    scans. So the archive would have failed on an address no user could ever have seen. The
+    fallback is now the real address; the plist remains the source, and check_release.sh still
+    refuses a build whose key is missing.
+  verified: "build — tools/ios_release_check.sh step 8 PASSES against a Release .app: no placeholder report address in the bundle"
   blocks_release: true
   blocks_release_scope: both
   deadline: before the first Play upload

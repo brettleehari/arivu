@@ -183,10 +183,19 @@ else:
     note("no executable to cross-check the privacy manifest against")
 
 # ---- 4. No network --------------------------------------------------------------------------
-net_keys = [k for k in ("NSAppTransportSecurity", "NSLocalNetworkUsageDescription", "NSBonjourServices",
-                        "NSUserTrackingUsageDescription", "UIFileSharingEnabled",
-                        "LSSupportsOpeningDocumentsInPlace") if k in info]
-out(not net_keys, f"Info.plist has no networking/tracking/file-sharing keys: {net_keys or '(none)'}")
+# Presence is not the question; the VALUE is. This used to fail on the mere existence of
+# UIFileSharingEnabled and LSSupportsOpeningDocumentsInPlace, which Arivu declares EXPLICITLY FALSE
+# — the safest possible setting, and better documentation than leaving them out and relying on the
+# default. A gate that fails the careful spelling of "no" teaches people to delete the "no".
+_absent = ("NSAppTransportSecurity", "NSLocalNetworkUsageDescription", "NSBonjourServices",
+           "NSUserTrackingUsageDescription")
+_must_be_false = ("UIFileSharingEnabled", "LSSupportsOpeningDocumentsInPlace")
+net_keys = [k for k in _absent if k in info]
+net_keys += [k for k in _must_be_false if info.get(k) is True]
+out(not net_keys, f"Info.plist opens no network, tracking or file-sharing door: {net_keys or '(none)'}")
+for k in _must_be_false:
+    if k in info and info.get(k) is False:
+        note(f"{k} is declared false, which is the point")
 
 if blob:
     frameworks = [f for f in ("CFNetwork.framework/CFNetwork", "Network.framework/Network",

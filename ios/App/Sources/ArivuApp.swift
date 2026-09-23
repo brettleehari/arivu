@@ -170,6 +170,11 @@ enum AppInfo {
     /// project.yml) rather than in source, so the release check can reject the placeholder the way
     /// tools/release_check.sh does on Android (D-010).
     static var reportEmail: String {
-        Bundle.main.object(forInfoDictionaryKey: "ARIVUReportEmail") as? String ?? "report@example.invalid"
+        // Info.plist is the source; this fallback exists only for a build that somehow lacks the
+        // key, which tools/ios/check_release.sh refuses to install. It used to be
+        // a placeholder address, and that was a real trap: the literal is compiled into the
+        // executable, and step 8 of the release gate scans the executable, so the archive failed
+        // on a placeholder that no user could ever have seen.
+        Bundle.main.object(forInfoDictionaryKey: "ARIVUReportEmail") as? String ?? "arivu.ai.org@gmail.com"
     }
 }

@@ -19,6 +19,7 @@ Every `uses:` value must be declared here as available or not. An unavailable re
 |---|---|---|---|---|
 | `phone` The 4 GB Android test phone (Helio G85 / SD680 class) on adb | **NO** | 1 | W112 (2026-10-03) | 9: W02, W08, W10, W18, W21, W46, W47, W48, W61 |
 | `iphone` A 3-4 GB test iPhone (SE 2020 / iPhone 11 class — the iOS twin of the Helio G85 target) | **NO** | 1 | W111 (2026-10-05) | 5: W101, W92, W93, W94, W99 |
+| `iphone-dev` The development iPhone (17 Pro Max) on devicectl | yes | 1 | — | 0: — |
 | `mac-with-xcode` A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen | yes | 1 | W85 (2026-09-23) | 11: W101, W109, W119, W92, W93, W94, W95, W96, W97, W98, W99 |
 | `mac` The development Mac as it is today (Command Line Tools, no Xcode) | yes | 1 | — | 0: — |
 | `Engineering` An agent that can drive builds, adb and scripts, lent to another Leaf's item | yes | 1 | — | 7: W101, W107, W46, W47, W48, W81, W99 |
@@ -26,7 +27,7 @@ Every `uses:` value must be declared here as available or not. An unavailable re
 
 **`phone` — not in hand.** W41 has assumed since 0.1 that Hari already owns this handset. No measurement, screenshot or logcat in the repo comes from a physical Android phone, so Sequencing now models it as not-yet-in-hand with an explicit purchase item. If Hari does own one, close W112 in a minute and every date below moves left.
 
-**`iphone` — not in hand.** Does not exist. Every iOS number in every Leaf is an Android measurement or an estimate (engineering-ios.md "the whole memory story"). Also needs the Apple Developer Program (W110) before an app can be installed on it at all.
+**`iphone` — not in hand.** STILL DOES NOT EXIST, and the flagship below does not replace it. Arivu's claim is that it runs on a modest phone (C2), and every iOS measurement now in the repo comes from an iPhone 17 Pro Max: 12 GB of RAM, the newest CPU, the most forgiving jetsam budget Apple ships. That device cannot fail the memory ceiling, so it cannot test it. Nothing in this repo proves the 4 GB claim on iOS.
 
 ## Milestones — two per store, independent calendars
 
@@ -484,8 +485,7 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 
 ## Graph warnings
 
-- W144 claims `iphone` — a physical-handset level. Sequencing has no evidence any handset exists; confirm before this ships in the report
-- W140 claims `iphone` — a physical-handset level. Sequencing has no evidence any handset exists; confirm before this ships in the report
+- 2 item(s) are verified on the DEVELOPMENT iPhone only (W140, W144). That handset is a 17 Pro Max — 12 GB of RAM and the most forgiving jetsam budget Apple ships — so it cannot fail the memory ceiling and therefore cannot test it. C2's claim about a modest phone is still unproven on iOS; the `iphone` resource (W111) is what would prove it
 
 ## Graph
 

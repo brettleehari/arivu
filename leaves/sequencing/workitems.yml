@@ -114,19 +114,30 @@ resources:
     capacity: 1
     acquired_by: W111
     note: >
-      Does not exist. Every iOS number in every Leaf is an Android measurement or an estimate
-      (engineering-ios.md "the whole memory story"). Also needs the Apple Developer Program (W110)
-      before an app can be installed on it at all.
+      STILL DOES NOT EXIST, and the flagship below does not replace it. Arivu's claim is that it
+      runs on a modest phone (C2), and every iOS measurement now in the repo comes from an iPhone
+      17 Pro Max: 12 GB of RAM, the newest CPU, the most forgiving jetsam budget Apple ships. That
+      device cannot fail the memory ceiling, so it cannot test it. Nothing in this repo proves the
+      4 GB claim on iOS.
+  iphone-dev:
+    title: The development iPhone (17 Pro Max) on devicectl
+    available: true
+    capacity: 1
+    note: >
+      In hand since 2026-09-20 and used daily since: built, installed, launched and driven on it,
+      and 0.1.0 (1) was archived and uploaded from this Mac against it. `verified: iphone` claims
+      are therefore real rather than aspirational — but see the entry above for what this device
+      cannot tell us.
   mac-with-xcode:
     title: A Mac with Xcode 16+ (Swift 6 toolchain), cmake and xcodegen
     available: true
     capacity: 1
     acquired_by: W85
     note: >
-      The machine this round ran on is macOS with Command Line Tools only — no iOS SDK, no
-      Simulator, no xcodebuild, no cmake, no xcodegen. Everything under ios/App/**, ios/project.yml
-      and tools/ios/*.sh (except verify_macos.sh and sync_licences.sh) has therefore never been
-      compiled or run.
+      Xcode has been installed and in daily use since 2026-09-20. Everything under ios/App/**,
+      ios/project.yml and tools/ios/*.sh has been compiled, run, tested on the Simulator and
+      installed on a handset; the twelve journeys in ios/App/UITests run here, and the App Store
+      archive was built and uploaded from this machine.
   mac:
     title: The development Mac as it is today (Command Line Tools, no Xcode)
     available: true

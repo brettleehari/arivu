@@ -45,8 +45,13 @@ PLATFORMS = ("android", "ios", "both")
 # The verified-level vocabulary, cheapest first. `done` must state one of these as its first word.
 LEVELS = ("type-checked-only", "delivered", "resolved_human", "core", "host", "unit",
           "swift-macos", "build", "emulator", "simulator", "phone", "iphone", "play", "appstore")
-# Levels that mean "a real handset ran this". Nothing should be here yet.
+# Levels that mean "a real handset ran this".
 HANDSET_LEVELS = ("phone", "iphone")
+# ...and the resource that has to be declared available for such a claim to be credible. `iphone`
+# is the LOW-END target; `iphone-dev` is the flagship actually in hand. They are separate on
+# purpose: a 17 Pro Max cannot fail the memory ceiling, so it cannot test it, and letting it
+# satisfy an `iphone` claim would quietly retire the only check that C2 has.
+HANDSET_RESOURCE = {"phone": ("phone",), "iphone": ("iphone", "iphone-dev")}
 OWNER_POOLS = ("Hari", "Engineering")   # `uses:` values that are people, not things
 
 ap = argparse.ArgumentParser()
@@ -71,6 +76,9 @@ for i in raw:
         errors.append(f"duplicate id {i['id']}")
     items[i["id"]] = i
 resources = doc.get("resources", {}) or {}
+# Items verified only on the flagship. Reported once at the end rather than once per item, because
+# eighteen copies of the same sentence is how a real caveat becomes noise.
+handset_flagship_only = set()
 
 # milestones: {name: {item, platform, title}}
 milestones, mil_meta = {}, {}
@@ -142,8 +150,12 @@ for k, i in items.items():
                 errors.append(f"{k}: `verified` starts with {first!r}, which is not a declared level "
                               f"({', '.join(LEVELS)})")
             elif first in HANDSET_LEVELS:
-                warnings.append(f"{k} claims `{first}` — a physical-handset level. Sequencing has no "
-                                f"evidence any handset exists; confirm before this ships in the report")
+                have = [r for r in HANDSET_RESOURCE.get(first, ()) if (resources.get(r) or {}).get("available")]
+                if not have:
+                    warnings.append(f"{k} claims `{first}` — a physical-handset level, and no such "
+                                    f"handset is declared available; confirm before this ships")
+                elif first == "iphone" and have == ["iphone-dev"]:
+                    handset_flagship_only.add(k)
     try:
         i["deadline"] = as_date(i.get("deadline"))
     except ValueError:
@@ -607,6 +619,16 @@ for k, i in items.items():
     if in_view(i) and not is_open(k):
         L.append(f"| {k} {esc(i['title'][:60])} | {i['owner']} | {i['platform']} | {esc(i['verified'])} |")
 L.append("")
+
+# Said once, at the end, rather than on every item: the same caveat repeated eighteen times is how
+# a real one becomes noise people scroll past.
+if handset_flagship_only:
+    warnings.append(
+        f"{len(handset_flagship_only)} item(s) are verified on the DEVELOPMENT iPhone only "
+        f"({', '.join(sorted(handset_flagship_only))}). That handset is a 17 Pro Max — 12 GB of "
+        f"RAM and the most forgiving jetsam budget Apple ships — so it cannot fail the memory "
+        f"ceiling and therefore cannot test it. C2's claim about a modest phone is still unproven "
+        f"on iOS; the `iphone` resource (W111) is what would prove it")
 
 if warnings:
     L += ["## Graph warnings", ""] + [f"- {w}" for w in warnings] + [""]

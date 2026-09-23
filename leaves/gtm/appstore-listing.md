@@ -48,14 +48,30 @@ We ship the Report path anyway, because Play requires it and because it is one p
 
 ---
 
-## App name — 29 / 30
+## App name — 8 / 30
 
 ```text
-Arivu: Offline Writing Helper
+Arivu AI
 ```
 
-Identical to the Play title, deliberately: one product, one name, and word of mouth crossing between
-platforms should land on the same words. No price, no superlative, no competitor, no other platform.
+RESERVED IN APP STORE CONNECT ON 2026-09-23, which is what makes this the name rather than the
+better one below. `Arivu` alone is taken — it is a common Tamil word, so that was always likely —
+and Apple offers a trademark-dispute route that needs registered rights nobody here holds and takes
+weeks regardless.
+
+What this costs, recorded so it is not rediscovered later:
+
+- It no longer matches the Play title (`Arivu: Offline Writing Helper`), breaking the "one product,
+  one name" rule this section used to state. Play titles do not have to be globally unique, so the
+  fix is to take `Arivu AI` there too when the Play listing is created.
+- 22 of 30 characters are unused, and the descriptor that used to carry search weight has gone with
+  them. The subtitle now does that work alone.
+
+What it does not cost: the home screen still says **Arivu**. `CFBundleDisplayName` is a separate
+field with no uniqueness requirement, and it is unchanged. And unlike the bundle id (D-001) the
+store name can be changed in a later version, so this is reversible if `Arivu` is ever released.
+
+No price, no superlative, no competitor, no other platform.
 
 ## Subtitle — 27 / 30
 

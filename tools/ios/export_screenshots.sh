@@ -22,7 +22,9 @@ xcrun xcresulttool export attachments --path "$RESULT" --output-path "$TMP" >/de
 mkdir -p "$OUT"
 n=0
 # The manifest names each attachment; the files themselves have opaque names.
-python3 - "$TMP" "$OUT" <<'PY'
+# /usr/bin/python3 explicitly: a stale Python 3.8 ahead of it on PATH is x86_64 and cannot exec
+# on this machine ("Bad CPU type in executable"), which is a confusing way for a script to die.
+/usr/bin/python3 - "$TMP" "$OUT" <<'PY'
 import json, os, shutil, sys
 tmp, out = sys.argv[1], sys.argv[2]
 manifest = os.path.join(tmp, "manifest.json")

@@ -339,8 +339,23 @@ sys.exit(1 if bad else 0)
 PYEOF
 
 # Extra confidence where Xcode's tools happen to be installed.
+#
+# THE SIGNATURE IS NOT ASSERTED WHEN THIS RUNS AS A BUILD PHASE. Xcode signs AFTER build phases, so
+# the product sitting in InstallationBuildProductsLocation while this script runs is unsigned by
+# construction — and failing on that stopped every archive with "bundle is not signed", which was
+# the gate reporting its own position in the build order as a defect in the app.
+#
+# It still fails for a finished artifact. Standalone — the way this is run against a .xcarchive or
+# an unpacked .ipa before upload — an unsigned bundle is a real problem and says so.
+IN_BUILD_PHASE="${TARGET_BUILD_DIR:-}"
 if command -v codesign >/dev/null 2>&1; then
-  if codesign -dv "$APP" >/dev/null 2>&1; then pass "bundle is signed (codesign)"; else bad "bundle is not signed"; fi
+  if codesign -dv "$APP" >/dev/null 2>&1; then
+    pass "bundle is signed (codesign)"
+  elif [[ -n "$IN_BUILD_PHASE" ]]; then
+    note "not signed yet — Xcode signs after build phases; checked again on the finished archive"
+  else
+    bad "bundle is not signed"
+  fi
 else
   note "codesign not available — signature not checked"
 fi

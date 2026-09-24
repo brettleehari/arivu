@@ -22,6 +22,7 @@ Usage:
     tools/ios/testflight.py status
     tools/ios/testflight.py groups
     tools/ios/testflight.py internal "Demo"                      # create/attach, then add users in ASC
+    tools/ios/testflight.py screenshots                          # upload the captured PNGs
     tools/ios/testflight.py prepare "Hari S" "+44..."             # app-level fields review needs
     tools/ios/testflight.py external "Friends" a@x.com b@y.com   # create, attach, invite, submit
     tools/ios/testflight.py whats-new                            # push What to Test from the Leaf
@@ -289,6 +290,56 @@ def cmd_external(name, emails):
           "Testers are invited now but cannot install until it is approved.")
 
 
+def cmd_screenshots(directory=None):
+    """Upload the captured screenshots to the App Store listing.
+
+    Three steps per image, which is Apple's design rather than ours: reserve a slot and be told
+    where to PUT the bytes, PUT them, then confirm with an md5 so the server can check it got what
+    we sent. Skipped silently by most tooling, which is why half-uploaded screenshot sets are a
+    common way to fail submission.
+    """
+    import hashlib
+    d = pathlib.Path(directory or (ROOT / "leaves/gtm/screenshots/ios"))
+    shots = sorted(p for p in d.glob("*.png"))
+    if not shots:
+        die(f"no screenshots in {d}")
+
+    aid = app_id()
+    vid = call("GET", f"/v1/apps/{aid}/appStoreVersions?limit=1")["data"][0]["id"]
+    locs = call("GET", f"/v1/appStoreVersions/{vid}/appStoreVersionLocalizations")["data"]
+    loc = next(l for l in locs if l["attributes"]["locale"].startswith("en"))
+
+    sets = call("GET", f"/v1/appStoreVersionLocalizations/{loc['id']}/appScreenshotSets")["data"]
+    kind = "APP_IPHONE_67"   # 1320x2868 is accepted here; Apple folds 6.9" into this set
+    sid = next((s["id"] for s in sets if s["attributes"]["screenshotDisplayType"] == kind), None)
+    if sid is None:
+        sid = call("POST", "/v1/appScreenshotSets", {"data": {
+            "type": "appScreenshotSets",
+            "attributes": {"screenshotDisplayType": kind},
+            "relationships": {"appStoreVersionLocalization": {
+                "data": {"type": "appStoreVersionLocalizations", "id": loc["id"]}}}}})["data"]["id"]
+        print(f"   created {kind} set")
+
+    for shot in shots:
+        raw = shot.read_bytes()
+        made = call("POST", "/v1/appScreenshots", {"data": {
+            "type": "appScreenshots",
+            "attributes": {"fileSize": len(raw), "fileName": shot.name},
+            "relationships": {"appScreenshotSet": {
+                "data": {"type": "appScreenshotSets", "id": sid}}}}})["data"]
+        for op in made["attributes"]["uploadOperations"]:
+            req = urllib.request.Request(op["url"], method=op["method"],
+                                         data=raw[op["offset"]:op["offset"] + op["length"]])
+            for h in op.get("requestHeaders", []):
+                req.add_header(h["name"], h["value"])
+            urllib.request.urlopen(req).read()
+        call("PATCH", f"/v1/appScreenshots/{made['id']}", {"data": {
+            "type": "appScreenshots", "id": made["id"],
+            "attributes": {"uploaded": True,
+                           "sourceFileChecksum": hashlib.md5(raw).hexdigest()}}})
+        print(f"   uploaded {shot.name} ({len(raw) // 1024} KB)")
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -305,6 +356,8 @@ def main():
         if not rest:
             die("usage: external <group-name> [email ...]")
         cmd_external(rest[0], rest[1:])
+    elif cmd == "screenshots":
+        cmd_screenshots(rest[0] if rest else None)
     elif cmd == "prepare":
         if len(rest) < 2:
             die('usage: prepare "Firstname Lastname" "+44..."')

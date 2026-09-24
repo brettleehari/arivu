@@ -111,6 +111,27 @@ does not change its behaviour.
 
 ---
 
+## Doing it from here instead of by hand
+
+`tools/ios/testflight.py` drives all of this through the App Store Connect API, reading the copy
+above rather than repeating it. It needs a key: App Store Connect → Users and Access →
+Integrations → App Store Connect API → **+** (App Manager is enough), download
+`AuthKey_<KEYID>.p8` **once** (Apple will not offer it again), put it in
+`~/.appstoreconnect/private_keys/`, then:
+
+```sh
+export ASC_KEY_ID=<10-character key id>
+export ASC_ISSUER_ID=<uuid above the key list>
+
+tools/ios/testflight.py status                        # has the build finished processing?
+tools/ios/testflight.py internal "Demo"               # group + build + what-to-test
+tools/ios/testflight.py prepare "Hari S" "+44..."     # app fields external review requires
+tools/ios/testflight.py external "Friends" a@x.com    # group + invite + submit for review
+```
+
+Internal testers still have to be users on the account — that is Apple's rule, not the tool's.
+Add them under Users and Access; everything else above is automated.
+
 ## After processing finishes
 
 1. TestFlight tab → the build appears as **0.1.0 (1)** once processing ends. A gigabyte takes

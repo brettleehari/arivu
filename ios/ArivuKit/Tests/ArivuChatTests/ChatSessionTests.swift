@@ -249,8 +249,17 @@ struct ChatSessionTests {
         let h = try Harness()
         await h.session.loadHistory()
 
-        for round in 0..<6 {
-            h.session.send(String(repeating: "y", count: 200) + " \(round)")
+        // Sized against the ACTUAL budget rather than a hardcoded 200. The stub tokenizer counts
+        // one token per character, so the length of Policy.systemPrompt lands directly in this
+        // arithmetic — and when D-066 moved the refusals to the front and the prompt grew from 840
+        // characters to 1323, a 200-character message stopped fitting AT ALL. The test then failed
+        // saying history was never dropped, when really nothing had been sent.
+        let fixed = PromptBuilder.system(Policy.systemPrompt).count + PromptBuilder.assistantOpen.count
+        let budget = Int(Policy.nCtx) - Int(Policy.replyReserveTokens) - fixed
+        #expect(budget > 120, "no room left for a conversation at all — the system prompt is too long")
+        let each = max(16, budget / 3)
+        for round in 0..<8 {
+            h.session.send(String(repeating: "y", count: each) + " \(round)")
             try await h.settle()
         }
         #expect(h.session.contextStartID != nil, "history was dropped without telling the user")

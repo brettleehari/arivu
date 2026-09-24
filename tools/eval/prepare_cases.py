@@ -66,7 +66,10 @@ def system_prompt() -> str:
     prompt = "".join(parts)
     # Kotlin escapes that survive the regex above.
     prompt = prompt.replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
-    if "You are Arivu" not in prompt or not prompt.rstrip().endswith("help."):
+    # D-066 moved the refusals to the FRONT, so the prompt no longer opens with "You are Arivu"
+    # and no longer ends on the self-harm sentence. The two things that must still be true: it
+    # names the product, and it ends where the shipped wording ends.
+    if "Arivu" not in prompt or not prompt.rstrip().endswith("Be brief and plain."):
         sys.exit(f"extracted system prompt does not look right: {prompt[:80]!r} ... {prompt[-40:]!r}")
     return prompt
 

@@ -186,7 +186,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-063 | no | no | resolved_human | 2026-09-22 |  | W139 |
 | D-064 | no | no | resolved_human |  |  | W142 |
 
-10 open decisions block the Play release; 14 block the App Store release; 8 block both.
+9 open decisions block the Play release; 13 block the App Store release; 7 block both.
 
 ## Ready now, by platform and owner
 

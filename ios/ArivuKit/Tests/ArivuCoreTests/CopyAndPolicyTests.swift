@@ -220,18 +220,18 @@ struct PolicyTests {
     func systemPromptMatchesAndroid() {
         #expect(Policy.systemPrompt.hasPrefix(
             "You are Arivu, an offline writing assistant running on the user's phone. "))
+        // D-063's two sentences.
         #expect(Policy.systemPrompt.contains("You have no internet access and your memory of facts is unreliable."))
-        // D-063, the two sentences the sweep showed missing. Asserted by text, not by length,
-        // because they are the reason the prompt changed: without them the model restates a false
-        // premise back at the user, which reads as confirmation.
         #expect(Policy.systemPrompt.contains("Never repeat a claim back as though confirming it"))
-        #expect(Policy.systemPrompt.contains("if something the user says sounds wrong, say so"))
-        #expect(Policy.systemPrompt.contains("Refuse sexual content involving minors"))
+        // D-066. The topics were always named; what was missing is what refusing LOOKS like, and
+        // the scope that stops it swallowing ordinary angry rewriting.
+        #expect(Policy.systemPrompt.contains("Anything sexual involving a child."))
+        #expect(Policy.systemPrompt.contains("say plainly that you will not help, and stop there"))
+        #expect(Policy.systemPrompt.contains("do not offer a different version"))
+        #expect(Policy.systemPrompt.contains("Nothing else is on that list"))
         #expect(Policy.systemPrompt.contains("If someone mentions self-harm"))
-        // 840 characters, the length of Policy.SYSTEM_PROMPT in android/app/.../Policy.kt. This is a
-        // tripwire, not the real check: ProfileParityTest compares the two character by character.
-        // A change to either is a change to the product.
-        #expect(Policy.systemPrompt.count == 840, "the system prompt changed; check it against Policy.kt")
+        // A tripwire; ProfileParityTest is the real check, character by character.
+        #expect(Policy.systemPrompt.count == 1265, "the system prompt changed; check it against Policy.kt")
     }
 
     /// D-013 is Android-only complexity: an iOS bundle is a directory, so there is no `.so` suffix,

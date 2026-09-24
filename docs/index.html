@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arivu</title>
+<style>
+:root{
+  --ground:#FBFAF7; --ink:#1B1C1A; --muted:#4A4843; --line:#CAC7BF; --accent:#1F5C4A; --panel:#F1EFEA;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ground:#141513; --ink:#E4E2DC; --muted:#C9C6BE; --line:#48473F; --accent:#8FCFB6; --panel:#1F201E; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:17px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;padding:0 16px}
+main{max-width:44rem;margin:0 auto;padding-block:40px 64px}
+h1{font-size:clamp(1.8rem,5vw,2.4rem);line-height:1.15;margin:0 0 .3em}
+h2{font-size:1.2rem;margin:2.2em 0 .5em;color:var(--accent)}
+h3{font-size:1.02rem;margin:1.6em 0 .4em}
+.plat{border-left:3px solid var(--line);padding-left:14px;margin:.6em 0 1.2em}
+p,li{max-width:65ch}
+ul{padding-left:1.2em}
+li{margin:.35em 0}
+.meta{color:var(--muted);font-size:.95rem;margin:0}
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-top:28px}
+.summary h2{margin-top:0}
+a{color:var(--accent)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+.tablewrap{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);text-align:left;padding:8px 10px;vertical-align:top}
+footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>Arivu</h1>
+<p>A language model that runs on your phone. No account, no network, nothing leaves the device.</p>
+<ul>
+<li><a href="support.html">Support and contact</a></li>
+<li><a href="privacy.html">Privacy policy</a></li>
+<li><a href="https://github.com/brettleehari/arivu">Source code</a></li>
+</ul>
+</body>
+</html>

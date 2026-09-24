@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arivu — Support</title>
+<style>
+:root{
+  --ground:#FBFAF7; --ink:#1B1C1A; --muted:#4A4843; --line:#CAC7BF; --accent:#1F5C4A; --panel:#F1EFEA;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ground:#141513; --ink:#E4E2DC; --muted:#C9C6BE; --line:#48473F; --accent:#8FCFB6; --panel:#1F201E; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:17px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;padding:0 16px}
+main{max-width:44rem;margin:0 auto;padding-block:40px 64px}
+h1{font-size:clamp(1.8rem,5vw,2.4rem);line-height:1.15;margin:0 0 .3em}
+h2{font-size:1.2rem;margin:2.2em 0 .5em;color:var(--accent)}
+h3{font-size:1.02rem;margin:1.6em 0 .4em}
+.plat{border-left:3px solid var(--line);padding-left:14px;margin:.6em 0 1.2em}
+p,li{max-width:65ch}
+ul{padding-left:1.2em}
+li{margin:.35em 0}
+.meta{color:var(--muted);font-size:.95rem;margin:0}
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-top:28px}
+.summary h2{margin-top:0}
+a{color:var(--accent)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+.tablewrap{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);text-align:left;padding:8px 10px;vertical-align:top}
+footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>Arivu — Support</h1>
+
+<p>Arivu is a language model that runs entirely on your phone. There is no account, no server and
+no network connection, which shapes most of the answers below.</p>
+
+<h2>Contact</h2>
+<p>Email <a href="mailto:arivu.ai.org@gmail.com">arivu.ai.org@gmail.com</a>. One person reads it,
+so a reply may take a few days.</p>
+
+<h2>Reporting a bad reply</h2>
+<p>Every reply in the app has a <strong>Report</strong> button beneath it. It opens your own email
+app with that reply attached, and <em>nothing is sent until you press send</em> — you can read and
+edit it first. That is the most useful way to report a wrong or harmful answer, because it tells us
+exactly what was said.</p>
+<p>Reported emails are kept for <strong>90 days</strong> and then deleted.</p>
+
+<h2>Things that are working as intended</h2>
+<ul>
+<li><strong>The first launch is slow.</strong> The app is loading a model of about a gigabyte from
+its own storage. Later launches are quicker.</li>
+<li><strong>Replies are slower than a cloud assistant.</strong> This is a small model running on a
+phone battery, not a data centre.</li>
+<li><strong>It gets facts wrong.</strong> It is good at working with text you give it — rewriting,
+shortening, explaining, summarising, translating. It is unreliable about facts, dates, scores and
+anything recent, and it has no way to look anything up. Check anything that matters.</li>
+<li><strong>It forgets the start of a long conversation.</strong> It can hold about 2000 tokens at
+once. When older messages fall out of range the app draws a line saying so, rather than losing them
+silently.</li>
+</ul>
+
+<h2>Deleting your data</h2>
+<p>Conversations are stored only on your phone, in the app's private storage, and are excluded from
+device backups. Swipe a conversation in the list, or tap Edit, to delete it. <strong>Deleting the
+app deletes everything</strong> — there is no copy anywhere else, because there is nowhere else.</p>
+
+<h2>It will not start</h2>
+<p>Arivu needs roughly 3.5&nbsp;GB of memory and iOS&nbsp;17 or later. If your device is below that,
+the app says so plainly on first launch and stops, rather than starting and failing later.</p>
+
+<h2>Privacy</h2>
+<p>See the <a href="privacy.html">privacy policy</a>. The short version: nothing you type leaves
+your phone, because the app contains no networking code at all.</p>
+
+<h2>Source</h2>
+<p>Arivu is open source, model weights included, under the Apache&nbsp;2.0 licence:
+<a href="https://github.com/brettleehari/arivu">github.com/brettleehari/arivu</a>.</p>
+</body>
+</html>

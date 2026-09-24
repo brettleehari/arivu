@@ -134,15 +134,15 @@ There is one screen. Type or paste your text and tap Send. Tap Stop at any time.
 Arivu can only hold a certain amount of conversation at once. When older messages no longer fit, Arivu shows a line where its memory stops. It does not forget without telling you. How much it can hold depends on your iPhone.
 
 Before you install
-• The download is about [SIZE_MB] MB, because the AI model is inside the app. Use Wi-Fi if you can.
-• Arivu needs [MIN_IOS] or newer, on [DEVICE_FLOOR].
+• The download is about 1039 MB MB, because the AI model is inside the app. Use Wi-Fi if you can.
+• Arivu needs 17.0 or newer, on 3.5 GB.
 • Speed depends on your iPhone. Replies appear word by word.
 • If your iPhone cannot run Arivu well, Arivu tells you and does not start.
 • The app's screens are in English. You can write to Arivu in other languages, and it will try to reply in the same language. Check the result carefully.
 
 Open source
 Arivu is open source under the Apache 2.0 licence. The AI model is Qwen3 0.6B (Apache 2.0), and it runs with llama.cpp (MIT). All licences are listed inside the app.
-Source code: [REPO_URL]
+Source code: https://github.com/brettleehari/arivu
 ```
 
 ### What changed from the Play description, and why
@@ -153,8 +153,8 @@ Source code: [REPO_URL]
 | The whole privacy section rewritten | `positioning.md` §7. The Android sentence ("no permission to use the internet") is **false on iOS** and is replaced by source + label + the Airplane Mode test, in that order of strength |
 | "Private, because it cannot go online" → "Private, and here is how you can check" | Same. The word "cannot" is banned in iOS copy |
 | "helps you uninstall it" → "tells you and does not start" | An iPhone app cannot offer to uninstall itself (`leaves/architecture/ios-port.md`) |
-| "64-bit phone with Android 11 or newer and about 4 GB of memory" → `[MIN_IOS]`, `[DEVICE_FLOOR]` | There is no App Store device-exclusion catalogue. The floor is a minimum iOS version plus the runtime gate. **The Android RAM number must not be carried across** |
-| "about 400 MB" → `[SIZE_MB]` | The 400 MB figure is a measured Android artifact size. Measuring the iOS download is W-GTM-i2. **No number ships until it is measured** |
+| "64-bit phone with Android 11 or newer and about 4 GB of memory" → `17.0`, `3.5 GB` | There is no App Store device-exclusion catalogue. The floor is a minimum iOS version plus the runtime gate. **The Android RAM number must not be carried across** |
+| "about 400 MB" → `1039 MB` | The 400 MB figure is a measured Android artifact size. Measuring the iOS download is W-GTM-i2. **No number ships until it is measured** |
 | "free, with no in-app purchases" dropped | Price terms in metadata: Guideline 2.3.7, plus Apple's advice to keep prices out of the description. The price field already says it |
 | "Report… opens your email app" → "your own mail app" | The iOS hand-off is the system mail composer / share sheet |
 
@@ -162,10 +162,10 @@ Source code: [REPO_URL]
 
 | Placeholder | Filled by | Blocks |
 |---|---|---|
-| `[SIZE_MB]` | W-GTM-i2, measured on a device. Expect a figure near the Android one: `leaves/architecture.md` §4.4 chose to **bundle the model in the app** rather than use On-Demand Resources, precisely so that no app code ever fetches anything — the same property the Play asset pack gives us. Do not write "400" from the Android measurement; measure it | Submission |
-| `[MIN_IOS]`, `[DEVICE_FLOOR]` | **Hari.** `leaves/architecture.md` §11 is explicit that "the iOS minimum version is a product decision, not a build setting": it is the only pre-install filter the App Store has, and setting it loosely means charging someone a large download to reach a wall. It is the counterpart of D-009 and it needs an answer before this listing can be finished | Submission |
-| `[REPO_URL]` | D-035 (resolved: `github.com/brettleehari/arivu`) — write the final URL in | Submission |
-| `[MODEL]` in the review notes | The shipped profile. Iteration-1 ships one profile, `compact` (Qwen3 0.6B Q4_K_M), on both platforms — `leaves/architecture.md` §2.8, §3.4 | Submission |
+| `1039 MB` | W-GTM-i2, measured on a device. Expect a figure near the Android one: `leaves/architecture.md` §4.4 chose to **bundle the model in the app** rather than use On-Demand Resources, precisely so that no app code ever fetches anything — the same property the Play asset pack gives us. Do not write "400" from the Android measurement; measure it | Submission |
+| `17.0`, `3.5 GB` | **Hari.** `leaves/architecture.md` §11 is explicit that "the iOS minimum version is a product decision, not a build setting": it is the only pre-install filter the App Store has, and setting it loosely means charging someone a large download to reach a wall. It is the counterpart of D-009 and it needs an answer before this listing can be finished | Submission |
+| `https://github.com/brettleehari/arivu` | D-035 (resolved: `github.com/brettleehari/arivu`) — write the final URL in | Submission |
+| `Qwen3-1.7B-Q4_K_M` in the review notes | The shipped profile. Iteration-1 ships one profile, `compact` (Qwen3 0.6B Q4_K_M), on both platforms — `leaves/architecture.md` §2.8, §3.4 | Submission |
 
 **The download size is copy, not an apology** (`leaves/architecture.md` §4.4): the model is inside the
 app, so it never needs the internet again; install on Wi-Fi. Note that iOS warns before a large
@@ -200,10 +200,10 @@ no internet · local ai · plain text
 
 | Field | Value | Note |
 |---|---|---|
-| Support URL (**required**) | `[SUPPORT_URL]` — a page at the privacy-policy host | Apple requires it to "lead to actual contact information". A repository README does not qualify for a non-technical reader. Must carry the D-010 mailbox, how to delete your data, how to report a reply, and the three limits. **Deliverable W-GTM-i6** |
-| Marketing URL (optional) | `[REPO_URL]` or the hosted tour | Optional; use the repo until a site exists |
-| Privacy Policy URL (**required**) | `[PRIVACY_POLICY_URL]` → `privacy-policy.html` | Same single policy as Play, now covering both platforms |
-| Copyright | `[YEAR] [DEVELOPER_NAME]` | |
+| Support URL (**required**) | `https://brettleehari.github.io/arivu/support.html` — a page at the privacy-policy host | Apple requires it to "lead to actual contact information". A repository README does not qualify for a non-technical reader. Must carry the D-010 mailbox, how to delete your data, how to report a reply, and the three limits. **Deliverable W-GTM-i6** |
+| Marketing URL (optional) | `https://github.com/brettleehari/arivu` or the hosted tour | Optional; use the repo until a site exists |
+| Privacy Policy URL (**required**) | `https://brettleehari.github.io/arivu/privacy.html` → `privacy-policy.html` | Same single policy as Play, now covering both platforms |
+| Copyright | `2026 Hariprasad Sudharshan` | |
 
 ## Age rating
 
@@ -293,11 +293,11 @@ Arivu runs a small language model entirely on the device. It has no accounts, no
 
 To verify: launch the app, turn on Airplane Mode, type "Explain this in simple words:" followed by any paragraph, and tap Send. The reply is generated on the device.
 
-The model is [MODEL] (Apache 2.0), bundled in the app, running under llama.cpp (MIT). Output is shown only to the person using the app; nothing is shared with other users and there is no feed, no messaging and no web access.
+The model is Qwen3-1.7B-Q4_K_M (Apache 2.0), bundled in the app, running under llama.cpp (MIT). Output is shown only to the person using the app; nothing is shared with other users and there is no feed, no messaging and no web access.
 
-The About screen states what the model is good and bad at, and every reply has a Report button, which opens the system mail composer, pre-filled, addressed to [CONTACT_EMAIL]. Nothing is sent unless the user sends it.
+The About screen states what the model is good and bad at, and every reply has a Report button, which opens the system mail composer, pre-filled, addressed to arivu.ai.org@gmail.com. Nothing is sent unless the user sends it.
 
-Full source: [REPO_URL]
+Full source: https://github.com/brettleehari/arivu
 ```
 
 ## What we must NOT claim
@@ -327,7 +327,7 @@ Added by Apple and by C11:
 
 ## Before submission — checklist
 
-1. `[SIZE_MB]`, `[MIN_IOS]`, `[DEVICE_FLOOR]` filled from measurements, not estimates (W-GTM-i2).
+1. `1039 MB`, `17.0`, `3.5 GB` filled from measurements, not estimates (W-GTM-i2).
 2. Support page live and carrying real contact information (W-GTM-i6); privacy policy URL live, with
    the iOS blocks in `privacy-policy.html` verified against the shipped app (W-GTM-i3).
 3. App Privacy questionnaire answered so the card reads **Data Not Collected**; read it side by side

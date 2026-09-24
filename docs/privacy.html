@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arivu Privacy Policy</title>
+<meta name="description" content="Privacy policy for Arivu, an offline writing and comprehension assistant for Android and iPhone.">
+<style>
+:root{
+  --ground:#FBFAF7; --ink:#1B1C1A; --muted:#4A4843; --line:#CAC7BF; --accent:#1F5C4A; --panel:#F1EFEA;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ground:#141513; --ink:#E4E2DC; --muted:#C9C6BE; --line:#48473F; --accent:#8FCFB6; --panel:#1F201E; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:17px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;padding:0 16px}
+main{max-width:44rem;margin:0 auto;padding-block:40px 64px}
+h1{font-size:clamp(1.8rem,5vw,2.4rem);line-height:1.15;margin:0 0 .3em}
+h2{font-size:1.2rem;margin:2.2em 0 .5em;color:var(--accent)}
+h3{font-size:1.02rem;margin:1.6em 0 .4em}
+.plat{border-left:3px solid var(--line);padding-left:14px;margin:.6em 0 1.2em}
+p,li{max-width:65ch}
+ul{padding-left:1.2em}
+li{margin:.35em 0}
+.meta{color:var(--muted);font-size:.95rem;margin:0}
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-top:28px}
+.summary h2{margin-top:0}
+a{color:var(--accent)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+.tablewrap{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);text-align:left;padding:8px 10px;vertical-align:top}
+footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Arivu Privacy Policy</h1>
+  <p class="meta">App: Arivu, on Android and iPhone · Developer: Hariprasad Sudharshan · Effective: 24 September 2026 · Applies to version 0.1.0 and later until this page changes</p>
+  <p class="meta">Arivu is one app on two platforms. Everything in this policy applies to both, except where a section says otherwise — and it says otherwise only where the two operating systems genuinely differ.</p>
+
+  <section class="summary" aria-labelledby="short">
+    <h2 id="short">The short version</h2>
+    <ul>
+      <li>Arivu does not use the internet. There is no account, no sign-in and no server: the AI model is inside the app and runs on your phone.
+        <ul>
+          <li><strong>On Android</strong>, Arivu has <strong>no permission to use the internet</strong>. Android does not let it send anything anywhere.</li>
+          <li><strong>On iPhone</strong>, there is no such permission for an app to give up, so we show you the evidence instead: the source code is public and contains no networking code, the App Store privacy card says "Data Not Collected", and you can check it yourself with Airplane Mode. See section 2.</li>
+        </ul>
+      </li>
+      <li>What you type and what Arivu writes is stored <strong>only on your phone</strong>, in the app's private storage. It is <strong>not</strong> included in phone backups or phone-to-phone transfers.</li>
+      <li>There is no advertising, no analytics and no tracking in the app on either platform.</li>
+      <li>We do <strong>not</strong> collect, receive, sell or share your messages. There is no account, no advertising, no analytics and no crash-reporting software in the app.</li>
+      <li>If you choose to report a reply, your own email app sends it. The draft contains that reply and your note, and you see it before you send. We receive only what you send.</li>
+      <li>The store you install Arivu from — Google Play, or Apple's App Store — has its own privacy policy.</li>
+    </ul>
+  </section>
+
+  <h2>1. What Arivu is</h2>
+  <p>Arivu is an offline writing and comprehension assistant. A small language model (Qwen3 0.6B) is installed together with the app and runs entirely on your phone. It works on text you give it: rewriting, shortening, explaining, summarising and drafting.</p>
+  <p>It is the same app on Android and on iPhone, built on the same code. A phone with more memory may run a larger model, which changes how good the replies are, not what Arivu does or what leaves your phone. Nothing leaves your phone on either platform.</p>
+
+  <h2>2. Arivu does not use the internet</h2>
+  <p>Arivu has no account, no sign-in and no server. Everything happens on your phone. The way we can <em>prove</em> that is different on Android and on iPhone, so both are set out below. We do not use one sentence for both, because only one of them would be true.</p>
+
+  <h3>On Android: a permission that is missing</h3>
+  <div class="plat">
+  <p>Android apps must ask for the <code>INTERNET</code> permission before they can use any network. Arivu does not ask for it, and it does not ask for any permission to see your network state. Our release check (<code>tools/check_manifest.sh</code> in the source code) fails if any part of the app adds a network permission.</p>
+  <p>Arivu does ask Android for these permissions. None of them show a pop-up, and none of them give access to the internet or to your personal data:</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Permission</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td><code>FOREGROUND_SERVICE</code></td><td>So a reply can keep being written for a short time if you switch to another app.</td></tr>
+      <tr><td><code>REQUEST_DELETE_PACKAGES</code></td><td>Used only on a phone that cannot run Arivu well, to open Android's screen for uninstalling Arivu itself. Arivu uses it for no other app, and Android always asks you to confirm before anything is removed.</td></tr>
+      <tr><td><code>…DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</code></td><td>Added automatically by Google's AndroidX library. Only Arivu itself holds it; it stops other apps from sending Arivu internal messages.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>You can check this yourself on the Google Play listing ("App permissions"), in your phone's app settings, or in the public source code.</p>
+  </div>
+
+  <h3>On iPhone: no permission to withhold, so here is the evidence instead</h3>
+  <div class="plat">
+  <p><em>[iOS — VERIFY BEFORE PUBLISHING]</em></p>
+  <p>iOS works differently. There is no internet permission that an iPhone app can decline, and no list on the App Store page that would show you Arivu is not allowed to connect. So we cannot make the Android claim here, and we will not pretend to. What we can give you is this:</p>
+  <ul>
+    <li><strong>The source code is public</strong> at https://github.com/brettleehari/arivu. Anyone can read it and see that Arivu contains no networking code — nothing that opens a connection, and no address to connect to.</li>
+    <li><strong>You can settle it yourself in ten seconds.</strong> Turn on Airplane Mode and use Arivu normally. Nothing changes, because nothing was being sent.</li>
+    <li><strong>The App Store privacy card for Arivu says "Data Not Collected".</strong> That is our declaration to Apple. Apple publishes it; Apple does not separately inspect our app to confirm it. We mention it last on purpose: the source code and your own Airplane Mode test are stronger evidence than a label.</li>
+  </ul>
+  <p>There is one thing we cannot offer on iPhone. Apps on the App Store are re-signed and encrypted by Apple, so you cannot check that the app you downloaded was built from the source code we published, in the way you could with an Android APK. Our claim on iPhone is that the published source has no networking code in it, not that you can verify the downloaded binary yourself.</p>
+  <p>The app never asks for permission to your photos, files, contacts, microphone, camera or location on either platform, because it does not use them.</p>
+  </div>
+
+  <h2>3. What is stored on your phone</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>What</th><th>Where</th><th>How long</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Your conversation: the messages you send, the replies, the time each was created, why a reply stopped, and whether you reported a reply</td>
+        <td>One file, <code>conversation.json</code>, in Arivu's private app storage. Other apps cannot read it on a normal Android phone.</td>
+        <td>Until you uninstall Arivu or clear its storage in Android settings. Version 0.1.0 has no in-app button to clear the conversation.</td>
+      </tr>
+      <tr>
+        <td>Temporary and damaged copies of that file</td>
+        <td>Same private folder. A temporary copy is used while saving. If the file is ever damaged, Arivu keeps only the newest damaged copy there instead of overwriting it, and starts a new conversation.</td>
+        <td>Same as above.</td>
+      </tr>
+      <tr>
+        <td>A note that your phone passed Arivu's compatibility check (app version and total memory size)</td>
+        <td>Arivu's private app settings</td>
+        <td>Same as above. Used so the check does not run on every launch.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>On Android:</strong> Arivu turns off Android backup for the whole app (<code>allowBackup="false"</code>) and excludes all its storage from both cloud backup and phone-to-phone transfer. Your conversation will not appear in your Google account backup and will not move to a new phone.</p>
+  <p><strong>On iPhone:</strong> <em>[iOS — VERIFY BEFORE PUBLISHING]</em> the conversation is kept in Arivu's own private container, which other apps cannot read, and iOS encrypts it at rest with your device passcode. It is marked so that it is not copied into your iCloud backup. If this page is published before that is confirmed in the iOS app, this sentence must be removed, not softened.</p>
+  <p>Arivu does not add its own encryption to the file. It is protected by the phone's app sandbox and by the phone's own storage encryption and screen lock. Anyone who can unlock your phone and open Arivu can read the conversation.</p>
+  <p>Like most apps, Arivu writes short technical messages to the phone's system log (for example, when the model is loaded or memory is freed). The system log stays on your phone, and ordinary apps cannot read other apps' log messages.</p>
+
+  <h2>4. What we collect</h2>
+  <p><strong>Nothing, through the app.</strong> On both platforms, Arivu contains no analytics, advertising, tracking, crash-reporting or payment software. On Android it also <em>cannot</em> send data, because it has no internet permission. On iPhone it does not send data, for the reasons and with the evidence set out in section 2. We never see your messages, and they are not used to train any AI model.</p>
+
+  <h2>5. Reporting a harmful reply</h2>
+  <p>There are two ways to report. Both use <strong>your own email app</strong> (or, if you have no email app, the phone's share menu, where you choose the app). Arivu does not send anything itself. <em>[iOS — VERIFY BEFORE PUBLISHING]</em> On iPhone the same hand-off is used: Arivu opens the system mail composer, or the share sheet, already filled in, and you send it.</p>
+  <p><strong>Report under a reply.</strong> Every reply Arivu writes has a Report button. It opens a small screen inside Arivu where you choose what is wrong (Offensive, Harmful, Wrong in a dangerous way, or Something else) and can add a note. When you tap "Open email", Arivu:</p>
+  <ul>
+    <li>marks that reply as "Reported" in the conversation stored on your phone, and</li>
+    <li>opens a draft email to arivu.ai.org@gmail.com with the subject "Arivu: report of harmful output", containing <strong>the reason you chose, your note (if any), the full text of that reply</strong>, and the Arivu version number.</li>
+  </ul>
+  <p>Only the reply you chose is put in the draft. Your own messages and the rest of the conversation are not added. You can read and change the draft, and nothing is sent until you press send in your email or messaging app. That app, not Arivu, sends it. If you do not send it, the reply still shows as "Reported" on your phone only.</p>
+  <p><strong>General report.</strong> The About screen has a "Report a reply" button. It opens a draft email to the same address with the same subject, a short blank form ("Paste the reply here", "What was wrong with it") and the Arivu version number. You choose what to paste in.</p>
+  <p>If you send a report, we receive what is in it (the reply text, your reason and note, anything you added) and whatever your email or messaging service includes, such as your email address or phone number. We use reports only to understand harmful replies, to make Arivu safer, and to reply to you if needed. We do not sell or share reports. We keep them for 90 days and then delete them. You can ask us to see or delete your report sooner by writing to arivu.ai.org@gmail.com. Your email or messaging provider handles the message under its own privacy policy.</p>
+
+  <h2>6. Copying text and your keyboard</h2>
+  <p>When you tap Copy, the text goes to your phone's clipboard, like any copied text. Arivu asks your keyboard app not to learn from what you type in Arivu, but Arivu cannot see or control what your keyboard app does. Other apps you paste into, and your keyboard app, work under their own privacy policies.</p>
+
+  <h2>7. The app store you installed from</h2>
+  <h3>Google Play (Android)</h3>
+  <p>You install and update Arivu through Google Play. Google may collect information about your device and your download under <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>. Google gives developers summary statistics, such as the number of installs by country and device model, and, from people who chose to share usage and diagnostics with Google, crash and performance statistics. We use these only to find phones and problems where Arivu does not work well. We do not receive your messages from Google, because Arivu never sends them anywhere.</p>
+  <p>Installing and updating from Google Play uses data. Once installed, Arivu itself uses none.</p>
+  <h3>Apple App Store (iPhone)</h3>
+  <p><em>[iOS — VERIFY BEFORE PUBLISHING]</em> You install and update Arivu through Apple's App Store. Apple may collect information about your device, your Apple Account and your download under <a href="https://www.apple.com/legal/privacy/">Apple's Privacy Policy</a>. Apple gives developers summary statistics, such as installs and, from people who chose to share analytics with app developers, crash and performance statistics. We use these only to find phones and problems where Arivu does not work well. We do not receive your messages from Apple, because Arivu never sends them anywhere. Downloading and updating from the App Store uses data; once installed, Arivu itself uses none.</p>
+
+  <h2>8. Children</h2>
+  <p>Arivu is not designed for children and we do not knowingly collect information from anyone, including children. The app itself collects nothing. If a child has sent us a report email, write to arivu.ai.org@gmail.com and we will delete it.</p>
+
+  <h2>9. Your choices and rights</h2>
+  <ul>
+    <li><strong>Delete your conversation, on Android:</strong> uninstall Arivu, or open Android Settings → Apps → Arivu → Storage → Clear storage.</li>
+    <li><strong>Delete your conversation, on iPhone:</strong> delete the app. <em>[iOS — VERIFY BEFORE PUBLISHING]</em> iOS has no "clear storage" button for an app, and "Offload App" keeps the app's data, so use <strong>Delete App</strong> if you want the conversation gone.</li>
+    <li><strong>Check our claims:</strong> the full source code is public at https://github.com/brettleehari/arivu.</li>
+    <li><strong>Reports you sent us:</strong> ask to see or delete them at arivu.ai.org@gmail.com. Depending on where you live (for example under Nigeria's NDPA, Kenya's Data Protection Act, Brazil's LGPD, the Philippines' Data Privacy Act or the EU GDPR), you may have further rights over that information, and you can complain to your data protection authority.</li>
+  </ul>
+
+  <h2>10. Changes to this policy</h2>
+  <p>If a future version of Arivu changes what it stores or sends, we will update this page before that version is released and change the effective date at the top. A version that needed the internet would be a different app from the one described here, and we would say so plainly in the store listing, on both platforms, before you could install it.</p>
+
+  <h2>11. Contact</h2>
+  <p>Hariprasad Sudharshan · <a href="mailto:arivu.ai.org@gmail.com">arivu.ai.org@gmail.com</a></p>
+
+  <footer>Arivu is open source under the Apache 2.0 licence. This page loads no scripts, fonts, images or trackers.</footer>
+</main>
+</body>
+</html>

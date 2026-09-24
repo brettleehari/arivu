@@ -186,7 +186,7 @@ Bandwidth chain (the dependency that finished last, traced back from the milesto
 | D-063 | no | no | resolved_human | 2026-09-22 |  | W139 |
 | D-064 | no | no | resolved_human |  |  | W142 |
 
-9 open decisions block the Play release; 13 block the App Store release; 7 block both.
+10 open decisions block the Play release; 14 block the App Store release; 8 block both.
 
 ## Ready now, by platform and owner
 
@@ -485,6 +485,7 @@ W61 (Engineering, android), W66 (Hari, both), W60 (Engineering, both), W47 (GTM,
 
 ## Graph warnings
 
+- android/ios-blocking decision D-066 is not referenced by any work item
 - 2 item(s) are verified on the DEVELOPMENT iPhone only (W140, W144). That handset is a 17 Pro Max — 12 GB of RAM and the most forgiving jetsam budget Apple ships — so it cannot fail the memory ceiling and therefore cannot test it. C2's claim about a modest phone is still unproven on iOS; the `iphone` resource (W111) is what would prove it
 
 ## Graph

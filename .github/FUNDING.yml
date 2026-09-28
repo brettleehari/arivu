@@ -1,0 +1,18 @@
+# Sponsorship for Arivu. GitHub renders a "Sponsor" button on the repository from this file.
+#
+# WHY IT IS HERE AND NOT IN THE APP. Apple's guideline 3.2.2(iv) says apps "may not use in-app
+# purchase to collect... donations" and that collection "must be done outside of the app, or by
+# using Apple Pay". An individual developer is also not an approved nonprofit, which is the case
+# Apple's fundraising rules are written for. A donate button in the app is therefore a review risk
+# with very little upside, and it would be the first piece of chrome on a screen C8 keeps clear.
+#
+# So the app stays clean and the asking happens here and on the website. That is also the normal
+# shape for an open-source project: people who want to fund it look at the repository.
+#
+# Fill in whichever of these Hari actually sets up, then delete the rest. Empty keys render nothing.
+github: [brettleehari]
+# open_collective:
+# ko_fi:
+# liberapay:
+# buy_me_a_coffee:
+# custom: ["https://..."]     # e.g. a UPI link, which has no platform fee in India

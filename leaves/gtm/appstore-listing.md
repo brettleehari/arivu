@@ -325,6 +325,24 @@ Added by Apple and by C11:
 18. **No implication that Apple verified our privacy claim.** The App Privacy card is our own
     declaration. Say what it says; never "Apple-verified", "Apple-approved privacy" or similar.
 
+## What the API cannot do, found at submission (2026-09-28)
+
+`tools/ios/testflight.py` sets everything else, but submission is refused until two things exist,
+and only one of them is reachable with an App Manager key:
+
+| | |
+|---|---|
+| `copyright` on the version | Settable by API. `2026 Hariprasad Sudharshan` |
+| **App Privacy data usages, published** | **Web UI only** with an App Manager key — `/v1/appDataUsages` and friends 404. Needs Admin or Account Holder, or a human |
+
+The App Privacy answer for Arivu is the shortest one the form has: *"Do you or your third-party
+partners collect any data from this app?"* → **No** → Publish. That is simply true — no networking
+framework is linked — and it is the same claim `PrivacyInfo.xcprivacy` and the privacy policy make.
+
+The submission error is worth knowing how to read, because the first message is useless on its own
+("This resource cannot be reviewed") and the real list is nested in `meta.associatedErrors` of the
+409 from `POST /v1/reviewSubmissionItems`. Print that and it names every missing attribute.
+
 ## Before submission — checklist
 
 1. `1039 MB`, `17.0`, `3.5 GB` filled from measurements, not estimates (W-GTM-i2).

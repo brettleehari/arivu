@@ -83,7 +83,6 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
 
   <h3>On iPhone: no permission to withhold, so here is the evidence instead</h3>
   <div class="plat">
-  <p><em>[iOS — VERIFY BEFORE PUBLISHING]</em></p>
   <p>iOS works differently. There is no internet permission that an iPhone app can decline, and no list on the App Store page that would show you Arivu is not allowed to connect. So we cannot make the Android claim here, and we will not pretend to. What we can give you is this:</p>
   <ul>
     <li><strong>The source code is public</strong> at https://github.com/brettleehari/arivu. Anyone can read it and see that Arivu contains no networking code — nothing that opens a connection, and no address to connect to.</li>
@@ -102,7 +101,7 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
       <tr>
         <td>Your conversation: the messages you send, the replies, the time each was created, why a reply stopped, and whether you reported a reply</td>
         <td>One file, <code>conversation.json</code>, in Arivu's private app storage. Other apps cannot read it on a normal Android phone.</td>
-        <td>Until you uninstall Arivu or clear its storage in Android settings. Version 0.1.0 has no in-app button to clear the conversation.</td>
+        <td>Until you delete it. On iPhone, swipe a conversation in the list, or tap Edit, to delete it. On Android, uninstall Arivu or clear its storage in Android settings.</td>
       </tr>
       <tr>
         <td>Temporary and damaged copies of that file</td>
@@ -118,7 +117,7 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
   </table>
   </div>
   <p><strong>On Android:</strong> Arivu turns off Android backup for the whole app (<code>allowBackup="false"</code>) and excludes all its storage from both cloud backup and phone-to-phone transfer. Your conversation will not appear in your Google account backup and will not move to a new phone.</p>
-  <p><strong>On iPhone:</strong> <em>[iOS — VERIFY BEFORE PUBLISHING]</em> the conversation is kept in Arivu's own private container, which other apps cannot read, and iOS encrypts it at rest with your device passcode. It is marked so that it is not copied into your iCloud backup. If this page is published before that is confirmed in the iOS app, this sentence must be removed, not softened.</p>
+  <p><strong>On iPhone:</strong> the conversation is kept in Arivu's own private container, which other apps cannot read, and iOS encrypts it at rest with your device passcode. It is marked so that it is not copied into your iCloud backup.</p>
   <p>Arivu does not add its own encryption to the file. It is protected by the phone's app sandbox and by the phone's own storage encryption and screen lock. Anyone who can unlock your phone and open Arivu can read the conversation.</p>
   <p>Like most apps, Arivu writes short technical messages to the phone's system log (for example, when the model is loaded or memory is freed). The system log stays on your phone, and ordinary apps cannot read other apps' log messages.</p>
 
@@ -126,7 +125,7 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
   <p><strong>Nothing, through the app.</strong> On both platforms, Arivu contains no analytics, advertising, tracking, crash-reporting or payment software. On Android it also <em>cannot</em> send data, because it has no internet permission. On iPhone it does not send data, for the reasons and with the evidence set out in section 2. We never see your messages, and they are not used to train any AI model.</p>
 
   <h2>5. Reporting a harmful reply</h2>
-  <p>There are two ways to report. Both use <strong>your own email app</strong> (or, if you have no email app, the phone's share menu, where you choose the app). Arivu does not send anything itself. <em>[iOS — VERIFY BEFORE PUBLISHING]</em> On iPhone the same hand-off is used: Arivu opens the system mail composer, or the share sheet, already filled in, and you send it.</p>
+  <p>There are two ways to report. Both use <strong>your own email app</strong> (or, if you have no email app, the phone's share menu, where you choose the app). Arivu does not send anything itself. On iPhone the same hand-off is used: Arivu opens the system mail composer, or the share sheet, already filled in, and you send it.</p>
   <p><strong>Report under a reply.</strong> Every reply Arivu writes has a Report button. It opens a small screen inside Arivu where you choose what is wrong (Offensive, Harmful, Wrong in a dangerous way, or Something else) and can add a note. When you tap "Open email", Arivu:</p>
   <ul>
     <li>marks that reply as "Reported" in the conversation stored on your phone, and</li>
@@ -144,7 +143,7 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
   <p>You install and update Arivu through Google Play. Google may collect information about your device and your download under <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>. Google gives developers summary statistics, such as the number of installs by country and device model, and, from people who chose to share usage and diagnostics with Google, crash and performance statistics. We use these only to find phones and problems where Arivu does not work well. We do not receive your messages from Google, because Arivu never sends them anywhere.</p>
   <p>Installing and updating from Google Play uses data. Once installed, Arivu itself uses none.</p>
   <h3>Apple App Store (iPhone)</h3>
-  <p><em>[iOS — VERIFY BEFORE PUBLISHING]</em> You install and update Arivu through Apple's App Store. Apple may collect information about your device, your Apple Account and your download under <a href="https://www.apple.com/legal/privacy/">Apple's Privacy Policy</a>. Apple gives developers summary statistics, such as installs and, from people who chose to share analytics with app developers, crash and performance statistics. We use these only to find phones and problems where Arivu does not work well. We do not receive your messages from Apple, because Arivu never sends them anywhere. Downloading and updating from the App Store uses data; once installed, Arivu itself uses none.</p>
+  <p>You install and update Arivu through Apple's App Store. Apple may collect information about your device, your Apple Account and your download under <a href="https://www.apple.com/legal/privacy/">Apple's Privacy Policy</a>. Apple gives developers summary statistics, such as installs and, from people who chose to share analytics with app developers, crash and performance statistics. We use these only to find phones and problems where Arivu does not work well. We do not receive your messages from Apple, because Arivu never sends them anywhere. Downloading and updating from the App Store uses data; once installed, Arivu itself uses none.</p>
 
   <h2>8. Children</h2>
   <p>Arivu is not designed for children and we do not knowingly collect information from anyone, including children. The app itself collects nothing. If a child has sent us a report email, write to arivu.ai.org@gmail.com and we will delete it.</p>
@@ -152,7 +151,7 @@ footer{margin-top:3em;border-top:1px solid var(--line);padding-top:1em;color:var
   <h2>9. Your choices and rights</h2>
   <ul>
     <li><strong>Delete your conversation, on Android:</strong> uninstall Arivu, or open Android Settings → Apps → Arivu → Storage → Clear storage.</li>
-    <li><strong>Delete your conversation, on iPhone:</strong> delete the app. <em>[iOS — VERIFY BEFORE PUBLISHING]</em> iOS has no "clear storage" button for an app, and "Offload App" keeps the app's data, so use <strong>Delete App</strong> if you want the conversation gone.</li>
+    <li><strong>Delete your conversation, on iPhone:</strong> swipe it in the conversation list, or tap Edit and remove it. To remove every conversation at once, delete the app — iOS has no "clear storage" button, and "Offload App" keeps the data.</li>
     <li><strong>Check our claims:</strong> the full source code is public at https://github.com/brettleehari/arivu.</li>
     <li><strong>Reports you sent us:</strong> ask to see or delete them at arivu.ai.org@gmail.com. Depending on where you live (for example under Nigeria's NDPA, Kenya's Data Protection Act, Brazil's LGPD, the Philippines' Data Privacy Act or the EU GDPR), you may have further rights over that information, and you can complain to your data protection authority.</li>
   </ul>

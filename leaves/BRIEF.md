@@ -26,7 +26,7 @@ do not relitigate them unless a measurement on real hardware contradicts them.
 
 ## What this is
 
-A free, open-source, fully offline LLM chat app for Android. One APK, model
+A free, open-source, fully offline LLM chat app for iPhone and Android. One package, model
 bundled, no network permission. Targeted at users in Africa, South East Asia,
 and South America where data costs and API pricing are the barrier.
 

@@ -1,0 +1,19 @@
+Arivu runs a language model entirely on the device. No account, no sign-in, no server, no network requests of any kind. No test credentials are needed.
+
+TO TEST: launch, tap "Start using Arivu", type "Explain this in simple words:" and any paragraph, tap Send. Turn on Aeroplane Mode and send another — behaviour is identical, because nothing leaves the device.
+
+1. PURPOSE AND AUDIENCE. An offline writing assistant for adults who want help with text they already have (rewriting, shortening, explaining, summarising, translating, drafting) without that text leaving their phone. Every comparable assistant needs a connection and sends your words to a server; this does neither. It is also built to teach: it shows what each reply cost in tokens, lets you read the exact text the model was given, and lets you edit the instructions it runs on. It is a small model, so it is good with your own text and unreliable about facts, and the app says so plainly in About and in "How Arivu works".
+
+2. SETUP. Nothing to set up. No account, registration, login, credentials, sample files, permissions or configuration. First reply takes a few seconds while the model loads from the bundle. No paid features, no in-app purchases, no subscriptions.
+
+3. EXTERNAL SERVICES: NONE. No AI service — the model is Qwen3-1.7B (Q4_K_M, Apache 2.0, Alibaba Cloud), bundled in the app, running locally via llama.cpp (MIT). No inference API. No data providers, authentication, payment processor, analytics, advertising, crash reporting, or third-party SDK. No networking framework is linked into the binary: `otool -L` shows no CFNetwork, no Network.framework, no SystemConfiguration. The only outbound action is the Report button, which opens the user's own mail composer pre-filled; the app sends nothing itself.
+
+4. REGIONAL DIFFERENCES: NONE. Identical in every region. No geo-gating, no region-specific content, no remote configuration, no server that could vary by territory. The model replies in the language the user writes in, which is a model property, not a regional variant.
+
+5. REGULATED INDUSTRY: no. Not a medical, financial, legal or credentialing app, and it makes no claims in those areas.
+
+THIRD-PARTY MATERIAL, all permissively licensed and redistributable: Qwen3-1.7B weights (Apache 2.0, Alibaba Cloud) and llama.cpp (MIT). Both licences in full are inside the app under About > Licences and in NOTICE in the public repository. The app itself is open source under Apache 2.0, weights included: https://github.com/brettleehari/arivu — every claim above can be checked against the source.
+
+USER-GENERATED CONTENT: none in the sense the guidelines describe. Nothing a user writes or receives is shared with anyone. No other users, no feed, no profiles, no messaging, no way to publish. Each conversation exists only in that app's private storage on that one device. There is still a reporting mechanism: every reply has a Report button that hands the exact reply to the user's mail app, addressed to a monitored address. There is no blocking mechanism because there is nobody to block.
+
+PRIVACY: nothing is collected. Conversations are stored only on the device, excluded from iCloud backup, and protected at rest. Policy: https://brettleehari.github.io/arivu/docs/privacy.html

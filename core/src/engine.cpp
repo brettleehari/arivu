@@ -3,6 +3,7 @@
 #include "llama.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <chrono>
 #include <mutex>
 
@@ -23,7 +24,15 @@ void backend_init_once() {
 
 llama_model_params model_params(bool use_repack) {
     llama_model_params p = llama_model_default_params();
+    // ZERO, except while measuring D-051. Offloading layers on Apple silicon moves the weights
+    // from clean file-backed pages (which jetsam does not charge) into memory it does, so this is
+    // a memory decision before it is a speed one. ARIVU_GPU_LAYERS exists so the experiment can be
+    // run without editing code, and it is read from the environment precisely because nothing in
+    // the shipped app can set it — there is no UI, no setting and no API that reaches this.
     p.n_gpu_layers    = 0;
+    if (const char * gpu = std::getenv("ARIVU_GPU_LAYERS")) {
+        p.n_gpu_layers = std::atoi(gpu);
+    }
     p.load_mode       = LLAMA_LOAD_MODE_MMAP;  // never MLOCK: pinning defeats eviction
     // Repacked weights live in anonymous memory, which would add ~400MB of
     // unreclaimable RSS. Off by default; the benchmark measures both.

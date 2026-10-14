@@ -366,6 +366,31 @@ else
   note "otool not available — dylib list read from the binary's strings instead"
 fi
 
+# ---- 8b. No GPU backend linked in ------------------------------------------------------------
+#
+# D-051 keeps Arivu on the CPU, and that is a MEMORY decision: Metal buffers are dirty pages that
+# jetsam charges, where the mmap'd weights are clean pages it does not. Shipping a Metal build by
+# accident would quietly delete the property the whole memory budget rests on.
+#
+# Checking for a .metallib FILE is not enough and that was the gap. The iOS core builds with
+# GGML_METAL_EMBED_LIBRARY=ON, so the shaders live inside the executable and leave no file behind —
+# a Metal build sailed past the file check. Found while running the D-051 experiment, which left a
+# Metal xcframework sitting in build/ios where the next deploy would have picked it up.
+#
+# ARIVU_ALLOW_METAL=1 exists for the day D-051 is revisited with numbers; it has to be deliberate.
+if [[ "${ARIVU_ALLOW_METAL:-0}" != "1" ]] && [[ -f "$EXEC" ]]; then
+  if command -v nm >/dev/null 2>&1; then
+    metal_syms="$(nm -U "$EXEC" 2>/dev/null | grep -c "ggml_metal" || true)"
+  else
+    metal_syms="$(strings "$EXEC" 2>/dev/null | grep -c "ggml_metal_" || true)"
+  fi
+  if [[ "${metal_syms:-0}" -gt 0 ]]; then
+    bad "the binary links a Metal backend ($metal_syms ggml_metal symbols) — D-051 says CPU only. Rebuild the core without ARIVU_METAL=1, or set ARIVU_ALLOW_METAL=1 if this is deliberate"
+  else
+    pass "no Metal backend linked (D-051: weights stay evictable)"
+  fi
+fi
+
 # 9. Traceability
 if "$PY" "$ROOT/tools/trace.py" --strict; then pass "tools/trace.py --strict"; else bad "tools/trace.py --strict"; fi
 

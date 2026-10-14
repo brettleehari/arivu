@@ -178,6 +178,11 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+        # Needed to run on a HANDSET, not just the Simulator. The journeys have only ever run on a
+        # Simulator; the D-051 experiment has to run on a real phone, because the question is about
+        # jetsam's accounting and jetsam does not exist on a Mac.
+        DEVELOPMENT_TEAM: AJ4SSKV57N
+        CODE_SIGN_STYLE: Automatic
 
 schemes:
   Arivu:

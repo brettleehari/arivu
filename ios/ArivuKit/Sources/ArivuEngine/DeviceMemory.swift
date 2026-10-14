@@ -108,10 +108,28 @@ public enum DeviceMemory {
     /// Clamped to the same [2, 4] band the Android heuristic uses, so the two platforms use the same
     /// number of threads on comparable hardware (C11).
     public static func performanceCoreCount() -> Int32 {
+        // ARIVU_THREADS overrides the band, for the D-051 / thread-clamp experiment only. DEBUG
+        // only, read from the environment, and unreachable from the shipped app: there is no UI,
+        // no setting and no API that sets it. PocketPal uses floor(allCores * 0.8) where this uses
+        // performance cores clamped to [2,4], and on a 2P+4E phone that is 4 threads against 2 —
+        // a difference nobody here has ever measured.
+        #if DEBUG
+        if let raw = ProcessInfo.processInfo.environment["ARIVU_THREADS"],
+           let n = Int32(raw), n > 0 {
+            return n
+        }
+        #endif
         let reported = sysctlInt("hw.perflevel0.logicalcpu")
             ?? sysctlInt("hw.perflevel0.physicalcpu")
             ?? Int32(ProcessInfo.processInfo.activeProcessorCount)
         return min(max(reported, Policy.minThreads), Policy.maxThreads)
+    }
+
+    /// What the device actually reports, before the [2,4] clamp. The experiment needs to know what
+    /// it is choosing not to use.
+    public static func reportedCoreCounts() -> (performance: Int32, total: Int32) {
+        (sysctlInt("hw.perflevel0.logicalcpu") ?? -1,
+         Int32(ProcessInfo.processInfo.activeProcessorCount))
     }
 
     private static func sysctlInt(_ name: String) -> Int32? {

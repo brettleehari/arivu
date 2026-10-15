@@ -52,7 +52,7 @@ jobs:
       # a link error inside Xcode.
       IOS_DEPLOYMENT_TARGET: "17.0"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 

@@ -15,6 +15,7 @@ enum A11y {
     static let send = "chat.send"
     static let stop = "chat.stop"
     static let copy = "chat.copy"
+    static let report = "chat.report"
     static let about = "chat.about"
     static let promptDisclosure = "chat.promptDisclosure"
     static let editInstructions = "chat.editInstructions"

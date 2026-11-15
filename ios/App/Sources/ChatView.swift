@@ -309,6 +309,7 @@ private struct MessageBubble: View {
                         if !message.fromUser {
                             // Report first, so Copy keeps its place at the edge.
                             Button(Strings.string(.report), action: onReport)
+                                .accessibilityIdentifier(A11y.report)
                                 .accessibilityLabel(Strings.string(.a11y_report_reply))
                                 .frame(minHeight: Metrics.minTouchTarget)
                         }

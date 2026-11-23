@@ -54,7 +54,7 @@ jobs:
       # android/app/build.gradle.kts names (29.0.14206865) must not be silently substituted: the
       # 16 KB alignment the Spine depends on comes from NDK r27+.
       - name: Install SDK packages
-        run: sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" > /dev/null
+        run: sdkmanager --install "platforms;android-37.0" "ndk;29.0.14206865" > /dev/null
 
       - uses: gradle/actions/setup-gradle@v4
 
